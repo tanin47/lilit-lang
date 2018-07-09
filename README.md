@@ -1,7 +1,7 @@
-Sonnet
+Ode
 =======
 
-Sonnet is a statically-typed and beautifully-terse programming language. It can compile to a single executable that runs on a target CPU. Thus, Sonnet is great for building command-line tools.
+Ode is a statically-typed and beautifully-terse programming language. It can compile to a single executable that runs on a target CPU. Thus, Ode is great for building command-line tools.
 
 
 Principles
@@ -27,9 +27,16 @@ Features
 
 ### Compile to a target CPU
 
-Sonnet code can be compiled to a single executable that runs on a target CPU. This is ideal for deploying a command-line tool on user's machine.
+Ode code can be compiled to a single executable that runs on a target CPU. This is ideal for deploying a command-line tool on user's machine.
 
 ### Tree shaking
 
 Because the standard libary is big and will continue to grow in size, we perform tree shaking to remove the parts that are not used and, thus, reduce the size of an executable.
 
+
+Write your first Ode
+---------------------
+
+```
+print "Sawasdee!"
+```
