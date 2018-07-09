@@ -13,7 +13,7 @@ We believe that a statically typed language, as codebase grows bigger, is expone
 
 ### Beautifully terse
 
-We aim to reduce the amount of code programmers need to write. For example, type inference is essential to avoid the verbosity problem in Java.
+We aim to reduce the amount of code programmers need to write. For example, type inference is essential to avoid the verbosity problem in Java (e.g. `Animal animal = new Animal()`).
 
 We also aim to add solutions to the standard library to prevent programmers from solving trivial problems on their own. For example, in Python, programmers implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none).
 
