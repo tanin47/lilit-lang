@@ -13,13 +13,13 @@ We believe that a statically typed language, as codebase grows bigger, is expone
 
 ### Beautifully terse
 
-We aim to reduce the amount of code programmers need to write. For example, type inference is essential to avoid the verbosity problem in Java (e.g. `Animal animal = new Animal()`).
+We aim to reduce the amount of code programmers need to write. For example, type inference is essential to avoid the verbosity problem in Java (e.g. `Animal animal = new Animal();` can be reduced to `animal = new Animal()`).
 
-We also aim to provide a rich standard library to prevent programmers from solving trivial problems on their own. For example, in Python, programmers implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none).
+We also aim to provide a rich standard library to prevent programmers from solving trivial problems on their own. For example, in Python, programmers have to implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none). In contrast, in Ruby, they don't need to because they can use `.first`.
 
 ### Maintainability over speed
 
-We value maintainability over speed. For example, we might not implement the asynchronous programming paradigm because coding explicit yield point (e.g. with Monads) makes codebase less comprehensible. Another example is that we will not allow programmers to maintain their own memory to avoid various problems that come with it (e.g. memory corruption).
+We value maintainability over speed. For example, we might not implement the asynchronous programming paradigm because coding explicit yield point (e.g. with Monads) makes codebase less comprehensible. Another example is that we will not allow programmers to manage their own memory to avoid various problems that come with it (e.g. memory corruption).
 
 
 Features
