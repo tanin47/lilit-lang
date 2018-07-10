@@ -15,7 +15,7 @@ We believe that a statically typed language, as codebase grows bigger, is expone
 
 We aim to reduce the amount of code programmers need to write. For example, type inference is essential to avoid the verbosity problem in Java (e.g. `Animal animal = new Animal();` can be reduced to `animal = new Animal()`).
 
-We also aim to provide a rich standard library to prevent programmers from solving trivial problems on their own. For example, in Python, programmers have to implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none). In contrast, in Ruby, they don't need to because they can use `.first`.
+We also aim to provide a rich standard library to prevent programmers from solving trivial problems on their own. For example, in Python, programmers have to implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none), while, in Ruby, they can use `.first` in Ruby's standard library.
 
 ### Maintainability over speed
 
