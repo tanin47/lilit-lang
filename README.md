@@ -1,7 +1,7 @@
-Ode
+Haiku
 =======
 
-Ode is a statically-typed and beautifully-terse programming language. It can compile to a single executable that runs on a target CPU. Thus, Ode is great for building command-line tools.
+Haiku is a statically-typed and beautifully-terse programming language. It can compile to a single executable that runs on a target CPU. Thus, Haiku is great for building command-line tools.
 
 
 Principles
@@ -25,18 +25,31 @@ We value maintainability over speed. For example, we might not implement the asy
 Features
 ---------
 
-### Compile to a target CPU
-
-Ode code can be compiled to a single executable that runs on a target CPU. This is ideal for deploying a command-line tool on user's machine.
-
-### Tree shaking
-
-Because the standard libary is big and will continue to grow in size, we perform tree shaking to remove the parts that are not used and, thus, reduce the size of an executable.
+* Compile to a target CPU (ideal for deploying a command-line tool)
+* Tree shaking (reducing the size of the binary)
+* No null; only optional type
+* Complex type system (e.g. strongly generic, multiple inheritance)
+* Metaprogramming
 
 
-Write your first Ode
+Write your first Haiku
 ---------------------
 
 ```
-print "Sawasdee!"
+val name = "world"
+print s"Hello $name"
+
+if name == "world"
+  print "This is not a person"
+end
+
+val car = Some("Subaru")
+
+car.isDefined
+
+class Test extends Base, Animal
+  def init
+    
+  end
+end
 ```
