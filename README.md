@@ -1,7 +1,7 @@
-Haiku
+Lilit
 =======
 
-Haiku is a statically-typed and beautifully-terse programming language. It can compile to a single executable that runs on a target CPU. Thus, Haiku is great for building command-line tools.
+Lilit is a statically-typed and beautifully-terse programming language. It can compile to a single executable that runs on a target CPU. Thus, Haiku is great for building command-line tools.
 
 
 Principles
@@ -32,8 +32,8 @@ Features
 * Metaprogramming
 
 
-Write your first Haiku
----------------------
+Write your first Lilit
+-----------------------
 
 ```
 val name = "world"
