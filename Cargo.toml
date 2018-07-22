@@ -1,0 +1,6 @@
+[package]
+name = "lilit"
+version = "0.1.0"
+authors = ["tanin"]
+
+[dependencies]
