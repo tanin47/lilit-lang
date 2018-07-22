@@ -1,0 +1,16 @@
+use std::str::FromStr;
+use ast::Expr;
+
+grammar;
+
+pub Expr: Box<Expr> = {
+  "def" <Id> "(" ")" <Num> "end" => Box::new(Expr::Func(<>))
+};
+
+Id: Box<String> = {
+  r"[a-z]+" => Box::new(String::from(<>)),
+};
+
+Num: i32 = {
+  r"[0-9]+" => i32::from_str(<>).unwrap()
+};
