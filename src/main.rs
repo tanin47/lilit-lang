@@ -24,7 +24,8 @@ fn main() {
     file.read_to_string(&mut contents)
         .expect("something went wrong reading the file");
 
-    println!("{:?}", lilit::ExprParser::new().parse(&contents));
+    let tree = lilit::ModParser::new().parse(&contents);
+    println!("{:?}", tree);
 
 
     println!("With text:\n{}", contents);

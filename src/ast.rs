@@ -1,15 +1,19 @@
 use std::fmt::{Debug, Error, Formatter};
 
-pub enum Expr {
-    Func(Box<String>, i32),
+pub enum Node {
+    Num(i32),
+    Func(Box<String>, Box<Node>),
+    Mod(Box<Node>, Option<Box<Node>>),
     Error,
 }
 
-impl Debug for Expr {
+impl Debug for Node {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        use self::Expr::*;
+        use self::Node::*;
         match *self {
-            Func(ref ident, ret_val) => write!(fmt, "({:?} {:?})", ident, ret_val),
+            Num(num) => write!(fmt, "Num({:?})", num),
+            Func(ref ident, ref node) => write!(fmt, "Func({:?} {:?})", ident, node),
+            Mod(ref func, ref opt) => write!(fmt, "Mod({:?}, {:?})", func, opt),
             Error => write!(fmt, "error"),
         }
     }
