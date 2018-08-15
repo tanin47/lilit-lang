@@ -1,7 +1,7 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: b9bb56627d2e7520c53bc31b9d6f6859a9db3c4e6e3bd96c6b8a2d19df4940
+// sha256: 879df2d1f62eef68800b480703d227c2e8260af42f97182d7299ab4c4f355
 use std::str::FromStr;
-use ast::Node;
+use ast::*;
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
 
@@ -10,7 +10,7 @@ mod __parse__Mod {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
-    use ast::Node;
+    use ast::*;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     use super::__intern_token::Token;
@@ -18,9 +18,11 @@ mod __parse__Mod {
     pub enum __Symbol<'input>
      {
         Variant0(&'input str),
-        Variant1(Box<Node>),
-        Variant2(Box<String>),
-        Variant3(i32),
+        Variant1(Box<Num>),
+        Variant2(Box<Func>),
+        Variant3(Box<String>),
+        Variant4(Box<Mod>),
+        Variant5(i32),
     }
     const __ACTION: &'static [i8] = &[
         // State 0
@@ -143,7 +145,7 @@ mod __parse__Mod {
         >(
             &self,
             input: &'input str,
-        ) -> Result<Box<Node>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
+        ) -> Result<Box<Mod>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
         {
             let mut __tokens = self.builder.matcher(input);
             let mut __states = vec![0_i8];
@@ -256,7 +258,7 @@ mod __parse__Mod {
         __states: &mut ::std::vec::Vec<i8>,
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
         _: ::std::marker::PhantomData<()>,
-    ) -> Option<Result<Box<Node>,__lalrpop_util::ParseError<usize, Token<'input>, &'static str>>>
+    ) -> Option<Result<Box<Mod>,__lalrpop_util::ParseError<usize, Token<'input>, &'static str>>>
     {
         let (__pop_states, __symbol, __nonterminal) = match -__action {
             1 => {
@@ -279,7 +281,7 @@ mod __parse__Mod {
             }
             7 => {
                 // __Mod = Mod => ActionFn(0);
-                let __sym0 = __pop_Variant1(__symbols);
+                let __sym0 = __pop_Variant4(__symbols);
                 let __start = __sym0.0.clone();
                 let __end = __sym0.2.clone();
                 let __nt = super::__action0::<>(input, __sym0);
@@ -295,25 +297,36 @@ mod __parse__Mod {
         __states.push(__next_state);
         None
     }
-    fn __pop_Variant1<
-      'input,
-    >(
-        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Node>, usize)
-     {
-        match __symbols.pop().unwrap() {
-            (__l, __Symbol::Variant1(__v), __r) => (__l, __v, __r),
-            _ => panic!("symbol type mismatch")
-        }
-    }
     fn __pop_Variant2<
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<String>, usize)
+    ) -> (usize, Box<Func>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant2(__v), __r) => (__l, __v, __r),
+            _ => panic!("symbol type mismatch")
+        }
+    }
+    fn __pop_Variant4<
+      'input,
+    >(
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
+    ) -> (usize, Box<Mod>, usize)
+     {
+        match __symbols.pop().unwrap() {
+            (__l, __Symbol::Variant4(__v), __r) => (__l, __v, __r),
+            _ => panic!("symbol type mismatch")
+        }
+    }
+    fn __pop_Variant1<
+      'input,
+    >(
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
+    ) -> (usize, Box<Num>, usize)
+     {
+        match __symbols.pop().unwrap() {
+            (__l, __Symbol::Variant1(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
         }
     }
@@ -321,10 +334,21 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, i32, usize)
+    ) -> (usize, Box<String>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant3(__v), __r) => (__l, __v, __r),
+            _ => panic!("symbol type mismatch")
+        }
+    }
+    fn __pop_Variant5<
+      'input,
+    >(
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
+    ) -> (usize, i32, usize)
+     {
+        match __symbols.pop().unwrap() {
+            (__l, __Symbol::Variant5(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
         }
     }
@@ -351,7 +375,7 @@ mod __parse__Mod {
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
         // Expr = Num => ActionFn(4);
-        let __sym0 = __pop_Variant3(__symbols);
+        let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action4::<>(input, __sym0);
@@ -374,12 +398,12 @@ mod __parse__Mod {
         let __sym4 = __pop_Variant1(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
-        let __sym1 = __pop_Variant2(__symbols);
+        let __sym1 = __pop_Variant3(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
         let __nt = super::__action3::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
-        let __symbol = (__start, __Symbol::Variant1(__nt), __end);
+        let __symbol = (__start, __Symbol::Variant2(__nt), __end);
         (6, __symbol, 1)
     }
     pub(crate) fn __reduce3<
@@ -398,7 +422,7 @@ mod __parse__Mod {
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action5::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant2(__nt), __end);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
         (1, __symbol, 2)
     }
     pub(crate) fn __reduce4<
@@ -413,12 +437,12 @@ mod __parse__Mod {
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
         // Mod = Func, Mod => ActionFn(1);
-        let __sym1 = __pop_Variant1(__symbols);
-        let __sym0 = __pop_Variant1(__symbols);
+        let __sym1 = __pop_Variant4(__symbols);
+        let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
         let __nt = super::__action1::<>(input, __sym0, __sym1);
-        let __symbol = (__start, __Symbol::Variant1(__nt), __end);
+        let __symbol = (__start, __Symbol::Variant4(__nt), __end);
         (2, __symbol, 3)
     }
     pub(crate) fn __reduce5<
@@ -433,11 +457,11 @@ mod __parse__Mod {
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
         // Mod = Func => ActionFn(2);
-        let __sym0 = __pop_Variant1(__symbols);
+        let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action2::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant1(__nt), __end);
+        let __symbol = (__start, __Symbol::Variant4(__nt), __end);
         (1, __symbol, 3)
     }
     pub(crate) fn __reduce6<
@@ -456,7 +480,7 @@ mod __parse__Mod {
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action6::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
+        let __symbol = (__start, __Symbol::Variant5(__nt), __end);
         (1, __symbol, 4)
     }
 }
@@ -465,7 +489,7 @@ pub use self::__parse__Mod::ModParser;
 mod __intern_token {
     #![allow(unused_imports)]
     use std::str::FromStr;
-    use ast::Node;
+    use ast::*;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     extern crate regex as __regex;
@@ -570,8 +594,8 @@ fn __action0<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Node>, usize),
-) -> Box<Node>
+    (_, __0, _): (usize, Box<Mod>, usize),
+) -> Box<Mod>
 {
     (__0)
 }
@@ -581,11 +605,11 @@ fn __action1<
     'input,
 >(
     input: &'input str,
-    (_, f, _): (usize, Box<Node>, usize),
-    (_, m, _): (usize, Box<Node>, usize),
-) -> Box<Node>
+    (_, f, _): (usize, Box<Func>, usize),
+    (_, m, _): (usize, Box<Mod>, usize),
+) -> Box<Mod>
 {
-    Box::new(Node::Mod(f, Some(m)))
+    Box::new(Mod { func:f, next_opt:Some(m) })
 }
 
 #[allow(unused_variables)]
@@ -593,10 +617,10 @@ fn __action2<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Node>, usize),
-) -> Box<Node>
+    (_, f, _): (usize, Box<Func>, usize),
+) -> Box<Mod>
 {
-    Box::new(Node::Mod(__0, None))
+    Box::new(Mod { func:f, next_opt:None })
 }
 
 #[allow(unused_variables)]
@@ -605,14 +629,14 @@ fn __action3<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, __0, _): (usize, Box<String>, usize),
+    (_, id, _): (usize, Box<String>, usize),
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
-    (_, __1, _): (usize, Box<Node>, usize),
+    (_, expr, _): (usize, Box<Num>, usize),
     (_, _, _): (usize, &'input str, usize),
-) -> Box<Node>
+) -> Box<Func>
 {
-    Box::new(Node::Func(__0, __1))
+    Box::new(Func { name:id, expr:expr })
 }
 
 #[allow(unused_variables)]
@@ -620,10 +644,10 @@ fn __action4<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, i32, usize),
-) -> Box<Node>
+    (_, n, _): (usize, i32, usize),
+) -> Box<Num>
 {
-    Box::new(Node::Num(__0))
+    Box::new(Num { value:n })
 }
 
 #[allow(unused_variables)]

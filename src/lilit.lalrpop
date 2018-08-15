@@ -1,19 +1,19 @@
 use std::str::FromStr;
-use ast::Node;
+use ast::*;
 
 grammar;
 
-pub Mod: Box<Node> = {
-  <f:Func> <m:Mod> => Box::new(Node::Mod(f, Some(m))),
-  Func => Box::new(Node::Mod(<>, None)),
+pub Mod: Box<Mod> = {
+  <f:Func> <m:Mod> => Box::new(Mod { func:f, next_opt:Some(m) }),
+  <f:Func> => Box::new(Mod { func:f, next_opt:None }),
 };
 
-Func: Box<Node> = {
-  "def" <Id> "(" ")" <Expr> "end" => Box::new(Node::Func(<>)),
+Func: Box<Func> = {
+  "def" <id:Id> "(" ")" <expr:Expr> "end" => Box::new(Func { name:id, expr:expr }),
 };
 
-Expr: Box<Node> = {
-  <Num> => Box::new(Node::Num(<>)),
+Expr: Box<Num> = {
+  <n:Num> => Box::new(Num { value:n }),
 };
 
 Id: Box<String> = {
