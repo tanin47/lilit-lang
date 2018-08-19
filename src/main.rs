@@ -10,10 +10,53 @@ use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::{ExecutionEngine, Symbol};
 use inkwell::module::Module;
+use inkwell::values::FunctionValue;
+use inkwell::basic_block::BasicBlock;
 use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
 
 mod lilit;
 mod ast;
+
+fn build_mod(
+    module: &ast::Mod,
+    context: &Context,
+    builder: &Builder
+) -> Module {
+    let llvm_module = context.create_module("main");
+    add_func(&module.func, &llvm_module, &context, &builder);
+    build_next_mod(&module.next_opt, &llvm_module, &context, &builder);
+    return llvm_module;
+}
+
+fn build_next_mod(
+    next_module_opt: &Option<Box<ast::Mod>>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder
+) {
+    if let Some(ref next_module) = next_module_opt {
+        add_func(&*(*next_module).func, &module, &context, &builder);
+        build_next_mod(&next_module.next_opt, &module, &context, &builder);
+    }
+}
+
+fn add_func(
+    func: &ast::Func,
+    module: &Module,
+    context: &Context,
+    builder: &Builder
+) {
+    let i32_type = context.i32_type();
+    let fn_type = i32_type.fn_type(&[], false);
+
+    let function = module.add_function(&*func.name, &fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+    let ret = i32_type.const_int((*func.expr).value as u64, false);
+    builder.build_return(Some(&ret));
+}
+
 
 fn main() {
     println!("Lilit 0.0.1");
@@ -32,30 +75,30 @@ fn main() {
 
     Target::initialize_native(&InitializationConfig::default()).unwrap();
 
-    let context = Context::create();
-    let module = context.create_module("main");
-    let builder = context.create_builder();
+    if let Ok(ref _ok_tree) = tree {
+        let context = Context::create();
+        let builder = context.create_builder();
+        let module = context.create_module("main");
+        let i32_type = context.i32_type();
+        let fn_type = i32_type.fn_type(&[], false);
 
-    let i32_type = context.i32_type();
-    let fn_type = i32_type.fn_type(&[], false);
+        let function = module.add_function("main", &fn_type, None);
 
-    let function = module.add_function("main", &fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
 
-    builder.position_at_end(&basic_block);
+        let module = build_mod(_ok_tree, &context, &builder);
 
-    let ret = i32_type.const_int(123, false);
+        let triple = TargetMachine::get_default_triple().to_string();
+        let target = Target::from_triple(&triple).unwrap();
+        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
 
-    builder.build_return(Some(&ret));
+        let path =  Path::new("./output.o\0");
+        let result = target_machine.write_to_file(&module, FileType::Object, &path);
+        println!("{:?}", result);
 
-    let triple = TargetMachine::get_default_triple().to_string();
-    let target = Target::from_triple(&triple).unwrap();
-    let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
-
-    let path =  Path::new("./output.o");
-    target_machine.write_to_file(&module, FileType::Object, &path);
-    // This is an object file. In order to run it as a binary,
-    // we need to link it using `cc output.o -o output`.
-    // Now you can run `./output`.
+        module.print_to_stderr();
+        // This is an object file. In order to run it as a binary,
+        // we need to link it using `cc output.o -o output`.
+        // Now you can run `./output`.
+    }
 }
 
