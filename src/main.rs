@@ -59,7 +59,7 @@ fn add_func(
 
 
 fn main() {
-    println!("Lilit 0.0.1");
+    println!("Lilit 0.0.1\n");
     let args: Vec<String> = env::args().collect();
     let mut file = File::open(&args[1]).expect("file not found");
 
@@ -68,14 +68,17 @@ fn main() {
         .expect("something went wrong reading the file");
 
     let tree = lilit::ModParser::new().parse(&contents);
-    println!("{:?}", tree);
 
-
-    println!("With text:\n{}", contents);
+    println!("---- Code ----");
+    println!("{}\n", contents);
 
     Target::initialize_native(&InitializationConfig::default()).unwrap();
 
     if let Ok(ref _ok_tree) = tree {
+
+        println!("---- Abstract Syntax Tree ----");
+        println!("{:?}\n", _ok_tree);
+
         let context = Context::create();
         let builder = context.create_builder();
         let module = context.create_module("main");
@@ -93,9 +96,9 @@ fn main() {
 
         let path =  Path::new("./output.o\0");
         let result = target_machine.write_to_file(&module, FileType::Object, &path);
-        println!("{:?}", result);
-
+        println!("---- LLVM IR ----");
         module.print_to_stderr();
+
         // This is an object file. In order to run it as a binary,
         // we need to link it using `cc output.o -o output`.
         // Now you can run `./output`.
