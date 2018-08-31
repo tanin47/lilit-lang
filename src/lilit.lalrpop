@@ -4,8 +4,31 @@ use ast::*;
 grammar;
 
 pub Mod: Box<Mod> = {
-  <f:Func> <m:Mod> => Box::new(Mod { func:f, next_opt:Some(m) }),
-  <f:Func> => Box::new(Mod { func:f, next_opt:None }),
+  <u:ModUnit*> => Box::new(Mod { units:u }),
+};
+
+ModUnit: Box<ModUnit> = {
+	<Class> => Box::new(ModUnit::ClassUnit(<>)),
+	<Func> => Box::new(ModUnit::FuncUnit(<>)),
+};
+
+Class: Box<Class> = {
+  "class" <n:r#"[A-Z][a-z0-9_]*"#> <e:ClassExtend?> <m:Func*> "end" => Box::new(Class {
+    name:Box::new(String::from(n)),
+    extends: match e {
+    	None => vec![],
+    	Some(e) => e,
+    },
+    methods:m,
+  })
+};
+
+ClassExtend: Vec<Box<String>> = {
+  "extends" <e:Name> <v:("," <Name>)*> => {
+  	let mut v = v;
+  	v.insert(0, e);
+  	v
+  }
 };
 
 Func: Box<Func> = {
@@ -17,7 +40,11 @@ Expr: Box<Num> = {
 };
 
 Id: Box<String> = {
-  r"[a-z]+" => Box::new(String::from(<>)),
+  r"[a-z][a-z0-9_]*" => Box::new(String::from(<>)),
+};
+
+Name: Box<String> = {
+  r"[A-Z][a-z0-9_]*" => Box::new(String::from(<>)),
 };
 
 Num: i32 = {
