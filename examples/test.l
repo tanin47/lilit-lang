@@ -1,5 +1,7 @@
 def main()
   56
+  another()
+  12
 end
 
 class Test
@@ -19,5 +21,9 @@ class Yo extends Yeah, Yay
 
 	def test_another()
 	  1
+	  test()
 	end
+end
+
+class EmptyClass
 end

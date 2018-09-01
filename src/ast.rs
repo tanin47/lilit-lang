@@ -18,22 +18,27 @@ pub struct Class {
 
 pub struct Func {
     pub name: Box<String>,
-    pub expr: Box<Num>,
+    pub exprs: Vec<Box<Expr>>,
 }
 
-pub struct Num {
-    pub value: i32
+pub enum Expr {
+    Invoke { name: Box<String> },
+    Num { value: i32 },
 }
 
-impl Debug for Num {
+
+impl Debug for Expr {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        write!(fmt, "Num({:?})", (*self).value)
+        match self {
+            Expr::Num { value } => write!(fmt, "Num({:?})", value),
+            Expr::Invoke { name } => write!(fmt, "Invoke({:?})", name),
+        }
     }
 }
 
 impl Debug for Func {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        write!(fmt, "Func({:?}, {:?})", (*self).name, (*self).expr)
+        write!(fmt, "Func({:?}, {:?})", (*self).name, (*self).exprs)
     }
 }
 

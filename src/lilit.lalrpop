@@ -13,8 +13,8 @@ ModUnit: Box<ModUnit> = {
 };
 
 Class: Box<Class> = {
-  "class" <n:r#"[A-Z][a-z0-9_]*"#> <e:ClassExtend?> <m:Func*> "end" => Box::new(Class {
-    name:Box::new(String::from(n)),
+  "class" <n:Name> <e:ClassExtend?> <m:Func*> "end" => Box::new(Class {
+    name:n,
     extends: match e {
     	None => vec![],
     	Some(e) => e,
@@ -32,11 +32,16 @@ ClassExtend: Vec<Box<String>> = {
 };
 
 Func: Box<Func> = {
-  "def" <id:Id> "(" ")" <expr:Expr> "end" => Box::new(Func { name:id, expr:expr }),
+  "def" <id:Id> "(" ")" <exprs:Expr*> "end" => Box::new(Func { name:id, exprs:exprs }),
 };
 
-Expr: Box<Num> = {
-  <n:Num> => Box::new(Num { value:n }),
+Expr: Box<Expr> = {
+  <Num>,
+  <Invoke>,
+};
+
+Invoke: Box<Expr> = {
+  <Id> "(" ")" => Box::new(Expr::Invoke { name: <> }),
 };
 
 Id: Box<String> = {
@@ -44,9 +49,9 @@ Id: Box<String> = {
 };
 
 Name: Box<String> = {
-  r"[A-Z][a-z0-9_]*" => Box::new(String::from(<>)),
+  r"[A-Z][a-zA-Z0-9_]*" => Box::new(String::from(<>)),
 };
 
-Num: i32 = {
-  r"[0-9]+" => i32::from_str(<>).unwrap(),
+Num: Box<Expr> = {
+  r"[0-9]+" => Box::new(Expr::Num { value: i32::from_str(<>).unwrap() }),
 };
