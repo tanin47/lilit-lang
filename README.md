@@ -3,10 +3,9 @@ Lilit
 
 Lilit is a statically-typed and beautifully-terse programming language that compiles to a single executable.
 
-Lilit (Thai: ลิลิต) is [one of Thai literary genres](http://cuir.car.chula.ac.th/handle/123456789/51485). 'Lilit' comes from 'Lalit' in Pali and Sansakrit languages. It means 'to play': to play rhythmic positions which have the same tone. Please enjoy one of the most popular Lilits in Thailand's history:
+Lilit (Thai: ลิลิต) is [one of Thai literary genres](http://cuir.car.chula.ac.th/handle/123456789/51485). 'Lilit' comes from 'Lalit' in Pali and Sansakrit languages. It means 'to play': to play rhythmic positions which have the same tone. Please enjoy ลิลิตพระลอ, one of the most popular Lilits in Thailand's history:
 
 ```
-ลิลิตพระลอ:
 เสียงฦๅเสียงเล่าอ้าง	  อันใด พี่เอย
 เสียงย่อมยอยศใคร	  ทั่วหล้า
 สองเขือพี่หลับใหล	  ลืมตื่น ฤๅพี่
