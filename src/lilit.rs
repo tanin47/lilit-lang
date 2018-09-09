@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: e2709a1343708d6ae7df43d0177e789d22475e063d65c1d179812d93c01c6f
+// sha256: e1fb83a62b50a33a9361397f9036e8abe8261629906a55a9cb48c0a55b8c193
 use std::str::FromStr;
 use ast::*;
 #[allow(unused_extern_crates)]
@@ -18,11 +18,11 @@ mod __parse__Mod {
     pub enum __Symbol<'input>
      {
         Variant0(&'input str),
-        Variant1(Box<String>),
-        Variant2(::std::vec::Vec<Box<String>>),
+        Variant1(String),
+        Variant2(::std::vec::Vec<String>),
         Variant3(Box<Class>),
-        Variant4(Vec<Box<String>>),
-        Variant5(::std::option::Option<Vec<Box<String>>>),
+        Variant4(Vec<String>),
+        Variant5(::std::option::Option<Vec<String>>),
         Variant6(Box<Expr>),
         Variant7(::std::vec::Vec<Box<Expr>>),
         Variant8(Box<Func>),
@@ -654,7 +654,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<String>, usize)
+    ) -> (usize, String, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant1(__v), __r) => (__l, __v, __r),
@@ -665,7 +665,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Vec<Box<String>>, usize)
+    ) -> (usize, Vec<String>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant4(__v), __r) => (__l, __v, __r),
@@ -676,7 +676,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::option::Option<Vec<Box<String>>>, usize)
+    ) -> (usize, ::std::option::Option<Vec<String>>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant5(__v), __r) => (__l, __v, __r),
@@ -720,7 +720,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Box<String>>, usize)
+    ) -> (usize, ::std::vec::Vec<String>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant2(__v), __r) => (__l, __v, __r),
@@ -1612,7 +1612,7 @@ fn __action2<
     (_, __0, _): (usize, Box<Class>, usize),
 ) -> Box<ModUnit>
 {
-    Box::new(ModUnit::ClassUnit(__0))
+    Box::new(ModUnit::Class(__0))
 }
 
 #[allow(unused_variables)]
@@ -1623,7 +1623,7 @@ fn __action3<
     (_, __0, _): (usize, Box<Func>, usize),
 ) -> Box<ModUnit>
 {
-    Box::new(ModUnit::FuncUnit(__0))
+    Box::new(ModUnit::Func(__0))
 }
 
 #[allow(unused_variables)]
@@ -1632,8 +1632,8 @@ fn __action4<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, n, _): (usize, Box<String>, usize),
-    (_, e, _): (usize, ::std::option::Option<Vec<Box<String>>>, usize),
+    (_, n, _): (usize, String, usize),
+    (_, e, _): (usize, ::std::option::Option<Vec<String>>, usize),
     (_, m, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
     (_, _, _): (usize, &'input str, usize),
 ) -> Box<Class>
@@ -1654,9 +1654,9 @@ fn __action5<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, e, _): (usize, Box<String>, usize),
-    (_, v, _): (usize, ::std::vec::Vec<Box<String>>, usize),
-) -> Vec<Box<String>>
+    (_, e, _): (usize, String, usize),
+    (_, v, _): (usize, ::std::vec::Vec<String>, usize),
+) -> Vec<String>
 {
     {
   	let mut v = v;
@@ -1671,7 +1671,7 @@ fn __action6<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, id, _): (usize, Box<String>, usize),
+    (_, id, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
     (_, exprs, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
@@ -1708,12 +1708,12 @@ fn __action9<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<String>, usize),
+    (_, __0, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
 ) -> Box<Expr>
 {
-    Box::new(Expr::Invoke { name: __0 })
+    Box::new(Expr::Invoke(Box::new(Invoke { name: __0 })))
 }
 
 #[allow(unused_variables)]
@@ -1722,9 +1722,9 @@ fn __action10<
 >(
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> Box<String>
+) -> String
 {
-    Box::new(String::from(__0))
+    String::from(__0)
 }
 
 #[allow(unused_variables)]
@@ -1733,9 +1733,9 @@ fn __action11<
 >(
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> Box<String>
+) -> String
 {
-    Box::new(String::from(__0))
+    String::from(__0)
 }
 
 #[allow(unused_variables)]
@@ -1746,7 +1746,7 @@ fn __action12<
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<Expr>
 {
-    Box::new(Expr::Num { value: i32::from_str(__0).unwrap() })
+    Box::new(Expr::Num(Box::new(Num { value: i32::from_str(__0).unwrap() })))
 }
 
 #[allow(unused_variables)]
@@ -1779,7 +1779,7 @@ fn __action15<
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Box<String>>
+) -> ::std::vec::Vec<String>
 {
     vec![]
 }
@@ -1789,8 +1789,8 @@ fn __action16<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<String>>, usize),
-) -> ::std::vec::Vec<Box<String>>
+    (_, v, _): (usize, ::std::vec::Vec<String>, usize),
+) -> ::std::vec::Vec<String>
 {
     v
 }
@@ -1801,8 +1801,8 @@ fn __action17<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, __0, _): (usize, Box<String>, usize),
-) -> Box<String>
+    (_, __0, _): (usize, String, usize),
+) -> String
 {
     (__0)
 }
@@ -1835,8 +1835,8 @@ fn __action20<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Vec<Box<String>>, usize),
-) -> ::std::option::Option<Vec<Box<String>>>
+    (_, __0, _): (usize, Vec<String>, usize),
+) -> ::std::option::Option<Vec<String>>
 {
     Some(__0)
 }
@@ -1848,7 +1848,7 @@ fn __action21<
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::option::Option<Vec<Box<String>>>
+) -> ::std::option::Option<Vec<String>>
 {
     None
 }
@@ -1927,8 +1927,8 @@ fn __action28<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<String>, usize),
-) -> ::std::vec::Vec<Box<String>>
+    (_, __0, _): (usize, String, usize),
+) -> ::std::vec::Vec<String>
 {
     vec![__0]
 }
@@ -1938,9 +1938,9 @@ fn __action29<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<String>>, usize),
-    (_, e, _): (usize, Box<String>, usize),
-) -> ::std::vec::Vec<Box<String>>
+    (_, v, _): (usize, ::std::vec::Vec<String>, usize),
+    (_, e, _): (usize, String, usize),
+) -> ::std::vec::Vec<String>
 {
     { let mut v = v; v.push(e); v }
 }
@@ -1974,8 +1974,8 @@ fn __action32<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
-) -> ::std::vec::Vec<Box<String>>
+    __1: (usize, String, usize),
+) -> ::std::vec::Vec<String>
 {
     let __start0 = __0.0.clone();
     let __end0 = __1.2.clone();
@@ -1996,10 +1996,10 @@ fn __action33<
     'input,
 >(
     input: &'input str,
-    __0: (usize, ::std::vec::Vec<Box<String>>, usize),
+    __0: (usize, ::std::vec::Vec<String>, usize),
     __1: (usize, &'input str, usize),
-    __2: (usize, Box<String>, usize),
-) -> ::std::vec::Vec<Box<String>>
+    __2: (usize, String, usize),
+) -> ::std::vec::Vec<String>
 {
     let __start0 = __1.0.clone();
     let __end0 = __2.2.clone();
@@ -2022,8 +2022,8 @@ fn __action34<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
-) -> Vec<Box<String>>
+    __1: (usize, String, usize),
+) -> Vec<String>
 {
     let __start0 = __1.2.clone();
     let __end0 = __1.2.clone();
@@ -2047,9 +2047,9 @@ fn __action35<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
-    __2: (usize, ::std::vec::Vec<Box<String>>, usize),
-) -> Vec<Box<String>>
+    __1: (usize, String, usize),
+    __2: (usize, ::std::vec::Vec<String>, usize),
+) -> Vec<String>
 {
     let __start0 = __2.0.clone();
     let __end0 = __2.2.clone();
@@ -2072,8 +2072,8 @@ fn __action36<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
-    __2: (usize, Vec<Box<String>>, usize),
+    __1: (usize, String, usize),
+    __2: (usize, Vec<String>, usize),
     __3: (usize, ::std::vec::Vec<Box<Func>>, usize),
     __4: (usize, &'input str, usize),
 ) -> Box<Class>
@@ -2101,7 +2101,7 @@ fn __action37<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
+    __1: (usize, String, usize),
     __2: (usize, ::std::vec::Vec<Box<Func>>, usize),
     __3: (usize, &'input str, usize),
 ) -> Box<Class>
@@ -2130,7 +2130,7 @@ fn __action38<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
+    __1: (usize, String, usize),
     __2: (usize, &'input str, usize),
     __3: (usize, &'input str, usize),
     __4: (usize, &'input str, usize),
@@ -2161,7 +2161,7 @@ fn __action39<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
+    __1: (usize, String, usize),
     __2: (usize, &'input str, usize),
     __3: (usize, &'input str, usize),
     __4: (usize, ::std::vec::Vec<Box<Expr>>, usize),
@@ -2192,8 +2192,8 @@ fn __action40<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
-    __2: (usize, Vec<Box<String>>, usize),
+    __1: (usize, String, usize),
+    __2: (usize, Vec<String>, usize),
     __3: (usize, &'input str, usize),
 ) -> Box<Class>
 {
@@ -2221,8 +2221,8 @@ fn __action41<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
-    __2: (usize, Vec<Box<String>>, usize),
+    __1: (usize, String, usize),
+    __2: (usize, Vec<String>, usize),
     __3: (usize, ::std::vec::Vec<Box<Func>>, usize),
     __4: (usize, &'input str, usize),
 ) -> Box<Class>
@@ -2250,7 +2250,7 @@ fn __action42<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
+    __1: (usize, String, usize),
     __2: (usize, &'input str, usize),
 ) -> Box<Class>
 {
@@ -2277,7 +2277,7 @@ fn __action43<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<String>, usize),
+    __1: (usize, String, usize),
     __2: (usize, ::std::vec::Vec<Box<Func>>, usize),
     __3: (usize, &'input str, usize),
 ) -> Box<Class>

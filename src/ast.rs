@@ -6,32 +6,40 @@ pub struct Mod {
 }
 
 pub enum ModUnit {
-    FuncUnit(Box<Func>),
-    ClassUnit(Box<Class>),
+    Func(Box<Func>),
+    Class(Box<Class>),
 }
 
 pub struct Class {
-    pub name: Box<String>,
-    pub extends: Vec<Box<String>>,
+    pub name: String,
+    pub extends: Vec<String>,
     pub methods: Vec<Box<Func>>,
 }
 
 pub struct Func {
-    pub name: Box<String>,
+    pub name: String,
     pub exprs: Vec<Box<Expr>>,
 }
 
 pub enum Expr {
-    Invoke { name: Box<String> },
-    Num { value: i32 },
+    Invoke(Box<Invoke>),
+    Num(Box<Num>),
+}
+
+pub struct Invoke {
+    pub name: String,
+}
+
+pub struct Num {
+    pub value: i32
 }
 
 
 impl Debug for Expr {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         match self {
-            Expr::Num { value } => write!(fmt, "Num({:?})", value),
-            Expr::Invoke { name } => write!(fmt, "Invoke({:?})", name),
+            Expr::Num(n) => write!(fmt, "Num({:?})", n.value),
+            Expr::Invoke(i) => write!(fmt, "Invoke({:?})", i.name),
         }
     }
 }
@@ -51,8 +59,8 @@ impl Debug for Class {
 impl Debug for ModUnit {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         match self {
-            ModUnit::ClassUnit(c) => write!(fmt, "ClassUnit({:?})", c),
-            ModUnit::FuncUnit(f) => write!(fmt, "FuncUnit({:?})", f),
+            ModUnit::Class(c) => write!(fmt, "ClassUnit({:?})", c),
+            ModUnit::Func(f) => write!(fmt, "FuncUnit({:?})", f),
         }
     }
 }

@@ -1,7 +1,9 @@
+use std::cell::Cell;
 use std::env;
 use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
+use std::collections::HashMap;
 
 // extern crate inkwell;
 
@@ -16,6 +18,7 @@ use std::io::prelude::*;
 
 mod lilit;
 mod ast;
+mod semantics;
 
 // fn build_mod(
 //     module: &ast::Mod,
@@ -58,6 +61,99 @@ mod ast;
 //     builder.build_return(Some(&ret));
 // }
 
+fn build_invoke<'a>(invoke: &'a ast::Invoke) -> semantics::Invoke<'a> {
+    semantics::Invoke {
+        func_opt: Cell::new(None),
+        syntax: &invoke,
+    }
+}
+
+fn build_num<'a>(num: &'a ast::Num) -> semantics::Num<'a> {
+    semantics::Num {
+        value: (*num).value,
+        syntax: &num,
+    }
+}
+
+fn build_expr<'a>(expr: &'a ast::Expr) -> semantics::Expr<'a> {
+    match expr {
+        ast::Expr::Invoke(i) => semantics::Expr::Invoke {
+            invoke: Box::new(build_invoke(&i)),
+            syntax: &expr,
+        },
+        ast::Expr::Num(n) => semantics::Expr::Num {
+            num: Box::new(build_num(&n)),
+            syntax: &expr,
+        },
+    }
+}
+
+fn build_func<'a>(func: &'a ast::Func) -> semantics::Func<'a> {
+    let mut vec = Vec::new();
+
+    for expr in &(*func).exprs {
+       vec.push(build_expr(&expr))
+    }
+
+    semantics::Func { exprs: vec, syntax: &func }
+}
+
+fn build_class<'a>(class: &'a ast::Class) -> semantics::Class<'a> {
+    semantics::Class { extends: vec![], methods: vec![], syntax: &class }
+}
+
+fn build_mod_unit<'a>(unit: &'a ast::ModUnit) -> semantics::ModUnit<'a> {
+  match unit {
+    ast::ModUnit::Func(func) => semantics::ModUnit::Func {
+        func: Box::new(build_func(&func)),
+        syntax: &unit,
+    },
+    ast::ModUnit::Class(class) => semantics::ModUnit::Class {
+        class: Box::new(build_class(&class)),
+        syntax: &unit,
+    },
+  }
+}
+
+
+fn build_mod<'a>(m: &'a ast::Mod) -> semantics::Mod<'a> {
+    let mut vec = Vec::new();
+
+    for unit in &(*m).units {
+       vec.push(build_mod_unit(&unit))
+    }
+
+    semantics::Mod { units: vec, syntax: &m }
+}
+
+fn register_funcs<'a>(root: &'a semantics::Mod<'a>, funcs: &mut HashMap<String, &'a semantics::Func<'a>>) {
+    for unit in &(*root).units {
+        match unit {
+            semantics::ModUnit::Func { func, syntax: _ } => {
+                funcs.insert(func.syntax.name.to_string(), func);
+            },
+            _ => (),
+        }
+    }
+}
+
+fn hydrate_funcs<'a>(root: &'a semantics::Mod<'a>, funcs: &HashMap<String, &'a semantics::Func<'a>>) {
+    for unit in &(*root).units {
+        match unit {
+            semantics::ModUnit::Func { func, syntax: _ } => {
+                for expr in &func.exprs {
+                    match expr {
+                        semantics::Expr::Invoke { invoke, syntax: _ } => {
+                            invoke.func_opt.set(funcs.get(&invoke.syntax.name).map(|v| *v));
+                        },
+                        _ => (),
+                    }
+                }
+            },
+            _ => (),
+        }
+    }
+}
 
 fn main() {
     println!("Lilit 0.0.1\n");
@@ -73,15 +169,26 @@ fn main() {
     println!("---- Code ----");
     println!("{}\n", contents);
 
-    // Target::initialize_native(&InitializationConfig::default()).unwrap();
 
-    println!("{:?}\n", tree)
+    println!("{:?}\n", tree);
 
-    // if let Ok(ref _ok_tree) = tree {
+    // The first pass makes a hashtable for function and class.
 
+    if let Ok(ref _ok_tree) = tree {
+        let mut root = build_mod(_ok_tree);
+        println!("{:?}\n", root);
+
+        let mut funcs = HashMap::new();
+        register_funcs(&root, &mut funcs);
+        println!("{:?}\n", funcs);
+
+        hydrate_funcs(&root, &funcs);
+
+        println!("{:?}\n", root);
     //     println!("---- Abstract Syntax Tree ----");
     //     println!("{:?}\n", _ok_tree);
 
+    // Target::initialize_native(&InitializationConfig::default()).unwrap();
     //     let context = Context::create();
     //     let builder = context.create_builder();
     //     let module = context.create_module("main");
@@ -105,6 +212,6 @@ fn main() {
     //     // This is an object file. In order to run it as a binary,
     //     // we need to link it using `cc output.o -o output`.
     //     // Now you can run `./output`.
-    // }
+    }
 }
 

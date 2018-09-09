@@ -8,8 +8,8 @@ pub Mod: Box<Mod> = {
 };
 
 ModUnit: Box<ModUnit> = {
-	<Class> => Box::new(ModUnit::ClassUnit(<>)),
-	<Func> => Box::new(ModUnit::FuncUnit(<>)),
+	<Class> => Box::new(ModUnit::Class(<>)),
+	<Func> => Box::new(ModUnit::Func(<>)),
 };
 
 Class: Box<Class> = {
@@ -23,7 +23,7 @@ Class: Box<Class> = {
   })
 };
 
-ClassExtend: Vec<Box<String>> = {
+ClassExtend: Vec<String> = {
   "extends" <e:Name> <v:("," <Name>)*> => {
   	let mut v = v;
   	v.insert(0, e);
@@ -41,17 +41,17 @@ Expr: Box<Expr> = {
 };
 
 Invoke: Box<Expr> = {
-  <Id> "(" ")" => Box::new(Expr::Invoke { name: <> }),
+  <Id> "(" ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: <> }))),
 };
 
-Id: Box<String> = {
-  r"[a-z][a-z0-9_]*" => Box::new(String::from(<>)),
+Id: String = {
+  r"[a-z][a-z0-9_]*" => String::from(<>),
 };
 
-Name: Box<String> = {
-  r"[A-Z][a-zA-Z0-9_]*" => Box::new(String::from(<>)),
+Name: String = {
+  r"[A-Z][a-zA-Z0-9_]*" => String::from(<>),
 };
 
 Num: Box<Expr> = {
-  r"[0-9]+" => Box::new(Expr::Num { value: i32::from_str(<>).unwrap() }),
+  r"[0-9]+" => Box::new(Expr::Num(Box::new(Num { value: i32::from_str(<>).unwrap() }))),
 };
