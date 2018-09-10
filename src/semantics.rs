@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Error, Formatter};
 use std::cell::Cell;
 use ast;
+use inkwell::values::FunctionValue;
 
 
 pub struct Mod<'a> {
@@ -26,6 +27,7 @@ pub struct Class<'a> {
 }
 
 pub struct Func<'a> {
+	pub llvm_ref: Cell<Option<FunctionValue>>,
     pub exprs: Vec<Expr<'a>>,
     pub syntax: &'a ast::Func,
 }

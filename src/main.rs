@@ -5,31 +5,115 @@ use std::path::Path;
 use std::io::prelude::*;
 use std::collections::HashMap;
 
-// extern crate inkwell;
+extern crate inkwell;
 
-// use inkwell::OptimizationLevel;
-// use inkwell::builder::Builder;
-// use inkwell::context::Context;
-// use inkwell::execution_engine::{ExecutionEngine, Symbol};
-// use inkwell::module::Module;
-// use inkwell::values::FunctionValue;
-// use inkwell::basic_block::BasicBlock;
-// use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
+use inkwell::OptimizationLevel;
+use inkwell::builder::Builder;
+use inkwell::context::Context;
+use inkwell::execution_engine::{ExecutionEngine, Symbol};
+use inkwell::module::Module;
+use inkwell::values::{FunctionValue, BasicValue, IntValue};
+use inkwell::basic_block::BasicBlock;
+use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
 
 mod lilit;
 mod ast;
 mod semantics;
 
-// fn build_mod(
-//     module: &ast::Mod,
-//     context: &Context,
-//     builder: &Builder
-// ) -> Module {
-//     let llvm_module = context.create_module("main");
-//     add_func(&module.func, &llvm_module, &context, &builder);
-//     build_next_mod(&module.next_opt, &llvm_module, &context, &builder);
-//     return llvm_module;
-// }
+fn gen_mod<'a>(
+    module: &semantics::Mod<'a>,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) -> Module {
+    let llvm_module = context.create_module("main");
+    for unit in &module.units {
+        gen_mod_unit(&unit, &llvm_module, &context, &builder, &funcs);
+    }
+    return llvm_module;
+}
+
+fn gen_mod_unit<'a>(
+    unit: &semantics::ModUnit<'a>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) {
+    match unit {
+        semantics::ModUnit::Func { func, syntax: _ } => {
+            gen_func(&func, &module, &context, &builder, &funcs);
+        },
+        _ => (),
+    }
+}
+
+fn gen_func<'a>(
+    func: &semantics::Func<'a>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) {
+    let i32_type = context.i32_type();
+    let fn_type = i32_type.fn_type(&[], false);
+
+    let function = module.add_function(&*func.syntax.name, &fn_type, None);
+    func.llvm_ref.set(Some(function));
+
+    for (index, expr) in func.exprs.iter().enumerate() {
+        let basic_block = context.append_basic_block(&function, &format!("block_{}", index));
+        if index > 0 {
+            builder.build_unconditional_branch(&basic_block);
+        }
+
+        builder.position_at_end(&basic_block);
+
+        let ret = gen_expr(&expr, &module, &context, &builder, &funcs);
+
+        if index == (func.exprs.len() - 1) {
+            builder.build_return(Some(&ret));
+        }
+    }
+
+}
+
+fn gen_expr<'a>(
+    expr: &semantics::Expr<'a>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) -> IntValue {
+    match expr {
+        semantics::Expr::Invoke { invoke, syntax: _ } => {
+            gen_invoke(&invoke, &module, &context, &builder, &funcs)
+        },
+        semantics::Expr::Num { num, syntax: _ } => {
+            gen_num(&num, &module, &context, &builder)
+        },
+    }
+}
+
+fn gen_num(
+    num: &semantics::Num,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+) -> IntValue {
+    let i32_type = context.i32_type();
+    i32_type.const_int(num.value as u64, false)
+}
+
+fn gen_invoke<'a>(
+    invoke: &semantics::Invoke<'a>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) -> IntValue {
+    builder.build_call(&invoke.func_opt.get().unwrap().llvm_ref.get().unwrap(), &[], &invoke.syntax.name, false).left().unwrap().into_int_value()
+}
 
 
 // fn build_next_mod(
@@ -95,7 +179,7 @@ fn build_func<'a>(func: &'a ast::Func) -> semantics::Func<'a> {
        vec.push(build_expr(&expr))
     }
 
-    semantics::Func { exprs: vec, syntax: &func }
+    semantics::Func { llvm_ref: Cell::new(None), exprs: vec, syntax: &func }
 }
 
 fn build_class<'a>(class: &'a ast::Class) -> semantics::Class<'a> {
@@ -185,29 +269,28 @@ fn main() {
         hydrate_funcs(&root, &funcs);
 
         println!("{:?}\n", root);
-    //     println!("---- Abstract Syntax Tree ----");
-    //     println!("{:?}\n", _ok_tree);
 
-    // Target::initialize_native(&InitializationConfig::default()).unwrap();
-    //     let context = Context::create();
-    //     let builder = context.create_builder();
-    //     let module = context.create_module("main");
-    //     let i32_type = context.i32_type();
-    //     let fn_type = i32_type.fn_type(&[], false);
+        Target::initialize_native(&InitializationConfig::default()).unwrap();
 
-    //     let function = module.add_function("main", &fn_type, None);
+        let context = Context::create();
+        let builder = context.create_builder();
+        // let module = context.create_module("main");
+        // let i32_type = context.i32_type();
+        // let fn_type = i32_type.fn_type(&[], false);
+
+        // let function = module.add_function("main", &fn_type, None);
 
 
-    //     let module = build_mod(_ok_tree, &context, &builder);
+        let module = gen_mod(&root, &context, &builder, &funcs);
 
-    //     let triple = TargetMachine::get_default_triple().to_string();
-    //     let target = Target::from_triple(&triple).unwrap();
-    //     let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+        let triple = TargetMachine::get_default_triple().to_string();
+        let target = Target::from_triple(&triple).unwrap();
+        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
 
-    //     let path =  Path::new("./output.o\0");
-    //     let result = target_machine.write_to_file(&module, FileType::Object, &path);
-    //     println!("---- LLVM IR ----");
-    //     module.print_to_stderr();
+        let path =  Path::new("./output.o\0");
+        let result = target_machine.write_to_file(&module, FileType::Object, &path);
+        println!("---- LLVM IR ----");
+        module.print_to_stderr();
 
     //     // This is an object file. In order to run it as a binary,
     //     // we need to link it using `cc output.o -o output`.
