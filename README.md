@@ -30,7 +30,7 @@ We also aim to provide a rich standard library to refrain programmers from solvi
 
 We value maintainability over speed. For example, we might not implement the asynchronous programming paradigm because coding explicit yield point (e.g. with Monads) makes codebase less comprehensible. Another example is that we won't allow programmers to manage their own memory to avoid various problems that come with it (e.g. memory corruption).
 
-Thus, Lilit is great for building command-line tools.
+Thus, Lilit aims to be great for building command-line tools.
 
 
 Features
