@@ -64,3 +64,12 @@ class Test extends Base, Animal
   end
 end
 ```
+
+
+Build
+------
+
+
+```
+cargo run examples/test.l
+```

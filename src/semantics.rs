@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Error, Formatter};
 use std::cell::Cell;
 use ast;
-use inkwell::values::FunctionValue;
+use inkwell::values::{FunctionValue, PointerValue};
 
 
 pub struct Mod<'a> {
@@ -41,6 +41,30 @@ pub enum Expr<'a> {
     	num: Box<Num<'a>>,
     	syntax: &'a ast::Expr,
     },
+    Assignment {
+        assignment: Box<Assignment<'a>>,
+        syntax: &'a ast::Expr,
+    },
+    Var {
+        var: Box<Var<'a>>,
+        syntax: &'a ast::Expr,
+    }
+}
+
+pub struct Assignment<'a> {
+    pub var: Box<Var<'a>>,
+    pub expr: Box<Expr<'a>>,
+    pub syntax: &'a ast::Assignment,
+}
+
+pub struct Var<'a> {
+    pub llvm_ref: Cell<Option<PointerValue>>,
+    pub id: Box<Id<'a>>,
+    pub syntax: &'a ast::Var,
+}
+
+pub struct Id<'a> {
+    pub syntax: &'a ast::Id,
 }
 
 pub struct Invoke<'a> {
@@ -53,9 +77,27 @@ pub struct Num<'a> {
 	pub syntax: &'a ast::Num,
 }
 
+impl<'a> Debug for Id<'a> {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+        write!(fmt, "Id({:?})", (*self).syntax.name)
+    }
+}
+
 impl<'a> Debug for Invoke<'a> {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         write!(fmt, "Invoke({:?})", (*self).func_opt)
+    }
+}
+
+impl<'a> Debug for Var<'a> {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+        write!(fmt, "Var({:?})", (*self).id)
+    }
+}
+
+impl<'a> Debug for Assignment<'a> {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+        write!(fmt, "Assignment({:?}, {:?})", (*self).var, (*self).expr)
     }
 }
 
@@ -70,13 +112,15 @@ impl<'a> Debug for Expr<'a> {
         match self {
             Expr::Num { num, syntax: _ } => write!(fmt, "{:?}", num),
             Expr::Invoke { invoke, syntax: _ } => write!(fmt, "{:?}", invoke),
+            Expr::Assignment { assignment, syntax: _ } => write!(fmt, "{:?}", assignment),
+            Expr::Var { var, syntax: _ } => write!(fmt, "{:?}", var),
         }
     }
 }
 
 impl<'a> Debug for Func<'a> {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        write!(fmt, "Func({:?}, {:?})", (*self).syntax.name, (*self).exprs)
+        write!(fmt, "Func({:?}, {:?})", (*self).syntax.id, (*self).exprs)
     }
 }
 

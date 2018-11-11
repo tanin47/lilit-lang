@@ -32,20 +32,34 @@ ClassExtend: Vec<String> = {
 };
 
 Func: Box<Func> = {
-  "def" <id:Id> "(" ")" <exprs:Expr*> "end" => Box::new(Func { name:id, exprs:exprs }),
+  "def" <id:Id> "(" ")" <exprs:Expr*> "end" => Box::new(Func { id:id, exprs:exprs }),
 };
 
 Expr: Box<Expr> = {
   <Num>,
   <Invoke>,
+  <Assignment>,
+  <ReadVar>,
 };
+
+Assignment: Box<Expr> = {
+  "val" <var:Var> "="  <expr:Expr> => Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
+}
 
 Invoke: Box<Expr> = {
-  <Id> "(" ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: <> }))),
+  <Id> "(" ")" => Box::new(Expr::Invoke(Box::new(Invoke { id: <> }))),
 };
 
-Id: String = {
-  r"[a-z][a-z0-9_]*" => String::from(<>),
+ReadVar: Box<Expr> = {
+  <Var> => Box::new(Expr::Var(<>))
+}
+
+Var: Box<Var> = {
+  <Id> => Box::new(Var { id: <> })
+}
+
+Id: Box<Id> = {
+  r"[a-z][a-z0-9_]*" => Box::new(Id { name: String::from(<>) }),
 };
 
 Name: String = {

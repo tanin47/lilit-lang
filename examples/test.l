@@ -8,6 +8,7 @@ def another()
 end
 
 def main()
+  val a = 2
   56
   another()
 end

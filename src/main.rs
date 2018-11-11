@@ -58,7 +58,7 @@ fn gen_func<'a>(
     let i32_type = context.i32_type();
     let fn_type = i32_type.fn_type(&[], false);
 
-    let function = module.add_function(&*func.syntax.name, &fn_type, None);
+    let function = module.add_function(&*func.syntax.id.name, &fn_type, None);
     func.llvm_ref.set(Some(function));
 
     for (index, expr) in func.exprs.iter().enumerate() {
@@ -92,7 +92,41 @@ fn gen_expr<'a>(
         semantics::Expr::Num { num, syntax: _ } => {
             gen_num(&num, &module, &context, &builder)
         },
+        semantics::Expr::Assignment { assignment, syntax: _ } => {
+            gen_assignment(&assignment, &module, &context, &builder, &funcs)
+        },
+        semantics::Expr::Var { var, syntax: _ } => {
+            gen_var(&var, &module, &context, &builder, &funcs)
+        },
     }
+}
+
+fn gen_var<'a>(
+    var: &semantics::Var<'a>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) -> IntValue {
+    let value = builder.build_load(&var.llvm_ref.get().unwrap(), "deref");
+    value.into_int_value()
+}
+
+fn gen_assignment<'a>(
+    assignment: &semantics::Assignment<'a>,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    funcs: &HashMap<String, &'a semantics::Func<'a>>,
+) -> IntValue {
+    let i32_type = context.i32_type();
+    let ptr = builder.build_alloca(i32_type, &assignment.var.syntax.id.name);
+
+    let expr = gen_expr(&assignment.expr, &module, &context, &builder, &funcs);
+
+    builder.build_store(&ptr, &expr);
+    assignment.var.llvm_ref.set(Some(ptr));
+    expr
 }
 
 fn gen_num(
@@ -112,7 +146,7 @@ fn gen_invoke<'a>(
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
 ) -> IntValue {
-    builder.build_call(&invoke.func_opt.get().unwrap().llvm_ref.get().unwrap(), &[], &invoke.syntax.name, false).left().unwrap().into_int_value()
+    builder.build_call(&invoke.func_opt.get().unwrap().llvm_ref.get().unwrap(), &[], &invoke.syntax.id.name, false).left().unwrap().into_int_value()
 }
 
 
@@ -159,6 +193,28 @@ fn build_num<'a>(num: &'a ast::Num) -> semantics::Num<'a> {
     }
 }
 
+fn build_id<'a>(id: &'a ast::Id) -> semantics::Id<'a> {
+    semantics::Id {
+        syntax: &id
+    }
+}
+
+fn build_var<'a>(var: &'a ast::Var) -> semantics::Var<'a> {
+    semantics::Var {
+        llvm_ref: Cell::new(None),
+        id: Box::new(build_id(&var.id)),
+        syntax: &var
+    }
+}
+
+fn build_assignment<'a>(assignment: &'a ast::Assignment) -> semantics::Assignment<'a> {
+    semantics::Assignment {
+        var: Box::new(build_var(&assignment.var)),
+        expr: Box::new(build_expr(&assignment.expr)),
+        syntax: &assignment,
+    }
+}
+
 fn build_expr<'a>(expr: &'a ast::Expr) -> semantics::Expr<'a> {
     match expr {
         ast::Expr::Invoke(i) => semantics::Expr::Invoke {
@@ -167,6 +223,14 @@ fn build_expr<'a>(expr: &'a ast::Expr) -> semantics::Expr<'a> {
         },
         ast::Expr::Num(n) => semantics::Expr::Num {
             num: Box::new(build_num(&n)),
+            syntax: &expr,
+        },
+        ast::Expr::Assignment(a) => semantics::Expr::Assignment {
+            assignment: Box::new(build_assignment(&a)),
+            syntax: &expr,
+        },
+        ast::Expr::Var(v) => semantics::Expr::Var {
+            var: Box::new(build_var(&v)),
             syntax: &expr,
         },
     }
@@ -214,7 +278,7 @@ fn register_funcs<'a>(root: &'a semantics::Mod<'a>, funcs: &mut HashMap<String, 
     for unit in &(*root).units {
         match unit {
             semantics::ModUnit::Func { func, syntax: _ } => {
-                funcs.insert(func.syntax.name.to_string(), func);
+                funcs.insert(func.syntax.id.name.to_string(), func);
             },
             _ => (),
         }
@@ -228,7 +292,7 @@ fn hydrate_funcs<'a>(root: &'a semantics::Mod<'a>, funcs: &HashMap<String, &'a s
                 for expr in &func.exprs {
                     match expr {
                         semantics::Expr::Invoke { invoke, syntax: _ } => {
-                            invoke.func_opt.set(funcs.get(&invoke.syntax.name).map(|v| *v));
+                            invoke.func_opt.set(funcs.get(&invoke.syntax.id.name).map(|v| *v));
                         },
                         _ => (),
                     }
