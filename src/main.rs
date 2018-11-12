@@ -19,47 +19,55 @@ use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, C
 mod lilit;
 mod ast;
 mod semantics;
+mod scope;
 
 fn gen_mod<'a>(
-    module: &semantics::Mod<'a>,
+    module: &'a semantics::Mod<'a>,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) -> Module {
     let llvm_module = context.create_module("main");
+    scope.enter();
     for unit in &module.units {
-        gen_mod_unit(&unit, &llvm_module, &context, &builder, &funcs);
+        gen_mod_unit(&unit, &llvm_module, &context, &builder, &funcs, scope);
     }
+    scope.leave();
     return llvm_module;
 }
 
 fn gen_mod_unit<'a>(
-    unit: &semantics::ModUnit<'a>,
+    unit: &'a semantics::ModUnit<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) {
     match unit {
         semantics::ModUnit::Func { func, syntax: _ } => {
-            gen_func(&func, &module, &context, &builder, &funcs);
+            gen_func(&func, &module, &context, &builder, &funcs, scope);
         },
         _ => (),
     }
 }
 
 fn gen_func<'a>(
-    func: &semantics::Func<'a>,
+    func: &'a semantics::Func<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) {
     let i32_type = context.i32_type();
     let fn_type = i32_type.fn_type(&[], false);
 
     let function = module.add_function(&*func.syntax.id.name, &fn_type, None);
     func.llvm_ref.set(Some(function));
+
+    scope.enter();
 
     for (index, expr) in func.exprs.iter().enumerate() {
         let basic_block = context.append_basic_block(&function, &format!("block_{}", index));
@@ -69,82 +77,89 @@ fn gen_func<'a>(
 
         builder.position_at_end(&basic_block);
 
-        let ret = gen_expr(&expr, &module, &context, &builder, &funcs);
+        let ret = gen_expr(&expr, &module, &context, &builder, &funcs, scope);
 
         if index == (func.exprs.len() - 1) {
             builder.build_return(Some(&ret));
         }
     }
 
+    scope.leave()
 }
 
 fn gen_expr<'a>(
-    expr: &semantics::Expr<'a>,
+    expr: &'a semantics::Expr<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) -> IntValue {
     match expr {
         semantics::Expr::Invoke { invoke, syntax: _ } => {
-            gen_invoke(&invoke, &module, &context, &builder, &funcs)
+            gen_invoke(&invoke, &module, &context, &builder, &funcs, scope)
         },
         semantics::Expr::Num { num, syntax: _ } => {
-            gen_num(&num, &module, &context, &builder)
+            gen_num(&num, &module, &context, &builder, scope)
         },
         semantics::Expr::Assignment { assignment, syntax: _ } => {
-            gen_assignment(&assignment, &module, &context, &builder, &funcs)
+            gen_assignment(&assignment, &module, &context, &builder, &funcs, scope)
         },
         semantics::Expr::Var { var, syntax: _ } => {
-            gen_var(&var, &module, &context, &builder, &funcs)
+            gen_var(&var, &module, &context, &builder, &funcs, scope)
         },
     }
 }
 
 fn gen_var<'a>(
-    var: &semantics::Var<'a>,
+    var: &'a semantics::Var<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) -> IntValue {
-    let value = builder.build_load(&var.llvm_ref.get().unwrap(), "deref");
+    let value = builder.build_load(&scope.read(&var.id.syntax.name).unwrap().llvm_ref.get().unwrap(), "deref");
     value.into_int_value()
 }
 
 fn gen_assignment<'a>(
-    assignment: &semantics::Assignment<'a>,
+    assignment: &'a semantics::Assignment<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) -> IntValue {
     let i32_type = context.i32_type();
     let ptr = builder.build_alloca(i32_type, &assignment.var.syntax.id.name);
 
-    let expr = gen_expr(&assignment.expr, &module, &context, &builder, &funcs);
+    let expr = gen_expr(&assignment.expr, &module, &context, &builder, &funcs, scope);
 
     builder.build_store(&ptr, &expr);
     assignment.var.llvm_ref.set(Some(ptr));
+    scope.declare(&assignment.var.syntax.id.name, &assignment.var);
     expr
 }
 
-fn gen_num(
-    num: &semantics::Num,
+fn gen_num<'a>(
+    num: &'a semantics::Num<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
+    scope: &mut scope::Scope<'a>,
 ) -> IntValue {
     let i32_type = context.i32_type();
     i32_type.const_int(num.value as u64, false)
 }
 
 fn gen_invoke<'a>(
-    invoke: &semantics::Invoke<'a>,
+    invoke: &'a semantics::Invoke<'a>,
     module: &Module,
     context: &Context,
     builder: &Builder,
     funcs: &HashMap<String, &'a semantics::Func<'a>>,
+    scope: &mut scope::Scope<'a>,
 ) -> IntValue {
     builder.build_call(&invoke.func_opt.get().unwrap().llvm_ref.get().unwrap(), &[], &invoke.syntax.id.name, false).left().unwrap().into_int_value()
 }
@@ -244,6 +259,7 @@ fn build_func<'a>(func: &'a ast::Func) -> semantics::Func<'a> {
     }
 
     semantics::Func { llvm_ref: Cell::new(None), exprs: vec, syntax: &func }
+
 }
 
 fn build_class<'a>(class: &'a ast::Class) -> semantics::Class<'a> {
@@ -251,16 +267,16 @@ fn build_class<'a>(class: &'a ast::Class) -> semantics::Class<'a> {
 }
 
 fn build_mod_unit<'a>(unit: &'a ast::ModUnit) -> semantics::ModUnit<'a> {
-  match unit {
-    ast::ModUnit::Func(func) => semantics::ModUnit::Func {
-        func: Box::new(build_func(&func)),
-        syntax: &unit,
-    },
-    ast::ModUnit::Class(class) => semantics::ModUnit::Class {
-        class: Box::new(build_class(&class)),
-        syntax: &unit,
-    },
-  }
+    match unit {
+      ast::ModUnit::Func(func) => semantics::ModUnit::Func {
+          func: Box::new(build_func(&func)),
+          syntax: &unit,
+      },
+      ast::ModUnit::Class(class) => semantics::ModUnit::Class {
+          class: Box::new(build_class(&class)),
+          syntax: &unit,
+      },
+    }
 }
 
 
@@ -338,14 +354,11 @@ fn main() {
 
         let context = Context::create();
         let builder = context.create_builder();
-        // let module = context.create_module("main");
-        // let i32_type = context.i32_type();
-        // let fn_type = i32_type.fn_type(&[], false);
 
-        // let function = module.add_function("main", &fn_type, None);
-
-
-        let module = gen_mod(&root, &context, &builder, &funcs);
+        let mut scope = scope::Scope { levels: Vec::new() };
+        scope.enter();
+        let module = gen_mod(&root, &context, &builder, &funcs, &mut scope);
+        scope.leave();
 
         let triple = TargetMachine::get_default_triple().to_string();
         let target = Target::from_triple(&triple).unwrap();

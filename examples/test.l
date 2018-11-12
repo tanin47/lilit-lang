@@ -3,13 +3,15 @@ def onemore()
 end
 
 def another()
-  9
+  val a = 20
   onemore()
+  a
 end
 
 def main()
-  val a = 2
+  val a = 3
   56
+  a
   another()
 end
 

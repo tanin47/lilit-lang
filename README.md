@@ -70,6 +70,6 @@ Build
 ------
 
 
-```
-cargo run examples/test.l
-```
+1. Compile using `cargo run examples/test.l`
+2. Link it using `cc output.o -o output`.
+3. Run `./output`.
