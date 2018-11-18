@@ -1,83 +1,90 @@
 use std::fmt::{Debug, Error, Formatter};
-use std::cell::Cell;
+use std::marker::PhantomData;
+use std::cell::RefCell;
 use ast;
 use inkwell::values::{FunctionValue, PointerValue};
+use std::rc::Rc;
 
 
 pub struct Mod<'a> {
-    pub units: Vec<ModUnit<'a>>,
-    pub syntax: &'a ast::Mod,
+    pub units: Vec<Rc<ModUnit<'a>>>,
+    pub syntax: Rc<ast::Mod>,
 }
 
 pub enum ModUnit<'a> {
     Func {
-    	func: Box<Func<'a>>,
-    	syntax: &'a ast::ModUnit,
+    	func: Rc<Func<'a>>,
+    	syntax: Rc<ast::ModUnit>,
     },
     Class {
-    	class: Box<Class<'a>>,
-    	syntax: &'a ast::ModUnit,
+    	class: Rc<Class<'a>>,
+    	syntax: Rc<ast::ModUnit>,
     },
 }
 
 pub struct Class<'a> {
-    pub extends: Vec<Class<'a>>,
-    pub methods: Vec<Func<'a>>,
-    pub syntax: &'a ast::Class,
+    pub extends: Vec<Rc<Class<'a>>>,
+    pub methods: Vec<Rc<Func<'a>>>,
+    pub syntax: Rc<ast::Class>,
 }
 
 pub struct Func<'a> {
-	pub llvm_ref: Cell<Option<FunctionValue>>,
-    pub exprs: Vec<Expr<'a>>,
-    pub syntax: &'a ast::Func,
+	pub llvm_ref: RefCell<Option<FunctionValue>>,
+    pub exprs: Vec<Rc<Expr<'a>>>,
+    pub syntax: Rc<ast::Func>,
 }
 
 pub enum Expr<'a> {
     Invoke {
-    	invoke: Box<Invoke<'a>>,
-    	syntax: &'a ast::Expr,
+    	invoke: Rc<Invoke<'a>>,
+    	syntax: Rc<ast::Expr>,
     },
     Num {
-    	num: Box<Num<'a>>,
-    	syntax: &'a ast::Expr,
+    	num: Rc<Num>,
+    	syntax: Rc<ast::Expr>,
     },
     Assignment {
-        assignment: Box<Assignment<'a>>,
-        syntax: &'a ast::Expr,
+        assignment: Rc<Assignment<'a>>,
+        syntax: Rc<ast::Expr>,
     },
-    Var {
-        var: Box<Var<'a>>,
-        syntax: &'a ast::Expr,
+    ReadVar {
+        read_var: Rc<ReadVar>,
+        syntax: Rc<ast::Expr>,
     }
 }
 
 pub struct Assignment<'a> {
-    pub var: Box<Var<'a>>,
-    pub expr: Box<Expr<'a>>,
-    pub syntax: &'a ast::Assignment,
+    pub var: Rc<Var>,
+    pub expr: Rc<Expr<'a>>,
+    pub syntax: Rc<ast::Assignment>,
 }
 
-pub struct Var<'a> {
-    pub llvm_ref: Cell<Option<PointerValue>>,
-    pub id: Box<Id<'a>>,
-    pub syntax: &'a ast::Var,
+pub struct ReadVar {
+    pub origin: Rc<Var>,
+    pub syntax: Rc<ast::Var>,
 }
 
-pub struct Id<'a> {
-    pub syntax: &'a ast::Id,
+pub struct Var {
+    pub llvm_ref: RefCell<Option<PointerValue>>,
+    pub id: Rc<Id>,
+    pub syntax: Rc<ast::Var>,
+}
+
+pub struct Id {
+    pub syntax: Rc<ast::Id>,
 }
 
 pub struct Invoke<'a> {
-	pub func_opt: Cell<Option<&'a Func<'a>>>,
-	pub syntax: &'a ast::Invoke,
+	pub func_opt: RefCell<Option<Rc<Func<'a>>>>,
+	pub syntax: Rc<ast::Invoke>,
 }
 
-pub struct Num<'a> {
+pub struct Num {
 	pub value: i32,
-	pub syntax: &'a ast::Num,
+	pub syntax: Rc<ast::Num>,
 }
 
-impl<'a> Debug for Id<'a> {
+impl Debug for Id {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         write!(fmt, "Id({:?})", (*self).syntax.name)
     }
@@ -89,9 +96,15 @@ impl<'a> Debug for Invoke<'a> {
     }
 }
 
-impl<'a> Debug for Var<'a> {
+impl Debug for Var {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         write!(fmt, "Var({:?})", (*self).id)
+    }
+}
+
+impl Debug for ReadVar {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+        write!(fmt, "ReadVar({:?})", (*self).syntax.id.name)
     }
 }
 
@@ -101,7 +114,7 @@ impl<'a> Debug for Assignment<'a> {
     }
 }
 
-impl<'a> Debug for Num<'a> {
+impl Debug for Num {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         write!(fmt, "Num({:?})", (*self).value)
     }
@@ -113,7 +126,7 @@ impl<'a> Debug for Expr<'a> {
             Expr::Num { num, syntax: _ } => write!(fmt, "{:?}", num),
             Expr::Invoke { invoke, syntax: _ } => write!(fmt, "{:?}", invoke),
             Expr::Assignment { assignment, syntax: _ } => write!(fmt, "{:?}", assignment),
-            Expr::Var { var, syntax: _ } => write!(fmt, "{:?}", var),
+            Expr::ReadVar { read_var, syntax: _ } => write!(fmt, "{:?}", read_var),
         }
     }
 }

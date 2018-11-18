@@ -7,7 +7,7 @@ build = "build.rs"
 [dependencies]
 lalrpop-util = "0.15.2"
 regex = "0.2.0"
-inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm6-0" }
+inkwell = { git = "https://github.com/TheDan64/inkwell", rev = "3e4f5d4105dd125261ebf5af372a193aed1e39d0", features = ["llvm6-0"] }
 
 [build-dependencies]
 lalrpop = "0.15.2"

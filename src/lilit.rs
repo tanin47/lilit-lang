@@ -1,6 +1,7 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: e51dee1145a6f59356f96124b319e724bc4e9de50fc2736ad06076beee554
+// sha256: c17c9188afaba2302361785eaf1b70a739732843c61395cbb5c984aca1482bb
 use std::str::FromStr;
+use std::rc::Rc;
 use ast::*;
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
@@ -10,6 +11,7 @@ mod __parse__Mod {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
+    use std::rc::Rc;
     use ast::*;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
@@ -20,18 +22,18 @@ mod __parse__Mod {
         Variant0(&'input str),
         Variant1(String),
         Variant2(::std::vec::Vec<String>),
-        Variant3(Box<Expr>),
-        Variant4(Box<Class>),
+        Variant3(Rc<Expr>),
+        Variant4(Rc<Class>),
         Variant5(Vec<String>),
         Variant6(::std::option::Option<Vec<String>>),
-        Variant7(::std::vec::Vec<Box<Expr>>),
-        Variant8(Box<Func>),
-        Variant9(::std::vec::Vec<Box<Func>>),
-        Variant10(Box<Id>),
-        Variant11(Box<Mod>),
-        Variant12(Box<ModUnit>),
-        Variant13(::std::vec::Vec<Box<ModUnit>>),
-        Variant14(Box<Var>),
+        Variant7(::std::vec::Vec<Rc<Expr>>),
+        Variant8(Rc<Func>),
+        Variant9(::std::vec::Vec<Rc<Func>>),
+        Variant10(Rc<Id>),
+        Variant11(Rc<Mod>),
+        Variant12(Rc<ModUnit>),
+        Variant13(::std::vec::Vec<Rc<ModUnit>>),
+        Variant14(Rc<Var>),
     }
     const __ACTION: &'static [i8] = &[
         // State 0
@@ -382,7 +384,7 @@ mod __parse__Mod {
         >(
             &self,
             input: &'input str,
-        ) -> Result<Box<Mod>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
+        ) -> Result<Rc<Mod>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
         {
             let mut __tokens = self.builder.matcher(input);
             let mut __states = vec![0_i8];
@@ -525,7 +527,7 @@ mod __parse__Mod {
         __states: &mut ::std::vec::Vec<i8>,
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
         _: ::std::marker::PhantomData<()>,
-    ) -> Option<Result<Box<Mod>,__lalrpop_util::ParseError<usize, Token<'input>, &'static str>>>
+    ) -> Option<Result<Rc<Mod>,__lalrpop_util::ParseError<usize, Token<'input>, &'static str>>>
     {
         let (__pop_states, __symbol, __nonterminal) = match -__action {
             1 => {
@@ -676,7 +678,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Class>, usize)
+    ) -> (usize, Rc<Class>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant4(__v), __r) => (__l, __v, __r),
@@ -687,7 +689,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Expr>, usize)
+    ) -> (usize, Rc<Expr>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant3(__v), __r) => (__l, __v, __r),
@@ -698,7 +700,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Func>, usize)
+    ) -> (usize, Rc<Func>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant8(__v), __r) => (__l, __v, __r),
@@ -709,7 +711,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Id>, usize)
+    ) -> (usize, Rc<Id>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant10(__v), __r) => (__l, __v, __r),
@@ -720,7 +722,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Mod>, usize)
+    ) -> (usize, Rc<Mod>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant11(__v), __r) => (__l, __v, __r),
@@ -731,7 +733,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<ModUnit>, usize)
+    ) -> (usize, Rc<ModUnit>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant12(__v), __r) => (__l, __v, __r),
@@ -742,7 +744,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Box<Var>, usize)
+    ) -> (usize, Rc<Var>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant14(__v), __r) => (__l, __v, __r),
@@ -786,7 +788,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Box<Expr>>, usize)
+    ) -> (usize, ::std::vec::Vec<Rc<Expr>>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant7(__v), __r) => (__l, __v, __r),
@@ -797,7 +799,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Box<Func>>, usize)
+    ) -> (usize, ::std::vec::Vec<Rc<Func>>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant9(__v), __r) => (__l, __v, __r),
@@ -808,7 +810,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Box<ModUnit>>, usize)
+    ) -> (usize, ::std::vec::Vec<Rc<ModUnit>>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant13(__v), __r) => (__l, __v, __r),
@@ -1671,6 +1673,7 @@ pub use self::__parse__Mod::ModParser;
 mod __intern_token {
     #![allow(unused_imports)]
     use std::str::FromStr;
+    use std::rc::Rc;
     use ast::*;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
@@ -1788,8 +1791,8 @@ fn __action0<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Mod>, usize),
-) -> Box<Mod>
+    (_, __0, _): (usize, Rc<Mod>, usize),
+) -> Rc<Mod>
 {
     (__0)
 }
@@ -1799,10 +1802,10 @@ fn __action1<
     'input,
 >(
     input: &'input str,
-    (_, u, _): (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
-) -> Box<Mod>
+    (_, u, _): (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
+) -> Rc<Mod>
 {
-    Box::new(Mod { units:u })
+    Rc::new(Mod { units:u })
 }
 
 #[allow(unused_variables)]
@@ -1810,10 +1813,10 @@ fn __action2<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Class>, usize),
-) -> Box<ModUnit>
+    (_, __0, _): (usize, Rc<Class>, usize),
+) -> Rc<ModUnit>
 {
-    Box::new(ModUnit::Class(__0))
+    Rc::new(ModUnit::Class(__0))
 }
 
 #[allow(unused_variables)]
@@ -1821,10 +1824,10 @@ fn __action3<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Func>, usize),
-) -> Box<ModUnit>
+    (_, __0, _): (usize, Rc<Func>, usize),
+) -> Rc<ModUnit>
 {
-    Box::new(ModUnit::Func(__0))
+    Rc::new(ModUnit::Func(__0))
 }
 
 #[allow(unused_variables)]
@@ -1835,11 +1838,11 @@ fn __action4<
     (_, _, _): (usize, &'input str, usize),
     (_, n, _): (usize, String, usize),
     (_, e, _): (usize, ::std::option::Option<Vec<String>>, usize),
-    (_, m, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
+    (_, m, _): (usize, ::std::vec::Vec<Rc<Func>>, usize),
     (_, _, _): (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
-    Box::new(Class {
+    Rc::new(Class {
     name:n,
     extends: match e {
     	None => vec![],
@@ -1872,14 +1875,14 @@ fn __action6<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, id, _): (usize, Box<Id>, usize),
+    (_, id, _): (usize, Rc<Id>, usize),
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
-    (_, exprs, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
+    (_, exprs, _): (usize, ::std::vec::Vec<Rc<Expr>>, usize),
     (_, _, _): (usize, &'input str, usize),
-) -> Box<Func>
+) -> Rc<Func>
 {
-    Box::new(Func { id:id, exprs:exprs })
+    Rc::new(Func { id:id, exprs:exprs })
 }
 
 #[allow(unused_variables)]
@@ -1887,8 +1890,8 @@ fn __action7<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Expr>, usize),
-) -> Box<Expr>
+    (_, __0, _): (usize, Rc<Expr>, usize),
+) -> Rc<Expr>
 {
     (__0)
 }
@@ -1898,8 +1901,8 @@ fn __action8<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Expr>, usize),
-) -> Box<Expr>
+    (_, __0, _): (usize, Rc<Expr>, usize),
+) -> Rc<Expr>
 {
     (__0)
 }
@@ -1909,8 +1912,8 @@ fn __action9<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Expr>, usize),
-) -> Box<Expr>
+    (_, __0, _): (usize, Rc<Expr>, usize),
+) -> Rc<Expr>
 {
     (__0)
 }
@@ -1920,8 +1923,8 @@ fn __action10<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Expr>, usize),
-) -> Box<Expr>
+    (_, __0, _): (usize, Rc<Expr>, usize),
+) -> Rc<Expr>
 {
     (__0)
 }
@@ -1932,12 +1935,12 @@ fn __action11<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, var, _): (usize, Box<Var>, usize),
+    (_, var, _): (usize, Rc<Var>, usize),
     (_, _, _): (usize, &'input str, usize),
-    (_, expr, _): (usize, Box<Expr>, usize),
-) -> Box<Expr>
+    (_, expr, _): (usize, Rc<Expr>, usize),
+) -> Rc<Expr>
 {
-    Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
+    Rc::new(Expr::Assignment(Rc::new(Assignment { var, expr })))
 }
 
 #[allow(unused_variables)]
@@ -1945,12 +1948,12 @@ fn __action12<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Id>, usize),
+    (_, __0, _): (usize, Rc<Id>, usize),
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
-) -> Box<Expr>
+) -> Rc<Expr>
 {
-    Box::new(Expr::Invoke(Box::new(Invoke { id: __0 })))
+    Rc::new(Expr::Invoke(Rc::new(Invoke { id: __0 })))
 }
 
 #[allow(unused_variables)]
@@ -1958,10 +1961,10 @@ fn __action13<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Var>, usize),
-) -> Box<Expr>
+    (_, __0, _): (usize, Rc<Var>, usize),
+) -> Rc<Expr>
 {
-    Box::new(Expr::Var(__0))
+    Rc::new(Expr::Var(__0))
 }
 
 #[allow(unused_variables)]
@@ -1969,10 +1972,10 @@ fn __action14<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Id>, usize),
-) -> Box<Var>
+    (_, __0, _): (usize, Rc<Id>, usize),
+) -> Rc<Var>
 {
-    Box::new(Var { id: __0 })
+    Rc::new(Var { id: __0 })
 }
 
 #[allow(unused_variables)]
@@ -1981,9 +1984,9 @@ fn __action15<
 >(
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> Box<Id>
+) -> Rc<Id>
 {
-    Box::new(Id { name: String::from(__0) })
+    Rc::new(Id { name: String::from(__0) })
 }
 
 #[allow(unused_variables)]
@@ -2003,9 +2006,9 @@ fn __action17<
 >(
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> Box<Expr>
+) -> Rc<Expr>
 {
-    Box::new(Expr::Num(Box::new(Num { value: i32::from_str(__0).unwrap() })))
+    Rc::new(Expr::Num(Rc::new(Num { value: i32::from_str(__0).unwrap() })))
 }
 
 #[allow(unused_variables)]
@@ -2015,7 +2018,7 @@ fn __action18<
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Box<Expr>>
+) -> ::std::vec::Vec<Rc<Expr>>
 {
     vec![]
 }
@@ -2025,8 +2028,8 @@ fn __action19<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
-) -> ::std::vec::Vec<Box<Expr>>
+    (_, v, _): (usize, ::std::vec::Vec<Rc<Expr>>, usize),
+) -> ::std::vec::Vec<Rc<Expr>>
 {
     v
 }
@@ -2073,7 +2076,7 @@ fn __action23<
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Box<Func>>
+) -> ::std::vec::Vec<Rc<Func>>
 {
     vec![]
 }
@@ -2083,8 +2086,8 @@ fn __action24<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
-) -> ::std::vec::Vec<Box<Func>>
+    (_, v, _): (usize, ::std::vec::Vec<Rc<Func>>, usize),
+) -> ::std::vec::Vec<Rc<Func>>
 {
     v
 }
@@ -2119,7 +2122,7 @@ fn __action27<
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Box<ModUnit>>
+) -> ::std::vec::Vec<Rc<ModUnit>>
 {
     vec![]
 }
@@ -2129,8 +2132,8 @@ fn __action28<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
-) -> ::std::vec::Vec<Box<ModUnit>>
+    (_, v, _): (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
+) -> ::std::vec::Vec<Rc<ModUnit>>
 {
     v
 }
@@ -2140,8 +2143,8 @@ fn __action29<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<ModUnit>, usize),
-) -> ::std::vec::Vec<Box<ModUnit>>
+    (_, __0, _): (usize, Rc<ModUnit>, usize),
+) -> ::std::vec::Vec<Rc<ModUnit>>
 {
     vec![__0]
 }
@@ -2151,9 +2154,9 @@ fn __action30<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
-    (_, e, _): (usize, Box<ModUnit>, usize),
-) -> ::std::vec::Vec<Box<ModUnit>>
+    (_, v, _): (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
+    (_, e, _): (usize, Rc<ModUnit>, usize),
+) -> ::std::vec::Vec<Rc<ModUnit>>
 {
     { let mut v = v; v.push(e); v }
 }
@@ -2163,8 +2166,8 @@ fn __action31<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Func>, usize),
-) -> ::std::vec::Vec<Box<Func>>
+    (_, __0, _): (usize, Rc<Func>, usize),
+) -> ::std::vec::Vec<Rc<Func>>
 {
     vec![__0]
 }
@@ -2174,9 +2177,9 @@ fn __action32<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
-    (_, e, _): (usize, Box<Func>, usize),
-) -> ::std::vec::Vec<Box<Func>>
+    (_, v, _): (usize, ::std::vec::Vec<Rc<Func>>, usize),
+    (_, e, _): (usize, Rc<Func>, usize),
+) -> ::std::vec::Vec<Rc<Func>>
 {
     { let mut v = v; v.push(e); v }
 }
@@ -2209,8 +2212,8 @@ fn __action35<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Box<Expr>, usize),
-) -> ::std::vec::Vec<Box<Expr>>
+    (_, __0, _): (usize, Rc<Expr>, usize),
+) -> ::std::vec::Vec<Rc<Expr>>
 {
     vec![__0]
 }
@@ -2220,9 +2223,9 @@ fn __action36<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
-    (_, e, _): (usize, Box<Expr>, usize),
-) -> ::std::vec::Vec<Box<Expr>>
+    (_, v, _): (usize, ::std::vec::Vec<Rc<Expr>>, usize),
+    (_, e, _): (usize, Rc<Expr>, usize),
+) -> ::std::vec::Vec<Rc<Expr>>
 {
     { let mut v = v; v.push(e); v }
 }
@@ -2333,9 +2336,9 @@ fn __action41<
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
     __2: (usize, Vec<String>, usize),
-    __3: (usize, ::std::vec::Vec<Box<Func>>, usize),
+    __3: (usize, ::std::vec::Vec<Rc<Func>>, usize),
     __4: (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
     let __start0 = __2.0.clone();
     let __end0 = __2.2.clone();
@@ -2361,9 +2364,9 @@ fn __action42<
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
-    __2: (usize, ::std::vec::Vec<Box<Func>>, usize),
+    __2: (usize, ::std::vec::Vec<Rc<Func>>, usize),
     __3: (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
     let __start0 = __1.2.clone();
     let __end0 = __2.0.clone();
@@ -2389,11 +2392,11 @@ fn __action43<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<Id>, usize),
+    __1: (usize, Rc<Id>, usize),
     __2: (usize, &'input str, usize),
     __3: (usize, &'input str, usize),
     __4: (usize, &'input str, usize),
-) -> Box<Func>
+) -> Rc<Func>
 {
     let __start0 = __3.2.clone();
     let __end0 = __4.0.clone();
@@ -2420,12 +2423,12 @@ fn __action44<
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Box<Id>, usize),
+    __1: (usize, Rc<Id>, usize),
     __2: (usize, &'input str, usize),
     __3: (usize, &'input str, usize),
-    __4: (usize, ::std::vec::Vec<Box<Expr>>, usize),
+    __4: (usize, ::std::vec::Vec<Rc<Expr>>, usize),
     __5: (usize, &'input str, usize),
-) -> Box<Func>
+) -> Rc<Func>
 {
     let __start0 = __4.0.clone();
     let __end0 = __4.2.clone();
@@ -2454,7 +2457,7 @@ fn __action45<
     __1: (usize, String, usize),
     __2: (usize, Vec<String>, usize),
     __3: (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
     let __start0 = __2.2.clone();
     let __end0 = __3.0.clone();
@@ -2482,9 +2485,9 @@ fn __action46<
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
     __2: (usize, Vec<String>, usize),
-    __3: (usize, ::std::vec::Vec<Box<Func>>, usize),
+    __3: (usize, ::std::vec::Vec<Rc<Func>>, usize),
     __4: (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
     let __start0 = __3.0.clone();
     let __end0 = __3.2.clone();
@@ -2511,7 +2514,7 @@ fn __action47<
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
     __2: (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
     let __start0 = __1.2.clone();
     let __end0 = __2.0.clone();
@@ -2537,9 +2540,9 @@ fn __action48<
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
-    __2: (usize, ::std::vec::Vec<Box<Func>>, usize),
+    __2: (usize, ::std::vec::Vec<Rc<Func>>, usize),
     __3: (usize, &'input str, usize),
-) -> Box<Class>
+) -> Rc<Class>
 {
     let __start0 = __2.0.clone();
     let __end0 = __2.2.clone();
@@ -2564,7 +2567,7 @@ fn __action49<
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> Box<Mod>
+) -> Rc<Mod>
 {
     let __start0 = __lookbehind.clone();
     let __end0 = __lookahead.clone();
@@ -2585,8 +2588,8 @@ fn __action50<
     'input,
 >(
     input: &'input str,
-    __0: (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
-) -> Box<Mod>
+    __0: (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
+) -> Rc<Mod>
 {
     let __start0 = __0.0.clone();
     let __end0 = __0.2.clone();

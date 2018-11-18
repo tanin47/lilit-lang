@@ -1,16 +1,17 @@
-use std::cell::Cell;
+use std::cell::RefCell;
 use std::env;
 use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 extern crate inkwell;
 
 use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
-use inkwell::execution_engine::{ExecutionEngine, Symbol};
+use inkwell::execution_engine::ExecutionEngine;
 use inkwell::module::Module;
 use inkwell::values::{FunctionValue, BasicValue, IntValue};
 use inkwell::basic_block::BasicBlock;
@@ -22,52 +23,45 @@ mod semantics;
 mod scope;
 
 fn gen_mod<'a>(
-    module: &'a semantics::Mod<'a>,
+    module: Rc<semantics::Mod<'a>>,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) -> Module {
     let llvm_module = context.create_module("main");
-    scope.enter();
     for unit in &module.units {
-        gen_mod_unit(&unit, &llvm_module, &context, &builder, &funcs, scope);
+        gen_mod_unit(Rc::clone(unit), &llvm_module, &context, &builder, &funcs);
     }
-    scope.leave();
     return llvm_module;
 }
 
 fn gen_mod_unit<'a>(
-    unit: &'a semantics::ModUnit<'a>,
+    unit: Rc<semantics::ModUnit<'a>>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) {
-    match unit {
-        semantics::ModUnit::Func { func, syntax: _ } => {
-            gen_func(&func, &module, &context, &builder, &funcs, scope);
+    match *unit {
+        semantics::ModUnit::Func { ref func, syntax: _ } => {
+            gen_func(Rc::clone(func), &module, &context, &builder, &funcs);
         },
         _ => (),
     }
 }
 
 fn gen_func<'a>(
-    func: &'a semantics::Func<'a>,
+    func: Rc<semantics::Func<'a>>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) {
     let i32_type = context.i32_type();
     let fn_type = i32_type.fn_type(&[], false);
 
-    let function = module.add_function(&*func.syntax.id.name, &fn_type, None);
-    func.llvm_ref.set(Some(function));
-
-    scope.enter();
+    let function = module.add_function(&*func.syntax.id.name, fn_type, None);
+    func.llvm_ref.replace(Some(function));
 
     for (index, expr) in func.exprs.iter().enumerate() {
         let basic_block = context.append_basic_block(&function, &format!("block_{}", index));
@@ -77,91 +71,86 @@ fn gen_func<'a>(
 
         builder.position_at_end(&basic_block);
 
-        let ret = gen_expr(&expr, &module, &context, &builder, &funcs, scope);
+        let ret = gen_expr(Rc::clone(expr), &module, &context, &builder, &funcs);
 
         if index == (func.exprs.len() - 1) {
             builder.build_return(Some(&ret));
         }
     }
-
-    scope.leave()
 }
 
 fn gen_expr<'a>(
-    expr: &'a semantics::Expr<'a>,
+    expr: Rc<semantics::Expr<'a>>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) -> IntValue {
-    match expr {
-        semantics::Expr::Invoke { invoke, syntax: _ } => {
-            gen_invoke(&invoke, &module, &context, &builder, &funcs, scope)
+    match *expr {
+        semantics::Expr::Invoke { ref invoke, syntax: _ } => {
+            gen_invoke(Rc::clone(invoke), &module, &context, &builder, &funcs)
         },
-        semantics::Expr::Num { num, syntax: _ } => {
-            gen_num(&num, &module, &context, &builder, scope)
+        semantics::Expr::Num { ref num, syntax: _ } => {
+            gen_num(Rc::clone(num), &module, &context, &builder)
         },
-        semantics::Expr::Assignment { assignment, syntax: _ } => {
-            gen_assignment(&assignment, &module, &context, &builder, &funcs, scope)
+        semantics::Expr::Assignment { ref assignment, syntax: _ } => {
+            gen_assignment(Rc::clone(assignment), &module, &context, &builder, &funcs)
         },
-        semantics::Expr::Var { var, syntax: _ } => {
-            gen_var(&var, &module, &context, &builder, &funcs, scope)
+        semantics::Expr::ReadVar { ref read_var, syntax: _ } => {
+            gen_read_var(Rc::clone(read_var), &module, &context, &builder, &funcs)
         },
     }
 }
 
-fn gen_var<'a>(
-    var: &'a semantics::Var<'a>,
+fn gen_read_var<'a>(
+    var: Rc<semantics::ReadVar>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) -> IntValue {
-    let value = builder.build_load(&scope.read(&var.id.syntax.name).unwrap().llvm_ref.get().unwrap(), "deref");
+    let value = builder.build_load(var.origin.llvm_ref.borrow().unwrap(), "deref");
     value.into_int_value()
 }
 
 fn gen_assignment<'a>(
-    assignment: &'a semantics::Assignment<'a>,
+    assignment: Rc<semantics::Assignment<'a>>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) -> IntValue {
     let i32_type = context.i32_type();
     let ptr = builder.build_alloca(i32_type, &assignment.var.syntax.id.name);
 
-    let expr = gen_expr(&assignment.expr, &module, &context, &builder, &funcs, scope);
+    let expr = gen_expr(Rc::clone(&assignment.expr), &module, &context, &builder, &funcs);
 
-    builder.build_store(&ptr, &expr);
-    assignment.var.llvm_ref.set(Some(ptr));
-    scope.declare(&assignment.var.syntax.id.name, &assignment.var);
+    builder.build_store(ptr, expr);
+    assignment.var.llvm_ref.replace(Some(ptr));
     expr
 }
 
 fn gen_num<'a>(
-    num: &'a semantics::Num<'a>,
+    num: Rc<semantics::Num>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    scope: &mut scope::Scope<'a>,
 ) -> IntValue {
     let i32_type = context.i32_type();
     i32_type.const_int(num.value as u64, false)
 }
 
 fn gen_invoke<'a>(
-    invoke: &'a semantics::Invoke<'a>,
+    invoke: Rc<semantics::Invoke<'a>>,
     module: &Module,
     context: &Context,
     builder: &Builder,
-    funcs: &HashMap<String, &'a semantics::Func<'a>>,
-    scope: &mut scope::Scope<'a>,
+    funcs: &HashMap<String, Rc<semantics::Func<'a>>>,
 ) -> IntValue {
-    builder.build_call(&invoke.func_opt.get().unwrap().llvm_ref.get().unwrap(), &[], &invoke.syntax.id.name, false).left().unwrap().into_int_value()
+    let func_opt = invoke.func_opt.borrow();
+    let func = func_opt.clone().unwrap();
+    let llvm_ref_opt = func.llvm_ref.borrow();
+    builder.build_call(llvm_ref_opt.clone().unwrap(), &[], &invoke.syntax.id.name).try_as_basic_value().left().unwrap().into_int_value()
 }
 
 
@@ -194,121 +183,160 @@ fn gen_invoke<'a>(
 //     builder.build_return(Some(&ret));
 // }
 
-fn build_invoke<'a>(invoke: &'a ast::Invoke) -> semantics::Invoke<'a> {
+fn build_invoke<'a>(invoke: Rc<ast::Invoke>) -> semantics::Invoke<'a> {
     semantics::Invoke {
-        func_opt: Cell::new(None),
-        syntax: &invoke,
+        func_opt: RefCell::new(None),
+        syntax: Rc::clone(&invoke),
     }
 }
 
-fn build_num<'a>(num: &'a ast::Num) -> semantics::Num<'a> {
+fn build_num(num: Rc<ast::Num>) -> semantics::Num {
     semantics::Num {
         value: (*num).value,
-        syntax: &num,
+        syntax: Rc::clone(&num),
     }
 }
 
-fn build_id<'a>(id: &'a ast::Id) -> semantics::Id<'a> {
+fn build_id(id: Rc<ast::Id>) -> semantics::Id {
     semantics::Id {
-        syntax: &id
+        syntax: Rc::clone(&id)
     }
 }
 
-fn build_var<'a>(var: &'a ast::Var) -> semantics::Var<'a> {
+fn build_read_var<'a>(
+    var: Rc<ast::Var>,
+    scope: &mut scope::Scope<'a>,
+) -> semantics::ReadVar {
+    let origin = match scope.read(&var.id.name) {
+        Some(scope::ScopeValue::Var(var)) => var,
+        _ => panic!("The variable {} is not found", var.id.name),
+    };
+    semantics::ReadVar {
+        origin: Rc::clone(origin),
+        syntax: Rc::clone(&var),
+    }
+
+}
+
+fn build_var(
+    var: Rc<ast::Var>,
+) -> semantics::Var {
     semantics::Var {
-        llvm_ref: Cell::new(None),
-        id: Box::new(build_id(&var.id)),
-        syntax: &var
+        llvm_ref: RefCell::new(None),
+        id: Rc::new(build_id(Rc::clone(&var.id))),
+        syntax: Rc::clone(&var)
     }
 }
 
-fn build_assignment<'a>(assignment: &'a ast::Assignment) -> semantics::Assignment<'a> {
+fn build_assignment<'a>(
+    assignment: Rc<ast::Assignment>,
+    scope: &mut scope::Scope<'a>,
+) -> semantics::Assignment<'a> {
+    let var = Rc::new(build_var(Rc::clone(&assignment.var)));
+    scope.declare(assignment.var.id.name.to_string(), scope::ScopeValue::Var(Rc::clone(&var)));
     semantics::Assignment {
-        var: Box::new(build_var(&assignment.var)),
-        expr: Box::new(build_expr(&assignment.expr)),
-        syntax: &assignment,
+        var: var,
+        expr: Rc::new(build_expr(Rc::clone(&assignment.expr), scope)),
+        syntax: Rc::clone(&assignment),
     }
 }
 
-fn build_expr<'a>(expr: &'a ast::Expr) -> semantics::Expr<'a> {
-    match expr {
-        ast::Expr::Invoke(i) => semantics::Expr::Invoke {
-            invoke: Box::new(build_invoke(&i)),
-            syntax: &expr,
+fn build_expr<'a>(
+    expr: Rc<ast::Expr>,
+    scope: &mut scope::Scope<'a>,
+) -> semantics::Expr<'a> {
+    match *expr {
+        ast::Expr::Invoke(ref i) => semantics::Expr::Invoke {
+            invoke: Rc::new(build_invoke(Rc::clone(i))),
+            syntax: Rc::clone(&expr),
         },
-        ast::Expr::Num(n) => semantics::Expr::Num {
-            num: Box::new(build_num(&n)),
-            syntax: &expr,
+        ast::Expr::Num(ref n) => semantics::Expr::Num {
+            num: Rc::new(build_num(Rc::clone(n))),
+            syntax: Rc::clone(&expr),
         },
-        ast::Expr::Assignment(a) => semantics::Expr::Assignment {
-            assignment: Box::new(build_assignment(&a)),
-            syntax: &expr,
+        ast::Expr::Assignment(ref a) => semantics::Expr::Assignment {
+            assignment: Rc::new(build_assignment(Rc::clone(a), scope)),
+            syntax: Rc::clone(&expr),
         },
-        ast::Expr::Var(v) => semantics::Expr::Var {
-            var: Box::new(build_var(&v)),
-            syntax: &expr,
+        ast::Expr::Var(ref v) => semantics::Expr::ReadVar {
+            read_var: Rc::new(build_read_var(Rc::clone(v), scope)),
+            syntax: Rc::clone(&expr),
         },
     }
 }
 
-fn build_func<'a>(func: &'a ast::Func) -> semantics::Func<'a> {
+fn build_func<'a>(
+    func: Rc<ast::Func>,
+    scope: &mut scope::Scope<'a>,
+) -> semantics::Func<'a> {
     let mut vec = Vec::new();
+    scope.enter();
 
     for expr in &(*func).exprs {
-       vec.push(build_expr(&expr))
+       vec.push(Rc::new(build_expr(Rc::clone(expr), scope)))
     }
+    scope.leave();
 
-    semantics::Func { llvm_ref: Cell::new(None), exprs: vec, syntax: &func }
+    semantics::Func { llvm_ref: RefCell::new(None), exprs: vec, syntax: Rc::clone(&func) }
 
 }
 
-fn build_class<'a>(class: &'a ast::Class) -> semantics::Class<'a> {
-    semantics::Class { extends: vec![], methods: vec![], syntax: &class }
+fn build_class<'a>(class: Rc<ast::Class>) -> semantics::Class<'a> {
+    semantics::Class { extends: vec![], methods: vec![], syntax: Rc::clone(&class) }
 }
 
-fn build_mod_unit<'a>(unit: &'a ast::ModUnit) -> semantics::ModUnit<'a> {
-    match unit {
-      ast::ModUnit::Func(func) => semantics::ModUnit::Func {
-          func: Box::new(build_func(&func)),
-          syntax: &unit,
+fn build_mod_unit<'a>(
+    unit: Rc<ast::ModUnit>,
+    scope: &mut scope::Scope<'a>,
+) -> semantics::ModUnit<'a> {
+    match *unit {
+      ast::ModUnit::Func(ref func) => semantics::ModUnit::Func {
+          func: Rc::new(build_func(Rc::clone(func), scope)),
+          syntax: Rc::clone(&unit),
       },
-      ast::ModUnit::Class(class) => semantics::ModUnit::Class {
-          class: Box::new(build_class(&class)),
-          syntax: &unit,
+      ast::ModUnit::Class(ref class) => semantics::ModUnit::Class {
+          class: Rc::new(build_class(Rc::clone(class))),
+          syntax: Rc::clone(&unit),
       },
     }
 }
 
 
-fn build_mod<'a>(m: &'a ast::Mod) -> semantics::Mod<'a> {
+fn build_mod<'a>(
+    m: Rc<ast::Mod>,
+    scope: &mut scope::Scope<'a>,
+) -> semantics::Mod<'a> {
     let mut vec = Vec::new();
+    scope.enter();
 
     for unit in &(*m).units {
-       vec.push(build_mod_unit(&unit))
+       vec.push(Rc::new(build_mod_unit(Rc::clone(unit), scope)))
     }
 
-    semantics::Mod { units: vec, syntax: &m }
+    scope.leave();
+
+    semantics::Mod { units: vec, syntax: Rc::clone(&m) }
 }
 
-fn register_funcs<'a>(root: &'a semantics::Mod<'a>, funcs: &mut HashMap<String, &'a semantics::Func<'a>>) {
+fn register_funcs<'a>(root: Rc<semantics::Mod<'a>>, funcs: &mut HashMap<String, Rc<semantics::Func<'a>>>) {
     for unit in &(*root).units {
-        match unit {
-            semantics::ModUnit::Func { func, syntax: _ } => {
-                funcs.insert(func.syntax.id.name.to_string(), func);
+        match **unit {
+            semantics::ModUnit::Func { ref func, syntax: _ } => {
+                funcs.insert(func.syntax.id.name.to_string(), Rc::clone(&func));
             },
             _ => (),
         }
     }
 }
 
-fn hydrate_funcs<'a>(root: &'a semantics::Mod<'a>, funcs: &HashMap<String, &'a semantics::Func<'a>>) {
+fn hydrate_funcs<'a>(root: Rc<semantics::Mod<'a>>, funcs: &HashMap<String, Rc<semantics::Func<'a>>>) {
     for unit in &(*root).units {
-        match unit {
-            semantics::ModUnit::Func { func, syntax: _ } => {
+        match **unit {
+            semantics::ModUnit::Func { ref func, syntax: _ } => {
                 for expr in &func.exprs {
-                    match expr {
-                        semantics::Expr::Invoke { invoke, syntax: _ } => {
-                            invoke.func_opt.set(funcs.get(&invoke.syntax.id.name).map(|v| *v));
+                    match **expr {
+                        semantics::Expr::Invoke { ref invoke, syntax: _ } => {
+                            invoke.func_opt.replace(funcs.get(&invoke.syntax.id.name).map(|v| Rc::clone(v)));
                         },
                         _ => (),
                     }
@@ -339,14 +367,17 @@ fn main() {
     // The first pass makes a hashtable for function and class.
 
     if let Ok(ref _ok_tree) = tree {
-        let mut root = build_mod(_ok_tree);
+        let mut scope = scope::Scope { levels: Vec::new() };
+        scope.enter();
+        let mut root = Rc::new(build_mod(Rc::clone(_ok_tree), &mut scope));
+        scope.leave();
         println!("{:?}\n", root);
 
         let mut funcs = HashMap::new();
-        register_funcs(&root, &mut funcs);
+        register_funcs(Rc::clone(&root), &mut funcs);
         println!("{:?}\n", funcs);
 
-        hydrate_funcs(&root, &funcs);
+        hydrate_funcs(Rc::clone(&root), &funcs);
 
         println!("{:?}\n", root);
 
@@ -354,17 +385,13 @@ fn main() {
 
         let context = Context::create();
         let builder = context.create_builder();
-
-        let mut scope = scope::Scope { levels: Vec::new() };
-        scope.enter();
-        let module = gen_mod(&root, &context, &builder, &funcs, &mut scope);
-        scope.leave();
+        let module = gen_mod(Rc::clone(&root), &context, &builder, &funcs);
 
         let triple = TargetMachine::get_default_triple().to_string();
         let target = Target::from_triple(&triple).unwrap();
         let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
 
-        let path =  Path::new("./output.o\0");
+        let path =  Path::new("./output.o");
         let result = target_machine.write_to_file(&module, FileType::Object, &path);
         println!("---- LLVM IR ----");
         module.print_to_stderr();

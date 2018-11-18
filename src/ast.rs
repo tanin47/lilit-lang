@@ -1,40 +1,41 @@
 use std::fmt::{Debug, Error, Formatter};
+use std::rc::Rc;
 
 
 pub struct Mod {
-    pub units: Vec<Box<ModUnit>>,
+    pub units: Vec<Rc<ModUnit>>,
 }
 
 pub enum ModUnit {
-    Func(Box<Func>),
-    Class(Box<Class>),
+    Func(Rc<Func>),
+    Class(Rc<Class>),
 }
 
 pub struct Class {
     pub name: String,
     pub extends: Vec<String>,
-    pub methods: Vec<Box<Func>>,
+    pub methods: Vec<Rc<Func>>,
 }
 
 pub struct Func {
-    pub id: Box<Id>,
-    pub exprs: Vec<Box<Expr>>,
+    pub id: Rc<Id>,
+    pub exprs: Vec<Rc<Expr>>,
 }
 
 pub enum Expr {
-    Invoke(Box<Invoke>),
-    Num(Box<Num>),
-    Assignment(Box<Assignment>),
-    Var(Box<Var>),
+    Invoke(Rc<Invoke>),
+    Num(Rc<Num>),
+    Assignment(Rc<Assignment>),
+    Var(Rc<Var>),
 }
 
 pub struct Assignment {
-    pub var: Box<Var>,
-    pub expr: Box<Expr>,
+    pub var: Rc<Var>,
+    pub expr: Rc<Expr>,
 }
 
 pub struct Var {
-    pub id: Box<Id>,
+    pub id: Rc<Id>,
 }
 
 pub struct Id {
@@ -42,7 +43,7 @@ pub struct Id {
 }
 
 pub struct Invoke {
-    pub id: Box<Id>,
+    pub id: Rc<Id>,
 }
 
 pub struct Num {
