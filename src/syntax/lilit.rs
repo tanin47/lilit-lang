@@ -1,8 +1,7 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: c17c9188afaba2302361785eaf1b70a739732843c61395cbb5c984aca1482bb
+// sha256: 2a29be529b5721db4ce9522d2f26804c6b3634c1fc5b495f3bd693e06e2869
 use std::str::FromStr;
-use std::rc::Rc;
-use ast::*;
+use syntax::tree::*;
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
 
@@ -11,8 +10,7 @@ mod __parse__Mod {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
-    use std::rc::Rc;
-    use ast::*;
+    use syntax::tree::*;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     use super::__intern_token::Token;
@@ -22,140 +20,143 @@ mod __parse__Mod {
         Variant0(&'input str),
         Variant1(String),
         Variant2(::std::vec::Vec<String>),
-        Variant3(Rc<Expr>),
-        Variant4(Rc<Class>),
+        Variant3(Box<Expr>),
+        Variant4(Box<Class>),
         Variant5(Vec<String>),
         Variant6(::std::option::Option<Vec<String>>),
-        Variant7(::std::vec::Vec<Rc<Expr>>),
-        Variant8(Rc<Func>),
-        Variant9(::std::vec::Vec<Rc<Func>>),
-        Variant10(Rc<Id>),
-        Variant11(Rc<Mod>),
-        Variant12(Rc<ModUnit>),
-        Variant13(::std::vec::Vec<Rc<ModUnit>>),
-        Variant14(Rc<Var>),
+        Variant7(::std::vec::Vec<Box<Expr>>),
+        Variant8(Box<Func>),
+        Variant9(::std::vec::Vec<Box<Func>>),
+        Variant10(Box<Mod>),
+        Variant11(Box<ModUnit>),
+        Variant12(::std::vec::Vec<Box<ModUnit>>),
+        Variant13(Box<Var>),
     }
     const __ACTION: &'static [i8] = &[
         // State 0
-        0, 0, 0, 0, 7, 8, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 7, 8, 0, 0, 0, 0, 0, 0, 0,
         // State 1
-        0, 0, 0, 0, -33, -33, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -35, -35, 0, 0, 0, 0, 0, 0, 0,
         // State 2
-        0, 0, 0, 0, -34, -34, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -36, -36, 0, 0, 0, 0, 0, 0, 0,
         // State 3
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 4
-        0, 0, 0, 0, -37, -37, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -39, -39, 0, 0, 0, 0, 0, 0, 0,
         // State 5
-        0, 0, 0, 0, 7, 8, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 7, 8, 0, 0, 0, 0, 0, 0, 0,
         // State 6
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
         // State 7
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13,
         // State 8
-        0, 0, 0, 0, -38, -38, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -40, -40, 0, 0, 0, 0, 0, 0, 0,
         // State 9
-        0, 0, 0, 0, 0, 8, 17, 18, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 8, 17, 18, 0, 0, 0, 0, 0,
         // State 10
-        0, 0, -39, 0, 0, -39, -39, -39, 0, 0, 0, 0,
+        0, 0, -15, 0, 0, -15, -15, -15, 0, 0, 0, 0, 0,
         // State 11
-        19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 12
-        -29, 0, 0, -29, 0, 0, -29, 0, -29, -29, 0, -29,
+        -41, 0, 0, -41, 0, 0, -41, 0, -41, -41, -41, 0, -41,
         // State 13
-        0, 0, 0, 0, 0, 8, 21, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 8, 21, 0, 0, 0, 0, 0, 0,
         // State 14
-        0, 0, 0, 0, 0, -27, -27, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, -29, -29, 0, 0, 0, 0, 0, 0,
         // State 15
-        0, 0, 0, 0, 0, 8, 23, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 8, 23, 0, 0, 0, 0, 0, 0,
         // State 16
-        0, 0, 0, 0, -9, -9, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -9, -9, 0, 0, 0, 0, 0, 0, 0,
         // State 17
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
         // State 18
-        0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 19
-        0, 0, 0, 0, 0, 8, 26, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 8, 26, 0, 0, 0, 0, 0, 0,
         // State 20
-        0, 0, 0, 0, -7, -7, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -7, -7, 0, 0, 0, 0, 0, 0, 0,
         // State 21
-        0, 0, 0, 0, 0, -28, -28, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, -30, -30, 0, 0, 0, 0, 0, 0,
         // State 22
-        0, 0, 0, 0, -10, -10, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -10, -10, 0, 0, 0, 0, 0, 0, 0,
         // State 23
-        0, 0, 28, 0, 0, -11, -11, 0, 0, 0, 0, 0,
+        0, 0, 28, 0, 0, -11, -11, 0, 0, 0, 0, 0, 0,
         // State 24
-        0, 0, 0, 0, 0, 0, 37, 0, 38, 39, 0, 13,
+        0, 0, 0, 0, 0, 0, 38, 0, 39, 40, 41, 0, 13,
         // State 25
-        0, 0, 0, 0, -8, -8, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -8, -8, 0, 0, 0, 0, 0, 0, 0,
         // State 26
-        0, 0, 40, 0, 0, -12, -12, 0, 0, 0, 0, 0,
+        0, 0, 42, 0, 0, -12, -12, 0, 0, 0, 0, 0, 0,
         // State 27
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
         // State 28
-        0, 0, 0, 0, 0, 0, -17, 0, -17, -17, 0, -17,
+        0, 0, 0, 0, 0, 0, -18, 0, -18, -18, -18, 0, -18,
         // State 29
-        0, 0, 0, 0, 0, 0, -21, 0, -21, -21, 0, -21,
+        0, 0, 0, 0, 0, 0, -23, 0, -23, -23, -23, 0, -23,
         // State 30
-        0, 0, 0, 0, 0, 0, 43, 0, 38, 39, 0, 13,
+        0, 0, 0, 0, 0, 0, 45, 0, 39, 40, 41, 0, 13,
         // State 31
-        44, 0, 0, 0, 0, 0, -42, 0, -42, -42, 0, -42,
+        0, 0, 0, 0, 0, 0, -17, 0, -17, -17, -17, 0, -17,
         // State 32
-        0, 0, 0, 0, 0, 0, -16, 0, -16, -16, 0, -16,
+        0, 0, 0, 0, 0, 0, -20, 0, -20, -20, -20, 0, -20,
         // State 33
-        0, 0, 0, 0, 0, 0, -15, 0, -15, -15, 0, -15,
+        46, 0, 0, 0, 0, 0, -44, 0, -44, -44, -44, 0, -44,
         // State 34
-        0, 0, 0, 0, 0, 0, -18, 0, -18, -18, 0, -18,
+        0, 0, 0, 0, 0, 0, -16, 0, -16, -16, -16, 0, -16,
         // State 35
-        0, 0, 0, 0, 0, 0, -41, 0, -41, -41, 0, -41,
+        0, 0, 0, 0, 0, 0, -19, 0, -19, -19, -19, 0, -19,
         // State 36
-        0, 0, 0, 0, -23, -23, -23, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, -43, 0, -43, -43, -43, 0, -43,
         // State 37
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13,
+        0, 0, 0, 0, -25, -25, -25, 0, 0, 0, 0, 0, 0,
         // State 38
-        0, 0, 0, 0, 0, 0, -40, 0, -40, -40, 0, -40,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13,
         // State 39
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
+        0, 0, 0, 0, 0, 0, -32, 0, -32, -32, -32, 0, -32,
         // State 40
-        0, 0, -4, 0, 0, -4, -4, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, -42, 0, -42, -42, -42, 0, -42,
         // State 41
-        0, 0, 0, 0, 0, 0, -22, 0, -22, -22, 0, -22,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
         // State 42
-        0, 0, 0, 0, -24, -24, -24, 0, 0, 0, 0, 0,
+        0, 0, -4, 0, 0, -4, -4, 0, 0, 0, 0, 0, 0,
         // State 43
-        0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, -24, 0, -24, -24, -24, 0, -24,
         // State 44
-        0, 0, 0, -42, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, -26, -26, -26, 0, 0, 0, 0, 0, 0,
         // State 45
-        0, 0, 0, 49, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 46
-        0, 0, -5, 0, 0, -5, -5, 0, 0, 0, 0, 0,
+        0, 0, 0, -44, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 47
-        0, 0, 0, 0, 0, 0, -30, 0, -30, -30, 0, -30,
+        0, 0, 0, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 48
-        0, 0, 0, 0, 0, 0, 0, 0, 38, 39, 0, 13,
+        0, 0, -5, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0,
         // State 49
-        0, 0, 0, 0, 0, 0, -6, 0, -6, -6, 0, -6,
+        0, 0, 0, 0, 0, 0, -31, 0, -31, -31, -31, 0, -31,
+        // State 50
+        0, 0, 0, 0, 0, 0, 0, 0, 39, 40, 41, 0, 13,
+        // State 51
+        0, 0, 0, 0, 0, 0, -6, 0, -6, -6, -6, 0, -6,
     ];
     const __EOF_ACTION: &'static [i8] = &[
         // State 0
-        -31,
-        // State 1
         -33,
+        // State 1
+        -35,
         // State 2
-        -34,
+        -36,
         // State 3
-        -43,
+        -45,
         // State 4
-        -37,
+        -39,
         // State 5
-        -32,
+        -34,
         // State 6
         0,
         // State 7
         0,
         // State 8
-        -38,
+        -40,
         // State 9
         0,
         // State 10
@@ -211,9 +212,9 @@ mod __parse__Mod {
         // State 35
         0,
         // State 36
-        -23,
-        // State 37
         0,
+        // State 37
+        -25,
         // State 38
         0,
         // State 39
@@ -223,11 +224,11 @@ mod __parse__Mod {
         // State 41
         0,
         // State 42
-        -24,
+        0,
         // State 43
         0,
         // State 44
-        0,
+        -26,
         // State 45
         0,
         // State 46
@@ -237,109 +238,117 @@ mod __parse__Mod {
         // State 48
         0,
         // State 49
+        0,
+        // State 50
+        0,
+        // State 51
         0,
     ];
     const __GOTO: &'static [i8] = &[
         // State 0
-        0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 4, 5, 0, 6, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 4, 5, 0, 6, 0, 0, 0, 0, 0,
         // State 1
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 2
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 3
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 4
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 5
-        0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0,
         // State 6
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 7
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0,
         // State 8
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 9
-        0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 15, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 15, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 10
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 11
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 12
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 13
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 14
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 15
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 16
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 17
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 18
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 19
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 20
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 21
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 22
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 23
-        0, 0, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 24
-        0, 0, 0, 29, 0, 0, 0, 30, 0, 31, 0, 0, 0, 32, 33, 0, 0, 0, 0, 0, 34, 35, 36, 0,
+        0, 0, 0, 29, 0, 0, 0, 0, 30, 0, 31, 0, 0, 0, 32, 33, 0, 0, 0, 0, 34, 35, 36, 37, 0,
         // State 25
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 26
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 27
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 43, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 28
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 29
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 30
-        0, 0, 0, 29, 0, 0, 0, 42, 0, 0, 0, 0, 0, 32, 33, 0, 0, 0, 0, 0, 34, 35, 36, 0,
+        0, 0, 0, 29, 0, 0, 0, 0, 44, 0, 0, 0, 0, 0, 32, 33, 0, 0, 0, 0, 34, 35, 36, 37, 0,
         // State 31
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 32
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 33
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 34
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 35
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 36
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 37
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 0, 0, 0, 46, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 38
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 48, 0,
         // State 39
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 40
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 41
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 42
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 43
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 44
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 45
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 46
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 47
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 48
-        0, 0, 0, 29, 0, 0, 0, 50, 0, 0, 0, 0, 0, 32, 33, 0, 0, 0, 0, 0, 34, 35, 36, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 49
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        // State 50
+        0, 0, 0, 29, 0, 0, 0, 0, 52, 0, 0, 0, 0, 0, 32, 33, 0, 0, 0, 0, 34, 35, 36, 37, 0,
+        // State 51
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
     fn __expected_tokens(__state: usize) -> Vec<::std::string::String> {
         const __TERMINAL: &'static [&'static str] = &[
@@ -352,11 +361,12 @@ mod __parse__Mod {
             r###""end""###,
             r###""extends""###,
             r###""val""###,
+            r###"r#"\"[^\"]*\""#"###,
             r###"r#"[0-9]+"#"###,
             r###"r#"[A-Z][a-zA-Z0-9_]*"#"###,
             r###"r#"[a-z][a-z0-9_]*"#"###,
         ];
-        __ACTION[(__state * 12)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
+        __ACTION[(__state * 13)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
             if state == 0 {
                 None
             } else {
@@ -384,7 +394,7 @@ mod __parse__Mod {
         >(
             &self,
             input: &'input str,
-        ) -> Result<Rc<Mod>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
+        ) -> Result<Box<Mod>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
         {
             let mut __tokens = self.builder.matcher(input);
             let mut __states = vec![0_i8];
@@ -400,18 +410,19 @@ mod __parse__Mod {
                 };
                 *__last_location = __lookahead.2.clone();
                 __integer = match __lookahead.1 {
-                    Token(3, _) if true => 0,
-                    Token(4, _) if true => 1,
-                    Token(5, _) if true => 2,
-                    Token(6, _) if true => 3,
-                    Token(7, _) if true => 4,
-                    Token(8, _) if true => 5,
-                    Token(9, _) if true => 6,
-                    Token(10, _) if true => 7,
-                    Token(11, _) if true => 8,
+                    Token(4, _) if true => 0,
+                    Token(5, _) if true => 1,
+                    Token(6, _) if true => 2,
+                    Token(7, _) if true => 3,
+                    Token(8, _) if true => 4,
+                    Token(9, _) if true => 5,
+                    Token(10, _) if true => 6,
+                    Token(11, _) if true => 7,
+                    Token(12, _) if true => 8,
                     Token(0, _) if true => 9,
                     Token(1, _) if true => 10,
                     Token(2, _) if true => 11,
+                    Token(3, _) if true => 12,
                     _ => {
                         let __state = *__states.last().unwrap() as usize;
                         let __error = __lalrpop_util::ParseError::UnrecognizedToken {
@@ -423,43 +434,43 @@ mod __parse__Mod {
                 };
                 '__inner: loop {
                     let __state = *__states.last().unwrap() as usize;
-                    let __action = __ACTION[__state * 12 + __integer];
+                    let __action = __ACTION[__state * 13 + __integer];
                     if __action > 0 {
                         let __symbol = match __integer {
                             0 => match __lookahead.1 {
-                                Token(3, __tok0) => __Symbol::Variant0((__tok0)),
-                                _ => unreachable!(),
-                            },
-                            1 => match __lookahead.1 {
                                 Token(4, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            2 => match __lookahead.1 {
+                            1 => match __lookahead.1 {
                                 Token(5, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            3 => match __lookahead.1 {
+                            2 => match __lookahead.1 {
                                 Token(6, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            4 => match __lookahead.1 {
+                            3 => match __lookahead.1 {
                                 Token(7, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            5 => match __lookahead.1 {
+                            4 => match __lookahead.1 {
                                 Token(8, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            6 => match __lookahead.1 {
+                            5 => match __lookahead.1 {
                                 Token(9, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            7 => match __lookahead.1 {
+                            6 => match __lookahead.1 {
                                 Token(10, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
-                            8 => match __lookahead.1 {
+                            7 => match __lookahead.1 {
                                 Token(11, __tok0) => __Symbol::Variant0((__tok0)),
+                                _ => unreachable!(),
+                            },
+                            8 => match __lookahead.1 {
+                                Token(12, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
                             9 => match __lookahead.1 {
@@ -472,6 +483,10 @@ mod __parse__Mod {
                             },
                             11 => match __lookahead.1 {
                                 Token(2, __tok0) => __Symbol::Variant0((__tok0)),
+                                _ => unreachable!(),
+                            },
+                            12 => match __lookahead.1 {
+                                Token(3, __tok0) => __Symbol::Variant0((__tok0)),
                                 _ => unreachable!(),
                             },
                             _ => unreachable!(),
@@ -527,7 +542,7 @@ mod __parse__Mod {
         __states: &mut ::std::vec::Vec<i8>,
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
         _: ::std::marker::PhantomData<()>,
-    ) -> Option<Result<Rc<Mod>,__lalrpop_util::ParseError<usize, Token<'input>, &'static str>>>
+    ) -> Option<Result<Box<Mod>,__lalrpop_util::ParseError<usize, Token<'input>, &'static str>>>
     {
         let (__pop_states, __symbol, __nonterminal) = match -__action {
             1 => {
@@ -657,8 +672,14 @@ mod __parse__Mod {
                 __reduce42(input, __action, __lookahead_start, __states, __symbols, ::std::marker::PhantomData::<()>)
             }
             43 => {
+                __reduce43(input, __action, __lookahead_start, __states, __symbols, ::std::marker::PhantomData::<()>)
+            }
+            44 => {
+                __reduce44(input, __action, __lookahead_start, __states, __symbols, ::std::marker::PhantomData::<()>)
+            }
+            45 => {
                 // __Mod = Mod => ActionFn(0);
-                let __sym0 = __pop_Variant11(__symbols);
+                let __sym0 = __pop_Variant10(__symbols);
                 let __start = __sym0.0.clone();
                 let __end = __sym0.2.clone();
                 let __nt = super::__action0::<>(input, __sym0);
@@ -670,7 +691,7 @@ mod __parse__Mod {
         __states.truncate(__states_len - __pop_states);
         __symbols.push(__symbol);
         let __state = *__states.last().unwrap() as usize;
-        let __next_state = __GOTO[__state * 24 + __nonterminal] - 1;
+        let __next_state = __GOTO[__state * 25 + __nonterminal] - 1;
         __states.push(__next_state);
         None
     }
@@ -678,7 +699,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<Class>, usize)
+    ) -> (usize, Box<Class>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant4(__v), __r) => (__l, __v, __r),
@@ -689,7 +710,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<Expr>, usize)
+    ) -> (usize, Box<Expr>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant3(__v), __r) => (__l, __v, __r),
@@ -700,7 +721,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<Func>, usize)
+    ) -> (usize, Box<Func>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant8(__v), __r) => (__l, __v, __r),
@@ -711,7 +732,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<Id>, usize)
+    ) -> (usize, Box<Mod>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant10(__v), __r) => (__l, __v, __r),
@@ -722,32 +743,21 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<Mod>, usize)
+    ) -> (usize, Box<ModUnit>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant11(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
         }
     }
-    fn __pop_Variant12<
+    fn __pop_Variant13<
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<ModUnit>, usize)
+    ) -> (usize, Box<Var>, usize)
      {
         match __symbols.pop().unwrap() {
-            (__l, __Symbol::Variant12(__v), __r) => (__l, __v, __r),
-            _ => panic!("symbol type mismatch")
-        }
-    }
-    fn __pop_Variant14<
-      'input,
-    >(
-        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, Rc<Var>, usize)
-     {
-        match __symbols.pop().unwrap() {
-            (__l, __Symbol::Variant14(__v), __r) => (__l, __v, __r),
+            (__l, __Symbol::Variant13(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
         }
     }
@@ -788,7 +798,7 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Rc<Expr>>, usize)
+    ) -> (usize, ::std::vec::Vec<Box<Expr>>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant7(__v), __r) => (__l, __v, __r),
@@ -799,21 +809,21 @@ mod __parse__Mod {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Rc<Func>>, usize)
+    ) -> (usize, ::std::vec::Vec<Box<Func>>, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant9(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
         }
     }
-    fn __pop_Variant13<
+    fn __pop_Variant12<
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, ::std::vec::Vec<Rc<ModUnit>>, usize)
+    ) -> (usize, ::std::vec::Vec<Box<ModUnit>>, usize)
      {
         match __symbols.pop().unwrap() {
-            (__l, __Symbol::Variant13(__v), __r) => (__l, __v, __r),
+            (__l, __Symbol::Variant12(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
         }
     }
@@ -850,12 +860,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ("," <Name>) = ",", Name => ActionFn(22);
+        // ("," <ClassName>) = ",", ClassName => ActionFn(24);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action22::<>(input, __sym0, __sym1);
+        let __nt = super::__action24::<>(input, __sym0, __sym1);
         let __symbol = (__start, __Symbol::Variant1(__nt), __end);
         (2, __symbol, 0)
     }
@@ -870,10 +880,10 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ("," <Name>)* =  => ActionFn(20);
+        // ("," <ClassName>)* =  => ActionFn(22);
         let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
         let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
-        let __nt = super::__action20::<>(input, &__start, &__end);
+        let __nt = super::__action22::<>(input, &__start, &__end);
         let __symbol = (__start, __Symbol::Variant2(__nt), __end);
         (0, __symbol, 1)
     }
@@ -888,11 +898,11 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ("," <Name>)* = ("," <Name>)+ => ActionFn(21);
+        // ("," <ClassName>)* = ("," <ClassName>)+ => ActionFn(23);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action21::<>(input, __sym0);
+        let __nt = super::__action23::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant2(__nt), __end);
         (1, __symbol, 1)
     }
@@ -907,12 +917,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ("," <Name>)+ = ",", Name => ActionFn(37);
+        // ("," <ClassName>)+ = ",", ClassName => ActionFn(39);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action37::<>(input, __sym0, __sym1);
+        let __nt = super::__action39::<>(input, __sym0, __sym1);
         let __symbol = (__start, __Symbol::Variant2(__nt), __end);
         (2, __symbol, 2)
     }
@@ -927,13 +937,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ("," <Name>)+ = ("," <Name>)+, ",", Name => ActionFn(38);
+        // ("," <ClassName>)+ = ("," <ClassName>)+, ",", ClassName => ActionFn(40);
         let __sym2 = __pop_Variant1(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action38::<>(input, __sym0, __sym1, __sym2);
+        let __nt = super::__action40::<>(input, __sym0, __sym1, __sym2);
         let __symbol = (__start, __Symbol::Variant2(__nt), __end);
         (3, __symbol, 2)
     }
@@ -948,14 +958,14 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Assignment = "val", Var, "=", Expr => ActionFn(11);
+        // Assignment = "val", Var, "=", Expr => ActionFn(14);
         let __sym3 = __pop_Variant3(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
-        let __sym1 = __pop_Variant14(__symbols);
+        let __sym1 = __pop_Variant13(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action11::<>(input, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action14::<>(input, __sym0, __sym1, __sym2, __sym3);
         let __symbol = (__start, __Symbol::Variant3(__nt), __end);
         (4, __symbol, 3)
     }
@@ -970,14 +980,14 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Class = "class", Name, ClassExtend, "end" => ActionFn(45);
+        // Class = "class", ClassName, ClassExtend, "end" => ActionFn(47);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant5(__symbols);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action45::<>(input, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action47::<>(input, __sym0, __sym1, __sym2, __sym3);
         let __symbol = (__start, __Symbol::Variant4(__nt), __end);
         (4, __symbol, 4)
     }
@@ -992,7 +1002,7 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Class = "class", Name, ClassExtend, Func+, "end" => ActionFn(46);
+        // Class = "class", ClassName, ClassExtend, Func+, "end" => ActionFn(48);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant9(__symbols);
         let __sym2 = __pop_Variant5(__symbols);
@@ -1000,7 +1010,7 @@ mod __parse__Mod {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action46::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action48::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4);
         let __symbol = (__start, __Symbol::Variant4(__nt), __end);
         (5, __symbol, 4)
     }
@@ -1015,13 +1025,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Class = "class", Name, "end" => ActionFn(47);
+        // Class = "class", ClassName, "end" => ActionFn(49);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action47::<>(input, __sym0, __sym1, __sym2);
+        let __nt = super::__action49::<>(input, __sym0, __sym1, __sym2);
         let __symbol = (__start, __Symbol::Variant4(__nt), __end);
         (3, __symbol, 4)
     }
@@ -1036,14 +1046,14 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Class = "class", Name, Func+, "end" => ActionFn(48);
+        // Class = "class", ClassName, Func+, "end" => ActionFn(50);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant9(__symbols);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action48::<>(input, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action50::<>(input, __sym0, __sym1, __sym2, __sym3);
         let __symbol = (__start, __Symbol::Variant4(__nt), __end);
         (4, __symbol, 4)
     }
@@ -1058,12 +1068,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ClassExtend = "extends", Name => ActionFn(39);
+        // ClassExtend = "extends", ClassName => ActionFn(41);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action39::<>(input, __sym0, __sym1);
+        let __nt = super::__action41::<>(input, __sym0, __sym1);
         let __symbol = (__start, __Symbol::Variant5(__nt), __end);
         (2, __symbol, 5)
     }
@@ -1078,13 +1088,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ClassExtend = "extends", Name, ("," <Name>)+ => ActionFn(40);
+        // ClassExtend = "extends", ClassName, ("," <ClassName>)+ => ActionFn(42);
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant1(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action40::<>(input, __sym0, __sym1, __sym2);
+        let __nt = super::__action42::<>(input, __sym0, __sym1, __sym2);
         let __symbol = (__start, __Symbol::Variant5(__nt), __end);
         (3, __symbol, 5)
     }
@@ -1099,11 +1109,11 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ClassExtend? = ClassExtend => ActionFn(25);
+        // ClassExtend? = ClassExtend => ActionFn(27);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action25::<>(input, __sym0);
+        let __nt = super::__action27::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant6(__nt), __end);
         (1, __symbol, 6)
     }
@@ -1118,10 +1128,10 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ClassExtend? =  => ActionFn(26);
+        // ClassExtend? =  => ActionFn(28);
         let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
         let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
-        let __nt = super::__action26::<>(input, &__start, &__end);
+        let __nt = super::__action28::<>(input, &__start, &__end);
         let __symbol = (__start, __Symbol::Variant6(__nt), __end);
         (0, __symbol, 6)
     }
@@ -1136,12 +1146,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr = Num => ActionFn(7);
-        let __sym0 = __pop_Variant3(__symbols);
+        // ClassName = r#"[A-Z][a-zA-Z0-9_]*"# => ActionFn(6);
+        let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action7::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
+        let __nt = super::__action6::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant1(__nt), __end);
         (1, __symbol, 7)
     }
     pub(crate) fn __reduce16<
@@ -1155,13 +1165,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr = Invoke => ActionFn(8);
+        // Expr = Num => ActionFn(8);
         let __sym0 = __pop_Variant3(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action8::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant3(__nt), __end);
-        (1, __symbol, 7)
+        (1, __symbol, 8)
     }
     pub(crate) fn __reduce17<
         'input,
@@ -1174,13 +1184,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr = Assignment => ActionFn(9);
+        // Expr = Invoke => ActionFn(9);
         let __sym0 = __pop_Variant3(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action9::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant3(__nt), __end);
-        (1, __symbol, 7)
+        (1, __symbol, 8)
     }
     pub(crate) fn __reduce18<
         'input,
@@ -1193,13 +1203,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr = ReadVar => ActionFn(10);
+        // Expr = Assignment => ActionFn(10);
         let __sym0 = __pop_Variant3(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action10::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant3(__nt), __end);
-        (1, __symbol, 7)
+        (1, __symbol, 8)
     }
     pub(crate) fn __reduce19<
         'input,
@@ -1212,12 +1222,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr* =  => ActionFn(18);
-        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
-        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
-        let __nt = super::__action18::<>(input, &__start, &__end);
-        let __symbol = (__start, __Symbol::Variant7(__nt), __end);
-        (0, __symbol, 8)
+        // Expr = ReadVar => ActionFn(11);
+        let __sym0 = __pop_Variant3(__symbols);
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
+        let __nt = super::__action11::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
+        (1, __symbol, 8)
     }
     pub(crate) fn __reduce20<
         'input,
@@ -1230,12 +1241,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr* = Expr+ => ActionFn(19);
-        let __sym0 = __pop_Variant7(__symbols);
+        // Expr = LiteralString => ActionFn(12);
+        let __sym0 = __pop_Variant3(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action19::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant7(__nt), __end);
+        let __nt = super::__action12::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
         (1, __symbol, 8)
     }
     pub(crate) fn __reduce21<
@@ -1249,13 +1260,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr+ = Expr => ActionFn(35);
-        let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0.clone();
-        let __end = __sym0.2.clone();
-        let __nt = super::__action35::<>(input, __sym0);
+        // Expr* =  => ActionFn(20);
+        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
+        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
+        let __nt = super::__action20::<>(input, &__start, &__end);
         let __symbol = (__start, __Symbol::Variant7(__nt), __end);
-        (1, __symbol, 9)
+        (0, __symbol, 9)
     }
     pub(crate) fn __reduce22<
         'input,
@@ -1268,14 +1278,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Expr+ = Expr+, Expr => ActionFn(36);
-        let __sym1 = __pop_Variant3(__symbols);
+        // Expr* = Expr+ => ActionFn(21);
         let __sym0 = __pop_Variant7(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym1.2.clone();
-        let __nt = super::__action36::<>(input, __sym0, __sym1);
+        let __end = __sym0.2.clone();
+        let __nt = super::__action21::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant7(__nt), __end);
-        (2, __symbol, 9)
+        (1, __symbol, 9)
     }
     pub(crate) fn __reduce23<
         'input,
@@ -1288,17 +1297,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Func = "def", Id, "(", ")", "end" => ActionFn(43);
-        let __sym4 = __pop_Variant0(__symbols);
-        let __sym3 = __pop_Variant0(__symbols);
-        let __sym2 = __pop_Variant0(__symbols);
-        let __sym1 = __pop_Variant10(__symbols);
-        let __sym0 = __pop_Variant0(__symbols);
+        // Expr+ = Expr => ActionFn(37);
+        let __sym0 = __pop_Variant3(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym4.2.clone();
-        let __nt = super::__action43::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4);
-        let __symbol = (__start, __Symbol::Variant8(__nt), __end);
-        (5, __symbol, 10)
+        let __end = __sym0.2.clone();
+        let __nt = super::__action37::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant7(__nt), __end);
+        (1, __symbol, 10)
     }
     pub(crate) fn __reduce24<
         'input,
@@ -1311,18 +1316,14 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Func = "def", Id, "(", ")", Expr+, "end" => ActionFn(44);
-        let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant7(__symbols);
-        let __sym3 = __pop_Variant0(__symbols);
-        let __sym2 = __pop_Variant0(__symbols);
-        let __sym1 = __pop_Variant10(__symbols);
-        let __sym0 = __pop_Variant0(__symbols);
+        // Expr+ = Expr+, Expr => ActionFn(38);
+        let __sym1 = __pop_Variant3(__symbols);
+        let __sym0 = __pop_Variant7(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym5.2.clone();
-        let __nt = super::__action44::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
-        let __symbol = (__start, __Symbol::Variant8(__nt), __end);
-        (6, __symbol, 10)
+        let __end = __sym1.2.clone();
+        let __nt = super::__action38::<>(input, __sym0, __sym1);
+        let __symbol = (__start, __Symbol::Variant7(__nt), __end);
+        (2, __symbol, 10)
     }
     pub(crate) fn __reduce25<
         'input,
@@ -1335,12 +1336,17 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Func* =  => ActionFn(23);
-        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
-        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
-        let __nt = super::__action23::<>(input, &__start, &__end);
-        let __symbol = (__start, __Symbol::Variant9(__nt), __end);
-        (0, __symbol, 11)
+        // Func = "def", Name, "(", ")", "end" => ActionFn(45);
+        let __sym4 = __pop_Variant0(__symbols);
+        let __sym3 = __pop_Variant0(__symbols);
+        let __sym2 = __pop_Variant0(__symbols);
+        let __sym1 = __pop_Variant1(__symbols);
+        let __sym0 = __pop_Variant0(__symbols);
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
+        let __nt = super::__action45::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __symbol = (__start, __Symbol::Variant8(__nt), __end);
+        (5, __symbol, 11)
     }
     pub(crate) fn __reduce26<
         'input,
@@ -1353,13 +1359,18 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Func* = Func+ => ActionFn(24);
-        let __sym0 = __pop_Variant9(__symbols);
+        // Func = "def", Name, "(", ")", Expr+, "end" => ActionFn(46);
+        let __sym5 = __pop_Variant0(__symbols);
+        let __sym4 = __pop_Variant7(__symbols);
+        let __sym3 = __pop_Variant0(__symbols);
+        let __sym2 = __pop_Variant0(__symbols);
+        let __sym1 = __pop_Variant1(__symbols);
+        let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym0.2.clone();
-        let __nt = super::__action24::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant9(__nt), __end);
-        (1, __symbol, 11)
+        let __end = __sym5.2.clone();
+        let __nt = super::__action46::<>(input, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __symbol = (__start, __Symbol::Variant8(__nt), __end);
+        (6, __symbol, 11)
     }
     pub(crate) fn __reduce27<
         'input,
@@ -1372,13 +1383,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Func+ = Func => ActionFn(31);
-        let __sym0 = __pop_Variant8(__symbols);
-        let __start = __sym0.0.clone();
-        let __end = __sym0.2.clone();
-        let __nt = super::__action31::<>(input, __sym0);
+        // Func* =  => ActionFn(25);
+        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
+        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
+        let __nt = super::__action25::<>(input, &__start, &__end);
         let __symbol = (__start, __Symbol::Variant9(__nt), __end);
-        (1, __symbol, 12)
+        (0, __symbol, 12)
     }
     pub(crate) fn __reduce28<
         'input,
@@ -1391,14 +1401,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Func+ = Func+, Func => ActionFn(32);
-        let __sym1 = __pop_Variant8(__symbols);
+        // Func* = Func+ => ActionFn(26);
         let __sym0 = __pop_Variant9(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym1.2.clone();
-        let __nt = super::__action32::<>(input, __sym0, __sym1);
+        let __end = __sym0.2.clone();
+        let __nt = super::__action26::<>(input, __sym0);
         let __symbol = (__start, __Symbol::Variant9(__nt), __end);
-        (2, __symbol, 12)
+        (1, __symbol, 12)
     }
     pub(crate) fn __reduce29<
         'input,
@@ -1411,12 +1420,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Id = r#"[a-z][a-z0-9_]*"# => ActionFn(15);
-        let __sym0 = __pop_Variant0(__symbols);
+        // Func+ = Func => ActionFn(33);
+        let __sym0 = __pop_Variant8(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action15::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant10(__nt), __end);
+        let __nt = super::__action33::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant9(__nt), __end);
         (1, __symbol, 13)
     }
     pub(crate) fn __reduce30<
@@ -1430,15 +1439,14 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Invoke = Id, "(", ")" => ActionFn(12);
-        let __sym2 = __pop_Variant0(__symbols);
-        let __sym1 = __pop_Variant0(__symbols);
-        let __sym0 = __pop_Variant10(__symbols);
+        // Func+ = Func+, Func => ActionFn(34);
+        let __sym1 = __pop_Variant8(__symbols);
+        let __sym0 = __pop_Variant9(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym2.2.clone();
-        let __nt = super::__action12::<>(input, __sym0, __sym1, __sym2);
-        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
-        (3, __symbol, 14)
+        let __end = __sym1.2.clone();
+        let __nt = super::__action34::<>(input, __sym0, __sym1);
+        let __symbol = (__start, __Symbol::Variant9(__nt), __end);
+        (2, __symbol, 13)
     }
     pub(crate) fn __reduce31<
         'input,
@@ -1451,12 +1459,15 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Mod =  => ActionFn(49);
-        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
-        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
-        let __nt = super::__action49::<>(input, &__start, &__end);
-        let __symbol = (__start, __Symbol::Variant11(__nt), __end);
-        (0, __symbol, 15)
+        // Invoke = Name, "(", ")" => ActionFn(15);
+        let __sym2 = __pop_Variant0(__symbols);
+        let __sym1 = __pop_Variant0(__symbols);
+        let __sym0 = __pop_Variant1(__symbols);
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
+        let __nt = super::__action15::<>(input, __sym0, __sym1, __sym2);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
+        (3, __symbol, 14)
     }
     pub(crate) fn __reduce32<
         'input,
@@ -1469,15 +1480,52 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Mod = ModUnit+ => ActionFn(50);
-        let __sym0 = __pop_Variant13(__symbols);
+        // LiteralString = r#"\"[^\"]*\""# => ActionFn(13);
+        let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action50::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant11(__nt), __end);
+        let __nt = super::__action13::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
         (1, __symbol, 15)
     }
     pub(crate) fn __reduce33<
+        'input,
+    >(
+        input: &'input str,
+        __action: i8,
+        __lookahead_start: Option<&usize>,
+        __states: &mut ::std::vec::Vec<i8>,
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
+        _: ::std::marker::PhantomData<()>,
+    ) -> (usize, (usize,__Symbol<'input>,usize), usize)
+    {
+        // Mod =  => ActionFn(51);
+        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
+        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
+        let __nt = super::__action51::<>(input, &__start, &__end);
+        let __symbol = (__start, __Symbol::Variant10(__nt), __end);
+        (0, __symbol, 16)
+    }
+    pub(crate) fn __reduce34<
+        'input,
+    >(
+        input: &'input str,
+        __action: i8,
+        __lookahead_start: Option<&usize>,
+        __states: &mut ::std::vec::Vec<i8>,
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
+        _: ::std::marker::PhantomData<()>,
+    ) -> (usize, (usize,__Symbol<'input>,usize), usize)
+    {
+        // Mod = ModUnit+ => ActionFn(52);
+        let __sym0 = __pop_Variant12(__symbols);
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
+        let __nt = super::__action52::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant10(__nt), __end);
+        (1, __symbol, 16)
+    }
+    pub(crate) fn __reduce35<
         'input,
     >(
         input: &'input str,
@@ -1493,10 +1541,10 @@ mod __parse__Mod {
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action2::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant12(__nt), __end);
-        (1, __symbol, 16)
+        let __symbol = (__start, __Symbol::Variant11(__nt), __end);
+        (1, __symbol, 17)
     }
-    pub(crate) fn __reduce34<
+    pub(crate) fn __reduce36<
         'input,
     >(
         input: &'input str,
@@ -1512,44 +1560,7 @@ mod __parse__Mod {
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
         let __nt = super::__action3::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant12(__nt), __end);
-        (1, __symbol, 16)
-    }
-    pub(crate) fn __reduce35<
-        'input,
-    >(
-        input: &'input str,
-        __action: i8,
-        __lookahead_start: Option<&usize>,
-        __states: &mut ::std::vec::Vec<i8>,
-        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
-        _: ::std::marker::PhantomData<()>,
-    ) -> (usize, (usize,__Symbol<'input>,usize), usize)
-    {
-        // ModUnit* =  => ActionFn(27);
-        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
-        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
-        let __nt = super::__action27::<>(input, &__start, &__end);
-        let __symbol = (__start, __Symbol::Variant13(__nt), __end);
-        (0, __symbol, 17)
-    }
-    pub(crate) fn __reduce36<
-        'input,
-    >(
-        input: &'input str,
-        __action: i8,
-        __lookahead_start: Option<&usize>,
-        __states: &mut ::std::vec::Vec<i8>,
-        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
-        _: ::std::marker::PhantomData<()>,
-    ) -> (usize, (usize,__Symbol<'input>,usize), usize)
-    {
-        // ModUnit* = ModUnit+ => ActionFn(28);
-        let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0.clone();
-        let __end = __sym0.2.clone();
-        let __nt = super::__action28::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant13(__nt), __end);
+        let __symbol = (__start, __Symbol::Variant11(__nt), __end);
         (1, __symbol, 17)
     }
     pub(crate) fn __reduce37<
@@ -1563,13 +1574,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ModUnit+ = ModUnit => ActionFn(29);
-        let __sym0 = __pop_Variant12(__symbols);
-        let __start = __sym0.0.clone();
-        let __end = __sym0.2.clone();
-        let __nt = super::__action29::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant13(__nt), __end);
-        (1, __symbol, 18)
+        // ModUnit* =  => ActionFn(29);
+        let __start = __symbols.last().map(|s| s.2.clone()).unwrap_or_default();
+        let __end = __lookahead_start.cloned().unwrap_or_else(|| __start.clone());
+        let __nt = super::__action29::<>(input, &__start, &__end);
+        let __symbol = (__start, __Symbol::Variant12(__nt), __end);
+        (0, __symbol, 18)
     }
     pub(crate) fn __reduce38<
         'input,
@@ -1582,14 +1592,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ModUnit+ = ModUnit+, ModUnit => ActionFn(30);
-        let __sym1 = __pop_Variant12(__symbols);
-        let __sym0 = __pop_Variant13(__symbols);
+        // ModUnit* = ModUnit+ => ActionFn(30);
+        let __sym0 = __pop_Variant12(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym1.2.clone();
-        let __nt = super::__action30::<>(input, __sym0, __sym1);
-        let __symbol = (__start, __Symbol::Variant13(__nt), __end);
-        (2, __symbol, 18)
+        let __end = __sym0.2.clone();
+        let __nt = super::__action30::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant12(__nt), __end);
+        (1, __symbol, 18)
     }
     pub(crate) fn __reduce39<
         'input,
@@ -1602,12 +1611,12 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Name = r#"[A-Z][a-zA-Z0-9_]*"# => ActionFn(16);
-        let __sym0 = __pop_Variant0(__symbols);
+        // ModUnit+ = ModUnit => ActionFn(31);
+        let __sym0 = __pop_Variant11(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action16::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant1(__nt), __end);
+        let __nt = super::__action31::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant12(__nt), __end);
         (1, __symbol, 19)
     }
     pub(crate) fn __reduce40<
@@ -1621,13 +1630,14 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Num = r#"[0-9]+"# => ActionFn(17);
-        let __sym0 = __pop_Variant0(__symbols);
+        // ModUnit+ = ModUnit+, ModUnit => ActionFn(32);
+        let __sym1 = __pop_Variant11(__symbols);
+        let __sym0 = __pop_Variant12(__symbols);
         let __start = __sym0.0.clone();
-        let __end = __sym0.2.clone();
-        let __nt = super::__action17::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
-        (1, __symbol, 20)
+        let __end = __sym1.2.clone();
+        let __nt = super::__action32::<>(input, __sym0, __sym1);
+        let __symbol = (__start, __Symbol::Variant12(__nt), __end);
+        (2, __symbol, 19)
     }
     pub(crate) fn __reduce41<
         'input,
@@ -1640,13 +1650,13 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // ReadVar = Var => ActionFn(13);
-        let __sym0 = __pop_Variant14(__symbols);
+        // Name = r#"[a-z][a-z0-9_]*"# => ActionFn(18);
+        let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action13::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
-        (1, __symbol, 21)
+        let __nt = super::__action18::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant1(__nt), __end);
+        (1, __symbol, 20)
     }
     pub(crate) fn __reduce42<
         'input,
@@ -1659,13 +1669,51 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Var = Id => ActionFn(14);
-        let __sym0 = __pop_Variant10(__symbols);
+        // Num = r#"[0-9]+"# => ActionFn(19);
+        let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action14::<>(input, __sym0);
-        let __symbol = (__start, __Symbol::Variant14(__nt), __end);
+        let __nt = super::__action19::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
+        (1, __symbol, 21)
+    }
+    pub(crate) fn __reduce43<
+        'input,
+    >(
+        input: &'input str,
+        __action: i8,
+        __lookahead_start: Option<&usize>,
+        __states: &mut ::std::vec::Vec<i8>,
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
+        _: ::std::marker::PhantomData<()>,
+    ) -> (usize, (usize,__Symbol<'input>,usize), usize)
+    {
+        // ReadVar = Var => ActionFn(16);
+        let __sym0 = __pop_Variant13(__symbols);
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
+        let __nt = super::__action16::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant3(__nt), __end);
         (1, __symbol, 22)
+    }
+    pub(crate) fn __reduce44<
+        'input,
+    >(
+        input: &'input str,
+        __action: i8,
+        __lookahead_start: Option<&usize>,
+        __states: &mut ::std::vec::Vec<i8>,
+        __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>,
+        _: ::std::marker::PhantomData<()>,
+    ) -> (usize, (usize,__Symbol<'input>,usize), usize)
+    {
+        // Var = Name => ActionFn(17);
+        let __sym0 = __pop_Variant1(__symbols);
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
+        let __nt = super::__action17::<>(input, __sym0);
+        let __symbol = (__start, __Symbol::Variant13(__nt), __end);
+        (1, __symbol, 23)
     }
 }
 pub use self::__parse__Mod::ModParser;
@@ -1673,8 +1721,7 @@ pub use self::__parse__Mod::ModParser;
 mod __intern_token {
     #![allow(unused_imports)]
     use std::str::FromStr;
-    use std::rc::Rc;
-    use ast::*;
+    use syntax::tree::*;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     extern crate regex as __regex;
@@ -1696,6 +1743,7 @@ mod __intern_token {
     impl __MatcherBuilder {
         pub fn new() -> __MatcherBuilder {
             let __strs: &[&str] = &[
+                "^((?u:\")(?u:[\u{0}-!\\#-\u{10ffff}])*(?u:\"))",
                 "^((?u:[0-9])+)",
                 "^((?u:[A-Z])(?u:[0-9A-Z_-_a-z])*)",
                 "^((?u:[a-z])(?u:[0-9_-_a-z])*)",
@@ -1711,6 +1759,7 @@ mod __intern_token {
             ];
             let __regex_set = __regex::RegexSet::new(__strs).unwrap();
             let __regex_vec = vec![
+                __regex::Regex::new("^((?u:\")(?u:[\u{0}-!\\#-\u{10ffff}])*(?u:\"))").unwrap(),
                 __regex::Regex::new("^((?u:[0-9])+)").unwrap(),
                 __regex::Regex::new("^((?u:[A-Z])(?u:[0-9A-Z_-_a-z])*)").unwrap(),
                 __regex::Regex::new("^((?u:[a-z])(?u:[0-9_-_a-z])*)").unwrap(),
@@ -1763,7 +1812,7 @@ mod __intern_token {
                 } else {
                     let mut __longest_match = 0;
                     let mut __index = 0;
-                    for __i in 0 .. 12 {
+                    for __i in 0 .. 13 {
                         if __matches.matched(__i) {
                             let __match = self.regex_vec[__i].find(__text).unwrap();
                             let __len = __match.end();
@@ -1791,8 +1840,8 @@ fn __action0<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Mod>, usize),
-) -> Rc<Mod>
+    (_, __0, _): (usize, Box<Mod>, usize),
+) -> Box<Mod>
 {
     (__0)
 }
@@ -1802,10 +1851,10 @@ fn __action1<
     'input,
 >(
     input: &'input str,
-    (_, u, _): (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
-) -> Rc<Mod>
+    (_, u, _): (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
+) -> Box<Mod>
 {
-    Rc::new(Mod { units:u })
+    Box::new(Mod { units:u })
 }
 
 #[allow(unused_variables)]
@@ -1813,10 +1862,10 @@ fn __action2<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Class>, usize),
-) -> Rc<ModUnit>
+    (_, __0, _): (usize, Box<Class>, usize),
+) -> Box<ModUnit>
 {
-    Rc::new(ModUnit::Class(__0))
+    Box::new(ModUnit::Class(__0))
 }
 
 #[allow(unused_variables)]
@@ -1824,10 +1873,10 @@ fn __action3<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Func>, usize),
-) -> Rc<ModUnit>
+    (_, __0, _): (usize, Box<Func>, usize),
+) -> Box<ModUnit>
 {
-    Rc::new(ModUnit::Func(__0))
+    Box::new(ModUnit::Func(__0))
 }
 
 #[allow(unused_variables)]
@@ -1838,11 +1887,11 @@ fn __action4<
     (_, _, _): (usize, &'input str, usize),
     (_, n, _): (usize, String, usize),
     (_, e, _): (usize, ::std::option::Option<Vec<String>>, usize),
-    (_, m, _): (usize, ::std::vec::Vec<Rc<Func>>, usize),
+    (_, m, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
     (_, _, _): (usize, &'input str, usize),
-) -> Rc<Class>
+) -> Box<Class>
 {
-    Rc::new(Class {
+    Box::new(Class {
     name:n,
     extends: match e {
     	None => vec![],
@@ -1874,15 +1923,10 @@ fn __action6<
     'input,
 >(
     input: &'input str,
-    (_, _, _): (usize, &'input str, usize),
-    (_, id, _): (usize, Rc<Id>, usize),
-    (_, _, _): (usize, &'input str, usize),
-    (_, _, _): (usize, &'input str, usize),
-    (_, exprs, _): (usize, ::std::vec::Vec<Rc<Expr>>, usize),
-    (_, _, _): (usize, &'input str, usize),
-) -> Rc<Func>
+    (_, __0, _): (usize, &'input str, usize),
+) -> String
 {
-    Rc::new(Func { id:id, exprs:exprs })
+    String::from(__0)
 }
 
 #[allow(unused_variables)]
@@ -1890,10 +1934,15 @@ fn __action7<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Expr>, usize),
-) -> Rc<Expr>
+    (_, _, _): (usize, &'input str, usize),
+    (_, name, _): (usize, String, usize),
+    (_, _, _): (usize, &'input str, usize),
+    (_, _, _): (usize, &'input str, usize),
+    (_, exprs, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
+    (_, _, _): (usize, &'input str, usize),
+) -> Box<Func>
 {
-    (__0)
+    Box::new(Func { name:name, exprs:exprs })
 }
 
 #[allow(unused_variables)]
@@ -1901,8 +1950,8 @@ fn __action8<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Expr>, usize),
-) -> Rc<Expr>
+    (_, __0, _): (usize, Box<Expr>, usize),
+) -> Box<Expr>
 {
     (__0)
 }
@@ -1912,8 +1961,8 @@ fn __action9<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Expr>, usize),
-) -> Rc<Expr>
+    (_, __0, _): (usize, Box<Expr>, usize),
+) -> Box<Expr>
 {
     (__0)
 }
@@ -1923,8 +1972,8 @@ fn __action10<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Expr>, usize),
-) -> Rc<Expr>
+    (_, __0, _): (usize, Box<Expr>, usize),
+) -> Box<Expr>
 {
     (__0)
 }
@@ -1934,13 +1983,10 @@ fn __action11<
     'input,
 >(
     input: &'input str,
-    (_, _, _): (usize, &'input str, usize),
-    (_, var, _): (usize, Rc<Var>, usize),
-    (_, _, _): (usize, &'input str, usize),
-    (_, expr, _): (usize, Rc<Expr>, usize),
-) -> Rc<Expr>
+    (_, __0, _): (usize, Box<Expr>, usize),
+) -> Box<Expr>
 {
-    Rc::new(Expr::Assignment(Rc::new(Assignment { var, expr })))
+    (__0)
 }
 
 #[allow(unused_variables)]
@@ -1948,12 +1994,10 @@ fn __action12<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Id>, usize),
-    (_, _, _): (usize, &'input str, usize),
-    (_, _, _): (usize, &'input str, usize),
-) -> Rc<Expr>
+    (_, __0, _): (usize, Box<Expr>, usize),
+) -> Box<Expr>
 {
-    Rc::new(Expr::Invoke(Rc::new(Invoke { id: __0 })))
+    (__0)
 }
 
 #[allow(unused_variables)]
@@ -1961,10 +2005,14 @@ fn __action13<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Var>, usize),
-) -> Rc<Expr>
+    (_, __0, _): (usize, &'input str, usize),
+) -> Box<Expr>
 {
-    Rc::new(Expr::Var(__0))
+    {
+    let s = String::from(__0);
+    let len = s.len();
+    Box::new(Expr::LiteralString(Box::new(LiteralString { content: String::from(&s[1..len-1]) })))
+  }
 }
 
 #[allow(unused_variables)]
@@ -1972,10 +2020,13 @@ fn __action14<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Id>, usize),
-) -> Rc<Var>
+    (_, _, _): (usize, &'input str, usize),
+    (_, var, _): (usize, Box<Var>, usize),
+    (_, _, _): (usize, &'input str, usize),
+    (_, expr, _): (usize, Box<Expr>, usize),
+) -> Box<Expr>
 {
-    Rc::new(Var { id: __0 })
+    Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
 }
 
 #[allow(unused_variables)]
@@ -1983,14 +2034,38 @@ fn __action15<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, &'input str, usize),
-) -> Rc<Id>
+    (_, __0, _): (usize, String, usize),
+    (_, _, _): (usize, &'input str, usize),
+    (_, _, _): (usize, &'input str, usize),
+) -> Box<Expr>
 {
-    Rc::new(Id { name: String::from(__0) })
+    Box::new(Expr::Invoke(Box::new(Invoke { name: __0 })))
 }
 
 #[allow(unused_variables)]
 fn __action16<
+    'input,
+>(
+    input: &'input str,
+    (_, __0, _): (usize, Box<Var>, usize),
+) -> Box<Expr>
+{
+    Box::new(Expr::Var(__0))
+}
+
+#[allow(unused_variables)]
+fn __action17<
+    'input,
+>(
+    input: &'input str,
+    (_, __0, _): (usize, String, usize),
+) -> Box<Var>
+{
+    Box::new(Var { name: __0 })
+}
+
+#[allow(unused_variables)]
+fn __action18<
     'input,
 >(
     input: &'input str,
@@ -2001,41 +2076,41 @@ fn __action16<
 }
 
 #[allow(unused_variables)]
-fn __action17<
+fn __action19<
     'input,
 >(
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> Rc<Expr>
+) -> Box<Expr>
 {
-    Rc::new(Expr::Num(Rc::new(Num { value: i32::from_str(__0).unwrap() })))
+    Box::new(Expr::Num(Box::new(Num { value: i32::from_str(__0).unwrap() })))
 }
 
 #[allow(unused_variables)]
-fn __action18<
+fn __action20<
     'input,
 >(
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Rc<Expr>>
+) -> ::std::vec::Vec<Box<Expr>>
 {
     vec![]
 }
 
 #[allow(unused_variables)]
-fn __action19<
+fn __action21<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Rc<Expr>>, usize),
-) -> ::std::vec::Vec<Rc<Expr>>
+    (_, v, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
+) -> ::std::vec::Vec<Box<Expr>>
 {
     v
 }
 
 #[allow(unused_variables)]
-fn __action20<
+fn __action22<
     'input,
 >(
     input: &'input str,
@@ -2047,7 +2122,7 @@ fn __action20<
 }
 
 #[allow(unused_variables)]
-fn __action21<
+fn __action23<
     'input,
 >(
     input: &'input str,
@@ -2058,7 +2133,7 @@ fn __action21<
 }
 
 #[allow(unused_variables)]
-fn __action22<
+fn __action24<
     'input,
 >(
     input: &'input str,
@@ -2070,30 +2145,30 @@ fn __action22<
 }
 
 #[allow(unused_variables)]
-fn __action23<
+fn __action25<
     'input,
 >(
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Rc<Func>>
+) -> ::std::vec::Vec<Box<Func>>
 {
     vec![]
 }
 
 #[allow(unused_variables)]
-fn __action24<
+fn __action26<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Rc<Func>>, usize),
-) -> ::std::vec::Vec<Rc<Func>>
+    (_, v, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
+) -> ::std::vec::Vec<Box<Func>>
 {
     v
 }
 
 #[allow(unused_variables)]
-fn __action25<
+fn __action27<
     'input,
 >(
     input: &'input str,
@@ -2104,7 +2179,7 @@ fn __action25<
 }
 
 #[allow(unused_variables)]
-fn __action26<
+fn __action28<
     'input,
 >(
     input: &'input str,
@@ -2116,37 +2191,15 @@ fn __action26<
 }
 
 #[allow(unused_variables)]
-fn __action27<
+fn __action29<
     'input,
 >(
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> ::std::vec::Vec<Rc<ModUnit>>
+) -> ::std::vec::Vec<Box<ModUnit>>
 {
     vec![]
-}
-
-#[allow(unused_variables)]
-fn __action28<
-    'input,
->(
-    input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
-) -> ::std::vec::Vec<Rc<ModUnit>>
-{
-    v
-}
-
-#[allow(unused_variables)]
-fn __action29<
-    'input,
->(
-    input: &'input str,
-    (_, __0, _): (usize, Rc<ModUnit>, usize),
-) -> ::std::vec::Vec<Rc<ModUnit>>
-{
-    vec![__0]
 }
 
 #[allow(unused_variables)]
@@ -2154,11 +2207,10 @@ fn __action30<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
-    (_, e, _): (usize, Rc<ModUnit>, usize),
-) -> ::std::vec::Vec<Rc<ModUnit>>
+    (_, v, _): (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
+) -> ::std::vec::Vec<Box<ModUnit>>
 {
-    { let mut v = v; v.push(e); v }
+    v
 }
 
 #[allow(unused_variables)]
@@ -2166,8 +2218,8 @@ fn __action31<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Func>, usize),
-) -> ::std::vec::Vec<Rc<Func>>
+    (_, __0, _): (usize, Box<ModUnit>, usize),
+) -> ::std::vec::Vec<Box<ModUnit>>
 {
     vec![__0]
 }
@@ -2177,15 +2229,38 @@ fn __action32<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Rc<Func>>, usize),
-    (_, e, _): (usize, Rc<Func>, usize),
-) -> ::std::vec::Vec<Rc<Func>>
+    (_, v, _): (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
+    (_, e, _): (usize, Box<ModUnit>, usize),
+) -> ::std::vec::Vec<Box<ModUnit>>
 {
     { let mut v = v; v.push(e); v }
 }
 
 #[allow(unused_variables)]
 fn __action33<
+    'input,
+>(
+    input: &'input str,
+    (_, __0, _): (usize, Box<Func>, usize),
+) -> ::std::vec::Vec<Box<Func>>
+{
+    vec![__0]
+}
+
+#[allow(unused_variables)]
+fn __action34<
+    'input,
+>(
+    input: &'input str,
+    (_, v, _): (usize, ::std::vec::Vec<Box<Func>>, usize),
+    (_, e, _): (usize, Box<Func>, usize),
+) -> ::std::vec::Vec<Box<Func>>
+{
+    { let mut v = v; v.push(e); v }
+}
+
+#[allow(unused_variables)]
+fn __action35<
     'input,
 >(
     input: &'input str,
@@ -2196,7 +2271,7 @@ fn __action33<
 }
 
 #[allow(unused_variables)]
-fn __action34<
+fn __action36<
     'input,
 >(
     input: &'input str,
@@ -2208,30 +2283,30 @@ fn __action34<
 }
 
 #[allow(unused_variables)]
-fn __action35<
+fn __action37<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, Rc<Expr>, usize),
-) -> ::std::vec::Vec<Rc<Expr>>
+    (_, __0, _): (usize, Box<Expr>, usize),
+) -> ::std::vec::Vec<Box<Expr>>
 {
     vec![__0]
 }
 
 #[allow(unused_variables)]
-fn __action36<
+fn __action38<
     'input,
 >(
     input: &'input str,
-    (_, v, _): (usize, ::std::vec::Vec<Rc<Expr>>, usize),
-    (_, e, _): (usize, Rc<Expr>, usize),
-) -> ::std::vec::Vec<Rc<Expr>>
+    (_, v, _): (usize, ::std::vec::Vec<Box<Expr>>, usize),
+    (_, e, _): (usize, Box<Expr>, usize),
+) -> ::std::vec::Vec<Box<Expr>>
 {
     { let mut v = v; v.push(e); v }
 }
 
 #[allow(unused_variables)]
-fn __action37<
+fn __action39<
     'input,
 >(
     input: &'input str,
@@ -2241,20 +2316,20 @@ fn __action37<
 {
     let __start0 = __0.0.clone();
     let __end0 = __1.2.clone();
-    let __temp0 = __action22(
+    let __temp0 = __action24(
         input,
         __0,
         __1,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action33(
+    __action35(
         input,
         __temp0,
     )
 }
 
 #[allow(unused_variables)]
-fn __action38<
+fn __action40<
     'input,
 >(
     input: &'input str,
@@ -2265,65 +2340,15 @@ fn __action38<
 {
     let __start0 = __1.0.clone();
     let __end0 = __2.2.clone();
-    let __temp0 = __action22(
+    let __temp0 = __action24(
         input,
         __1,
         __2,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action34(
+    __action36(
         input,
         __0,
-        __temp0,
-    )
-}
-
-#[allow(unused_variables)]
-fn __action39<
-    'input,
->(
-    input: &'input str,
-    __0: (usize, &'input str, usize),
-    __1: (usize, String, usize),
-) -> Vec<String>
-{
-    let __start0 = __1.2.clone();
-    let __end0 = __1.2.clone();
-    let __temp0 = __action20(
-        input,
-        &__start0,
-        &__end0,
-    );
-    let __temp0 = (__start0, __temp0, __end0);
-    __action5(
-        input,
-        __0,
-        __1,
-        __temp0,
-    )
-}
-
-#[allow(unused_variables)]
-fn __action40<
-    'input,
->(
-    input: &'input str,
-    __0: (usize, &'input str, usize),
-    __1: (usize, String, usize),
-    __2: (usize, ::std::vec::Vec<String>, usize),
-) -> Vec<String>
-{
-    let __start0 = __2.0.clone();
-    let __end0 = __2.2.clone();
-    let __temp0 = __action21(
-        input,
-        __2,
-    );
-    let __temp0 = (__start0, __temp0, __end0);
-    __action5(
-        input,
-        __0,
-        __1,
         __temp0,
     )
 }
@@ -2335,25 +2360,21 @@ fn __action41<
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
-    __2: (usize, Vec<String>, usize),
-    __3: (usize, ::std::vec::Vec<Rc<Func>>, usize),
-    __4: (usize, &'input str, usize),
-) -> Rc<Class>
+) -> Vec<String>
 {
-    let __start0 = __2.0.clone();
-    let __end0 = __2.2.clone();
-    let __temp0 = __action25(
+    let __start0 = __1.2.clone();
+    let __end0 = __1.2.clone();
+    let __temp0 = __action22(
         input,
-        __2,
+        &__start0,
+        &__end0,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action4(
+    __action5(
         input,
         __0,
         __1,
         __temp0,
-        __3,
-        __4,
     )
 }
 
@@ -2364,13 +2385,67 @@ fn __action42<
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
-    __2: (usize, ::std::vec::Vec<Rc<Func>>, usize),
+    __2: (usize, ::std::vec::Vec<String>, usize),
+) -> Vec<String>
+{
+    let __start0 = __2.0.clone();
+    let __end0 = __2.2.clone();
+    let __temp0 = __action23(
+        input,
+        __2,
+    );
+    let __temp0 = (__start0, __temp0, __end0);
+    __action5(
+        input,
+        __0,
+        __1,
+        __temp0,
+    )
+}
+
+#[allow(unused_variables)]
+fn __action43<
+    'input,
+>(
+    input: &'input str,
+    __0: (usize, &'input str, usize),
+    __1: (usize, String, usize),
+    __2: (usize, Vec<String>, usize),
+    __3: (usize, ::std::vec::Vec<Box<Func>>, usize),
+    __4: (usize, &'input str, usize),
+) -> Box<Class>
+{
+    let __start0 = __2.0.clone();
+    let __end0 = __2.2.clone();
+    let __temp0 = __action27(
+        input,
+        __2,
+    );
+    let __temp0 = (__start0, __temp0, __end0);
+    __action4(
+        input,
+        __0,
+        __1,
+        __temp0,
+        __3,
+        __4,
+    )
+}
+
+#[allow(unused_variables)]
+fn __action44<
+    'input,
+>(
+    input: &'input str,
+    __0: (usize, &'input str, usize),
+    __1: (usize, String, usize),
+    __2: (usize, ::std::vec::Vec<Box<Func>>, usize),
     __3: (usize, &'input str, usize),
-) -> Rc<Class>
+) -> Box<Class>
 {
     let __start0 = __1.2.clone();
     let __end0 = __2.0.clone();
-    let __temp0 = __action26(
+    let __temp0 = __action28(
         input,
         &__start0,
         &__end0,
@@ -2387,26 +2462,26 @@ fn __action42<
 }
 
 #[allow(unused_variables)]
-fn __action43<
+fn __action45<
     'input,
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Rc<Id>, usize),
+    __1: (usize, String, usize),
     __2: (usize, &'input str, usize),
     __3: (usize, &'input str, usize),
     __4: (usize, &'input str, usize),
-) -> Rc<Func>
+) -> Box<Func>
 {
     let __start0 = __3.2.clone();
     let __end0 = __4.0.clone();
-    let __temp0 = __action18(
+    let __temp0 = __action20(
         input,
         &__start0,
         &__end0,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action6(
+    __action7(
         input,
         __0,
         __1,
@@ -2418,26 +2493,26 @@ fn __action43<
 }
 
 #[allow(unused_variables)]
-fn __action44<
+fn __action46<
     'input,
 >(
     input: &'input str,
     __0: (usize, &'input str, usize),
-    __1: (usize, Rc<Id>, usize),
+    __1: (usize, String, usize),
     __2: (usize, &'input str, usize),
     __3: (usize, &'input str, usize),
-    __4: (usize, ::std::vec::Vec<Rc<Expr>>, usize),
+    __4: (usize, ::std::vec::Vec<Box<Expr>>, usize),
     __5: (usize, &'input str, usize),
-) -> Rc<Func>
+) -> Box<Func>
 {
     let __start0 = __4.0.clone();
     let __end0 = __4.2.clone();
-    let __temp0 = __action19(
+    let __temp0 = __action21(
         input,
         __4,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action6(
+    __action7(
         input,
         __0,
         __1,
@@ -2449,7 +2524,7 @@ fn __action44<
 }
 
 #[allow(unused_variables)]
-fn __action45<
+fn __action47<
     'input,
 >(
     input: &'input str,
@@ -2457,79 +2532,23 @@ fn __action45<
     __1: (usize, String, usize),
     __2: (usize, Vec<String>, usize),
     __3: (usize, &'input str, usize),
-) -> Rc<Class>
+) -> Box<Class>
 {
     let __start0 = __2.2.clone();
     let __end0 = __3.0.clone();
-    let __temp0 = __action23(
+    let __temp0 = __action25(
         input,
         &__start0,
         &__end0,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action41(
+    __action43(
         input,
         __0,
         __1,
         __2,
         __temp0,
         __3,
-    )
-}
-
-#[allow(unused_variables)]
-fn __action46<
-    'input,
->(
-    input: &'input str,
-    __0: (usize, &'input str, usize),
-    __1: (usize, String, usize),
-    __2: (usize, Vec<String>, usize),
-    __3: (usize, ::std::vec::Vec<Rc<Func>>, usize),
-    __4: (usize, &'input str, usize),
-) -> Rc<Class>
-{
-    let __start0 = __3.0.clone();
-    let __end0 = __3.2.clone();
-    let __temp0 = __action24(
-        input,
-        __3,
-    );
-    let __temp0 = (__start0, __temp0, __end0);
-    __action41(
-        input,
-        __0,
-        __1,
-        __2,
-        __temp0,
-        __4,
-    )
-}
-
-#[allow(unused_variables)]
-fn __action47<
-    'input,
->(
-    input: &'input str,
-    __0: (usize, &'input str, usize),
-    __1: (usize, String, usize),
-    __2: (usize, &'input str, usize),
-) -> Rc<Class>
-{
-    let __start0 = __1.2.clone();
-    let __end0 = __2.0.clone();
-    let __temp0 = __action23(
-        input,
-        &__start0,
-        &__end0,
-    );
-    let __temp0 = (__start0, __temp0, __end0);
-    __action42(
-        input,
-        __0,
-        __1,
-        __temp0,
-        __2,
     )
 }
 
@@ -2540,18 +2559,74 @@ fn __action48<
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, String, usize),
-    __2: (usize, ::std::vec::Vec<Rc<Func>>, usize),
+    __2: (usize, Vec<String>, usize),
+    __3: (usize, ::std::vec::Vec<Box<Func>>, usize),
+    __4: (usize, &'input str, usize),
+) -> Box<Class>
+{
+    let __start0 = __3.0.clone();
+    let __end0 = __3.2.clone();
+    let __temp0 = __action26(
+        input,
+        __3,
+    );
+    let __temp0 = (__start0, __temp0, __end0);
+    __action43(
+        input,
+        __0,
+        __1,
+        __2,
+        __temp0,
+        __4,
+    )
+}
+
+#[allow(unused_variables)]
+fn __action49<
+    'input,
+>(
+    input: &'input str,
+    __0: (usize, &'input str, usize),
+    __1: (usize, String, usize),
+    __2: (usize, &'input str, usize),
+) -> Box<Class>
+{
+    let __start0 = __1.2.clone();
+    let __end0 = __2.0.clone();
+    let __temp0 = __action25(
+        input,
+        &__start0,
+        &__end0,
+    );
+    let __temp0 = (__start0, __temp0, __end0);
+    __action44(
+        input,
+        __0,
+        __1,
+        __temp0,
+        __2,
+    )
+}
+
+#[allow(unused_variables)]
+fn __action50<
+    'input,
+>(
+    input: &'input str,
+    __0: (usize, &'input str, usize),
+    __1: (usize, String, usize),
+    __2: (usize, ::std::vec::Vec<Box<Func>>, usize),
     __3: (usize, &'input str, usize),
-) -> Rc<Class>
+) -> Box<Class>
 {
     let __start0 = __2.0.clone();
     let __end0 = __2.2.clone();
-    let __temp0 = __action24(
+    let __temp0 = __action26(
         input,
         __2,
     );
     let __temp0 = (__start0, __temp0, __end0);
-    __action42(
+    __action44(
         input,
         __0,
         __1,
@@ -2561,17 +2636,17 @@ fn __action48<
 }
 
 #[allow(unused_variables)]
-fn __action49<
+fn __action51<
     'input,
 >(
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
-) -> Rc<Mod>
+) -> Box<Mod>
 {
     let __start0 = __lookbehind.clone();
     let __end0 = __lookahead.clone();
-    let __temp0 = __action27(
+    let __temp0 = __action29(
         input,
         &__start0,
         &__end0,
@@ -2584,16 +2659,16 @@ fn __action49<
 }
 
 #[allow(unused_variables)]
-fn __action50<
+fn __action52<
     'input,
 >(
     input: &'input str,
-    __0: (usize, ::std::vec::Vec<Rc<ModUnit>>, usize),
-) -> Rc<Mod>
+    __0: (usize, ::std::vec::Vec<Box<ModUnit>>, usize),
+) -> Box<Mod>
 {
     let __start0 = __0.0.clone();
     let __end0 = __0.2.clone();
-    let __temp0 = __action28(
+    let __temp0 = __action30(
         input,
         __0,
     );

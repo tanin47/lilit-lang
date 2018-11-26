@@ -10,6 +10,7 @@ end
 
 def main()
   val a = 3
+  val b = "this is a string"
   56
   a
   another()

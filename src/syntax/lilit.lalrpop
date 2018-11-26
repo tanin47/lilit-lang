@@ -1,0 +1,80 @@
+use std::str::FromStr;
+use syntax::tree::*;
+
+grammar;
+
+pub Mod: Box<Mod> = {
+  <u:ModUnit*> => Box::new(Mod { units:u }),
+};
+
+ModUnit: Box<ModUnit> = {
+	<Class> => Box::new(ModUnit::Class(<>)),
+	<Func> => Box::new(ModUnit::Func(<>)),
+};
+
+Class: Box<Class> = {
+  "class" <n:ClassName> <e:ClassExtend?> <m:Func*> "end" => Box::new(Class {
+    name:n,
+    extends: match e {
+    	None => vec![],
+    	Some(e) => e,
+    },
+    methods:m,
+  })
+};
+
+ClassExtend: Vec<String> = {
+  "extends" <e:ClassName> <v:("," <ClassName>)*> => {
+  	let mut v = v;
+  	v.insert(0, e);
+  	v
+  }
+};
+
+ClassName: String = {
+  r"[A-Z][a-zA-Z0-9_]*" => String::from(<>),
+};
+
+Func: Box<Func> = {
+  "def" <name:Name> "(" ")" <exprs:Expr*> "end" => Box::new(Func { name:name, exprs:exprs }),
+};
+
+Expr: Box<Expr> = {
+  <Num>,
+  <Invoke>,
+  <Assignment>,
+  <ReadVar>,
+  <LiteralString>
+};
+
+LiteralString: Box<Expr> = {
+  r#""[^"]*""# => {
+    let s = String::from(<>);
+    let len = s.len();
+    Box::new(Expr::LiteralString(Box::new(LiteralString { content: String::from(&s[1..len-1]) })))
+  }
+}
+
+Assignment: Box<Expr> = {
+  "val" <var:Var> "="  <expr:Expr> => Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
+}
+
+Invoke: Box<Expr> = {
+  <Name> "(" ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: <> }))),
+};
+
+ReadVar: Box<Expr> = {
+  <Var> => Box::new(Expr::Var(<>))
+}
+
+Var: Box<Var> = {
+  <Name> => Box::new(Var { name: <> })
+}
+
+Name: String = {
+  r"[a-z][a-z0-9_]*" => String::from(<>),
+};
+
+Num: Box<Expr> = {
+  r"[0-9]+" => Box::new(Expr::Num(Box::new(Num { value: i32::from_str(<>).unwrap() }))),
+};
