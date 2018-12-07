@@ -71,5 +71,5 @@ Build
 
 
 1. Compile using `cargo run examples/test.l`
-2. Link it using `cc output.o -o output`.
+2. Link it using `cc output.o -o output`. On Ubuntu 18.04, `-no-pie` is needed. I don't know why.
 3. Run `./output`.

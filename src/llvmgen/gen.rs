@@ -1,5 +1,4 @@
-extern crate inkwell;
-
+use inkwell::AddressSpace;
 use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
@@ -10,6 +9,9 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
 
 use semantics::tree;
+use inkwell::values::BasicValueEnum;
+use inkwell::types::BasicTypeEnum;
+use inkwell::module::Linkage;
 
 pub fn generate(
     module: &tree::Mod,
@@ -134,6 +136,15 @@ fn gen_invoke(
     context: &Context,
     builder: &Builder,
 ) -> IntValue {
+    let global = unsafe { builder.build_global_string("Hello, World!", "message") };
+
+    let str_type = context.i8_type().ptr_type(AddressSpace::Generic);
+    let i32_type = context.i32_type();
+    let printf_type = i32_type.fn_type(&[str_type.into()], true);
+    let printf = module.add_function("printf", printf_type, Some(Linkage::External));
+
+    builder.build_call(printf, &[global.as_pointer_value().into()], "");
+
     let func = unsafe { &*invoke.func_ref.get().unwrap() };
     builder.build_call(func.llvm_ref.get().unwrap(), &[], &invoke.name).try_as_basic_value().left().unwrap().into_int_value()
 }
