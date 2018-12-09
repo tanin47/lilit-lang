@@ -1,22 +1,22 @@
 use inkwell::AddressSpace;
-use inkwell::OptimizationLevel;
+use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::ExecutionEngine;
-use inkwell::module::Module;
-use inkwell::values::{FunctionValue, BasicValue, IntValue};
-use inkwell::basic_block::BasicBlock;
-use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
-
-use semantics::tree;
-use inkwell::values::BasicValueEnum;
-use inkwell::types::BasicTypeEnum;
 use inkwell::module::Linkage;
-use inkwell::values::VectorValue;
-use inkwell::types::StructType;
+use inkwell::module::Module;
+use inkwell::OptimizationLevel;
+use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
 use inkwell::types::ArrayType;
+use inkwell::types::BasicTypeEnum;
+use inkwell::types::StructType;
+use inkwell::values::{BasicValue, FunctionValue, IntValue};
+use inkwell::values::BasicValueEnum;
 use inkwell::values::PointerValue;
 use inkwell::values::StructValue;
+use inkwell::values::VectorValue;
+
+use semantics::tree;
 
 struct Core {
    string_struct_type: StructType
@@ -168,7 +168,75 @@ fn gen_string(
     };
     builder.build_store(content_pointer, array);
 
-    println!("string {:?}", string);
+    string
+}
+
+fn gen_string_from_cstring(
+    cstring: PointerValue,
+    cstring_size: IntValue,
+    module: &Module,
+    context: &Context,
+    builder: &Builder,
+    core: &Core,
+) -> PointerValue {
+    let i8_type = context.i8_type();
+    let i32_type = context.i32_type();
+
+    let string = builder.build_alloca(core.string_struct_type, "string");
+
+    let size_with_terminator = cstring_size.const_add(context.i32_type().const_int(1, false));
+    let array = builder.build_array_alloca(i8_type, size_with_terminator,  "string_array");
+
+    let memcpy = match module.get_function("llvm.memcpy.p0i8.p0i8.i64") {
+        None => {
+           module.add_function(
+               "llvm.memcpy.p0i8.p0i8.i64",
+               context.i64_type().fn_type(
+                   &[
+                       i8_type.ptr_type(AddressSpace::Generic).into(),
+                       i8_type.ptr_type(AddressSpace::Generic).into(),
+                       context.i64_type().into(),
+                       context.i32_type().into(),
+                       context.bool_type().into()
+                   ],
+                   false
+               ),
+               Some(Linkage::External)
+           )
+        }
+        Some(f) => f,
+    };
+
+    builder.build_call(
+        memcpy,
+        &[
+            array.into(),
+            cstring.into(),
+            size_with_terminator.into(),
+            context.i32_type().const_int(4, false).into(),
+            context.bool_type().const_zero().into()
+        ],
+        "memcpy"
+    );
+
+    let size_pointer = unsafe {
+        builder.build_in_bounds_gep(
+            string,
+            &[i32_type.const_int(0, false), i32_type.const_int(0, false)],
+            "gep"
+        )
+    };
+    builder.build_store(size_pointer, cstring_size);
+
+    let content_pointer = unsafe {
+        builder.build_in_bounds_gep(
+            string,
+            &[i32_type.const_int(0, false), i32_type.const_int(1, false)],
+            "gep"
+        )
+    };
+    builder.build_store(content_pointer, array);
+
     string
 }
 
@@ -180,14 +248,11 @@ fn gen_read_var(
     core: &Core,
 ) -> BasicValueEnum {
     let assignment = unsafe { &*var.assignment_ref.get().unwrap() };
-    println!("assignment ref {:?}", assignment);
-    println!("assignment llvm ref {:?}", assignment.llvm_ref);
     let i32_type = context.i32_type();
     let value = builder.build_load(
         assignment.llvm_ref.get().unwrap(),
         &var.name
     );
-    println!("{:?}", value);
     value.into()
 }
 
@@ -213,7 +278,6 @@ fn gen_assignment(
    } ;
 
 
-    println!("{:?}\nassignto\n{:?}", ptr, expr);
     builder.build_store(ptr, expr);
     assignment.var.llvm_ref.replace(Some(ptr));
     expr.into()
@@ -251,19 +315,68 @@ fn gen_invoke(
         let i32_type = context.i32_type();
         let ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
         let arg = gen_expr(&invoke.arg, module, context, builder, core);
-        println!("arg {:?}", arg);
         let ss = match arg {
             BasicValueEnum::PointerValue(ptr) => ptr,
             _ => panic!("fail arg"),
         };
-        println!("ptr {:?}", ss);
         let s = unsafe {
             builder.build_in_bounds_gep(ss, &[i32_type.const_int(0, false), i32_type.const_int(1, false)], "")
         };
-        println!("s {:?}", s);
         let l = builder.build_load(s, "load");
-        println!("l {:?}", l);
         builder.build_call(printf, &[l], "").try_as_basic_value().left().unwrap().into()
+    } else if invoke.name == "read" {
+        let io_struct = context.opaque_struct_type("struct._IO_FILE");
+        let fgets = match module.get_function("fgets") {
+            Some(f) => f,
+            None => {
+                let fgets_type = context.i8_type().ptr_type(AddressSpace::Generic).fn_type(
+                    &[
+                        context.i8_type().ptr_type(AddressSpace::Generic).into(),
+                        context.i32_type().into(),
+                        io_struct.ptr_type(AddressSpace::Generic).into(),
+                    ],
+                    false);
+                module.add_function("fgets", fgets_type, Some(Linkage::External))
+            },
+        };
+        let stdin = match module.get_global("stdin") {
+            None => {
+                let g = module.add_global(
+                    io_struct.ptr_type(AddressSpace::Generic),
+                    None,
+                    "stdin");
+                g
+            },
+            Some(g) => g
+        };
+
+        let input_size = 100;
+        let input = builder.build_alloca(context.i8_type().array_type(input_size), "input");
+        builder.build_call(
+            fgets,
+            &[
+                input.into(),
+                context.i32_type().const_int(input_size as u64, false).into(),
+                builder.build_load(stdin.as_pointer_value(), "load_stdin"),
+            ],
+            "fgets").try_as_basic_value().left().unwrap();
+        let strlen = match module.get_function("strlen") {
+            Some(f) => f,
+            None => {
+                let fn_type = context.i64_type().fn_type(
+                    &[
+                        context.i8_type().ptr_type(AddressSpace::Generic).into()
+                    ],
+                    false);
+                module.add_function("strlen", fn_type, Some(Linkage::External))
+            },
+        };
+        let ret_str_len = builder.build_call(strlen, &[input.into()], "strlen");
+        let size = match ret_str_len.try_as_basic_value().left().unwrap() {
+            BasicValueEnum::IntValue(i) => i,
+            _ => panic!("unable to get string's length")
+        };
+        gen_string_from_cstring(input, size, module, context, builder, core).into()
     } else {
         let func = unsafe { &*invoke.func_ref.get().unwrap() };
         builder.build_call(func.llvm_ref.get().unwrap(), &[], &invoke.name).try_as_basic_value().left().unwrap().into()

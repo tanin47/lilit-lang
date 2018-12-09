@@ -1,7 +1,8 @@
 def main()
-  val a = "from variable"
-  print(a)
-  print("TEST AGAIN")
+  print("Hello, what's your name? ")
+  val name = read(1)
+  print("Hello ")
+  print(name)
   1
 end
 
