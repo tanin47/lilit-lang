@@ -60,7 +60,7 @@ Assignment: Box<Expr> = {
 }
 
 Invoke: Box<Expr> = {
-  <Name> "(" ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: <> }))),
+  <name:Name> "(" <expr:Expr> ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: name, arg: expr }))),
 };
 
 ReadVar: Box<Expr> = {

@@ -66,6 +66,7 @@ pub struct Num {
 pub struct Invoke {
     pub func_ref: Cell<Option<*const Func>>,
     pub name: String,
+    pub arg: Box<Expr>,
 }
 
 #[derive(Debug)]

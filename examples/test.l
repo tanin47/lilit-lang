@@ -1,13 +1,6 @@
-
-def another()
-  val a = 20
-  a
-end
-
 def main()
-  val a = 3
-  56
+  val a = 111
+  print("Test stdout")
   a
-  another()
 end
 

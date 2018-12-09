@@ -53,6 +53,7 @@ pub struct Var {
 #[derive(Debug)]
 pub struct Invoke {
     pub name: String,
+    pub arg: Box<Expr>,
 }
 
 #[derive(Debug)]

@@ -96,11 +96,15 @@ fn link_invoke(
     invoke: &tree::Invoke,
     scope: &mut scope::Scope,
 ) {
-    let f = match scope.read_func(&invoke.name) {
-        Some(func) => func,
-        None => panic!("Unable to find the function {:?}", invoke.name),
-    };
-    invoke.func_ref.set(Some(f as *const tree::Func))
+    if invoke.name != "print" {
+        let f = match scope.read_func(&invoke.name) {
+            Some(func) => func,
+            None => panic!("Unable to find the function {:?}", invoke.name),
+        };
+        invoke.func_ref.set(Some(f as *const tree::Func))
+    }
+
+    link_expr(&invoke.arg, scope);
 }
 
 pub fn build_mod(
@@ -228,6 +232,7 @@ fn build_invoke(
     tree::Invoke {
         func_ref: Cell::new(None),
         name: invoke.name.to_string(),
+        arg: Box::new(build_expr(&invoke.arg)),
     }
 }
 
