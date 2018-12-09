@@ -19,9 +19,9 @@ We aim be at the highest level of abstraction and, thus, reduce the amount of de
 
 We also aim to provide a rich standard library to refrain programmers from solving trivial problems on their own. For example, in Python, programmers have to implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none), while, in Ruby, they can use `.first` in Ruby's standard library.
 
-### Maintainability over speed
+### Maintainability
 
-We value maintainability over speed. For example, we might not implement the asynchronous programming paradigm because coding explicit yield point (e.g. with Monads) makes codebase less comprehensible. Another example is that we won't allow programmers to manage their own memory to avoid various problems that come with it (e.g. memory corruption).
+We value maintainability. For example, we might not implement the asynchronous programming paradigm because coding explicit yield point (e.g. with Monads) makes codebase less comprehensible. Another example is that we won't allow programmers to manage their own memory to avoid various problems that come with it (e.g. memory corruption).
 
 Thus, Lilit aims to be great for building command-line tools.
 
