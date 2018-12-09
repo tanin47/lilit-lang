@@ -184,7 +184,7 @@ fn gen_read_var(
     println!("assignment llvm ref {:?}", assignment.llvm_ref);
     let i32_type = context.i32_type();
     let value = builder.build_load(
-        unsafe { builder.build_in_bounds_gep(assignment.llvm_ref.get().unwrap(), &[i32_type.const_int(0, false)], "deref") },
+        assignment.llvm_ref.get().unwrap(),
         &var.name
     );
     println!("{:?}", value);
@@ -206,7 +206,7 @@ fn gen_assignment(
            builder.build_alloca(i32_type, &assignment.var.name)
        },
        BasicValueEnum::PointerValue(p) => {
-           let ptr_type = context.i8_type().ptr_type(AddressSpace::Generic);
+           let ptr_type = core.string_struct_type.ptr_type(AddressSpace::Generic);
            builder.build_alloca(ptr_type, &assignment.var.name)
        },
        _ => panic!("Unknow expr")

@@ -1,6 +1,7 @@
 def main()
-  val a = 111
-  print("Test stdout")
-  a
+  val a = "from variable"
+  print(a)
+  print("TEST AGAIN")
+  1
 end
 

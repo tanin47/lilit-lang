@@ -11,6 +11,7 @@ int main()
    struct Test t;
    t.size = 11;
    t.content = content;
-   printf(t.content);
+   struct Test* a = &t;
+   printf(a->content);
    return 0;
 }

@@ -10,15 +10,18 @@ define i32 @main() #0 {
   %1 = alloca i32, align 4
   %2 = alloca [10 x i8], align 1
   %3 = alloca %struct.Test, align 8
+  %4 = alloca %struct.Test*, align 8
   store i32 0, i32* %1, align 4
-  %4 = getelementptr inbounds %struct.Test, %struct.Test* %3, i32 0, i32 0
-  store i32 11, i32* %4, align 8
-  %5 = getelementptr inbounds [10 x i8], [10 x i8]* %2, i32 0, i32 0
-  %6 = getelementptr inbounds %struct.Test, %struct.Test* %3, i32 0, i32 1
-  store i8* %5, i8** %6, align 8
+  %5 = getelementptr inbounds %struct.Test, %struct.Test* %3, i32 0, i32 0
+  store i32 11, i32* %5, align 8
+  %6 = getelementptr inbounds [10 x i8], [10 x i8]* %2, i32 0, i32 0
   %7 = getelementptr inbounds %struct.Test, %struct.Test* %3, i32 0, i32 1
-  %8 = load i8*, i8** %7, align 8
-  %9 = call i32 (i8*, ...) @printf(i8* %8)
+  store i8* %6, i8** %7, align 8
+  store %struct.Test* %3, %struct.Test** %4, align 8
+  %8 = load %struct.Test*, %struct.Test** %4, align 8
+  %9 = getelementptr inbounds %struct.Test, %struct.Test* %8, i32 0, i32 1
+  %10 = load i8*, i8** %9, align 8
+  %11 = call i32 (i8*, ...) @printf(i8* %10)
   ret i32 0
 }
 
