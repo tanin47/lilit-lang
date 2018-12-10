@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: 96eb11e2f977c3622f450b112a51ef23ee338ff950771a68fd275d3cae8d4
+// sha256: 41bbbe2655a99d8767f2ad3055e5715af431862c423b59496a6d6a4dcba493e
 use std::str::FromStr;
 use syntax::tree::*;
 #[allow(unused_extern_crates)]
@@ -370,7 +370,7 @@ mod __parse__Mod {
             r###"r#"\"[^\"]*\""#"###,
             r###"r#"[0-9]+"#"###,
             r###"r#"[A-Z][a-zA-Z0-9_]*"#"###,
-            r###"r#"[a-z][a-z0-9_]*"#"###,
+            r###"r#"[a-z][A-Za-z0-9_]*"#"###,
         ];
         __ACTION[(__state * 13)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
             if state == 0 {
@@ -1657,7 +1657,7 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Name = r#"[a-z][a-z0-9_]*"# => ActionFn(18);
+        // Name = r#"[a-z][A-Za-z0-9_]*"# => ActionFn(18);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -1753,7 +1753,7 @@ mod __intern_token {
                 "^((?u:\")(?u:[\u{0}-!\\#-\u{10ffff}])*(?u:\"))",
                 "^((?u:[0-9])+)",
                 "^((?u:[A-Z])(?u:[0-9A-Z_-_a-z])*)",
-                "^((?u:[a-z])(?u:[0-9_-_a-z])*)",
+                "^((?u:[a-z])(?u:[0-9A-Z_-_a-z])*)",
                 "^((?u:\\())",
                 "^((?u:\\)))",
                 "^((?u:,))",
@@ -1769,7 +1769,7 @@ mod __intern_token {
                 __regex::Regex::new("^((?u:\")(?u:[\u{0}-!\\#-\u{10ffff}])*(?u:\"))").unwrap(),
                 __regex::Regex::new("^((?u:[0-9])+)").unwrap(),
                 __regex::Regex::new("^((?u:[A-Z])(?u:[0-9A-Z_-_a-z])*)").unwrap(),
-                __regex::Regex::new("^((?u:[a-z])(?u:[0-9_-_a-z])*)").unwrap(),
+                __regex::Regex::new("^((?u:[a-z])(?u:[0-9A-Z_-_a-z])*)").unwrap(),
                 __regex::Regex::new("^((?u:\\())").unwrap(),
                 __regex::Regex::new("^((?u:\\)))").unwrap(),
                 __regex::Regex::new("^((?u:,))").unwrap(),

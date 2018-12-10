@@ -1,8 +1,6 @@
 def main()
-  print("Hello, what's your name? ")
+  print("Please input the exit code: ")
   val name = read(1)
-  print("Hello ")
-  print(name)
-  1
+  parseNumber(name)
 end
 

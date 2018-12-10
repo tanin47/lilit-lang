@@ -72,7 +72,7 @@ Var: Box<Var> = {
 }
 
 Name: String = {
-  r"[a-z][a-z0-9_]*" => String::from(<>),
+  r"[a-z][A-Za-z0-9_]*" => String::from(<>),
 };
 
 Num: Box<Expr> = {

@@ -17,6 +17,7 @@ use inkwell::values::StructValue;
 use inkwell::values::VectorValue;
 
 use semantics::tree;
+use inkwell::types::PointerType;
 
 struct Core {
    string_struct_type: StructType
@@ -377,6 +378,30 @@ fn gen_invoke(
             _ => panic!("unable to get string's length")
         };
         gen_string_from_cstring(input, size, module, context, builder, core).into()
+    } else if invoke.name == "parseNumber" {
+        let parse_number = match module.get_function("strtol") {
+            Some(f) => f,
+            None => {
+                let str_type = context.i8_type().ptr_type(AddressSpace::Generic);
+                let str_end_type = context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic);
+                let base_type = context.i32_type();
+                let fn_type = context.i32_type().fn_type(&[str_type.into(), str_end_type.into(), base_type.into()], false);
+                module.add_function("strtol", fn_type, Some(Linkage::External))
+            },
+        };
+
+        let i32_type = context.i32_type();
+        let ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+        let arg = gen_expr(&invoke.arg, module, context, builder, core);
+        let ss = match arg {
+            BasicValueEnum::PointerValue(ptr) => ptr,
+            _ => panic!("fail arg"),
+        };
+        let s = unsafe {
+            builder.build_in_bounds_gep(ss, &[i32_type.const_int(0, false), i32_type.const_int(1, false)], "")
+        };
+        let l = builder.build_load(s, "load");
+        builder.build_call(parse_number, &[l.into(), context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).const_null().into(), context.i32_type().const_int(10, false).into()], "").try_as_basic_value().left().unwrap().into()
     } else {
         let func = unsafe { &*invoke.func_ref.get().unwrap() };
         builder.build_call(func.llvm_ref.get().unwrap(), &[], &invoke.name).try_as_basic_value().left().unwrap().into()

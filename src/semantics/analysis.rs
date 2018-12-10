@@ -96,7 +96,7 @@ fn link_invoke(
     invoke: &tree::Invoke,
     scope: &mut scope::Scope,
 ) {
-    if invoke.name != "print" && invoke.name != "read" {
+    if invoke.name != "print" && invoke.name != "read" && invoke.name != "parseNumber" {
         let f = match scope.read_func(&invoke.name) {
             Some(func) => func,
             None => panic!("Unable to find the function {:?}", invoke.name),
