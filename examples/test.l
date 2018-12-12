@@ -1,6 +1,16 @@
 def main()
-  print("Please input the exit code: ")
-  val name = read(1)
-  parseNumber(name)
+  print("Please enter your age: ")
+  val age = parseNumber(read(1))
+  if age > 35 {
+    print("That's old")
+  } else {
+    print("That's not too old")
+  }
+  val result = if age > 10 {
+    99
+  } else {
+    10
+  }
+  result
 end
 

@@ -40,11 +40,27 @@ Func: Box<Func> = {
 };
 
 Expr: Box<Expr> = {
-  <Num>,
+  <NumExpr>,
+  <Boolean>,
   <Invoke>,
   <Assignment>,
   <ReadVar>,
-  <LiteralString>
+  <LiteralString>,
+  <IfElse>,
+  <ComparisonExpr>,
+};
+
+// TODO(tanin): Comparison should take Exprs. But there is a problem with ambiguity. We should handle it
+ComparisonExpr: Box<Expr> = {
+  <Comparison> => Box::new(Expr::Comparison(<>)),
+};
+
+Comparison: Box<Comparison> = {
+  <left:Var> ">" <right:Num> => Box::new(Comparison { left, right }),
+};
+
+IfElse: Box<Expr> = {
+  "if" <cond: Comparison> "{" <true_br: Expr> "}" "else" "{" <false_br: Expr> "}" => Box::new(Expr::IfElse(Box::new(IfElse { cond, true_br, false_br }))),
 };
 
 LiteralString: Box<Expr> = {
@@ -53,11 +69,11 @@ LiteralString: Box<Expr> = {
     let len = s.len();
     Box::new(Expr::LiteralString(Box::new(LiteralString { content: String::from(&s[1..len-1]) })))
   }
-}
+};
 
 Assignment: Box<Expr> = {
   "val" <var:Var> "="  <expr:Expr> => Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
-}
+};
 
 Invoke: Box<Expr> = {
   <name:Name> "(" <expr:Expr> ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: name, arg: expr }))),
@@ -65,16 +81,25 @@ Invoke: Box<Expr> = {
 
 ReadVar: Box<Expr> = {
   <Var> => Box::new(Expr::Var(<>))
-}
+};
 
 Var: Box<Var> = {
   <Name> => Box::new(Var { name: <> })
-}
+};
 
 Name: String = {
   r"[a-z][A-Za-z0-9_]*" => String::from(<>),
 };
 
-Num: Box<Expr> = {
-  r"[0-9]+" => Box::new(Expr::Num(Box::new(Num { value: i32::from_str(<>).unwrap() }))),
+Boolean: Box<Expr> = {
+  "true" => Box::new(Expr::Boolean(Box::new(Boolean { value: true }))),
+  "false" => Box::new(Expr::Boolean(Box::new(Boolean { value: false }))),
+};
+
+NumExpr: Box<Expr> = {
+  <Num> => Box::new(Expr::Num(<>)),
+};
+
+Num: Box<Num> = {
+  r"[0-9]+" => Box::new(Num { value: i32::from_str(<>).unwrap() }),
 };

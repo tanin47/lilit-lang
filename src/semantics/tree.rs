@@ -36,10 +36,10 @@ pub struct Func {
 #[derive(Debug)]
 pub enum Expr {
     Invoke {
-    	invoke: Box<Invoke>,
+        invoke: Box<Invoke>,
     },
     Num {
-    	num: Box<Num>,
+        num: Box<Num>,
     },
     LiteralString {
         literal_string: Box<LiteralString>,
@@ -47,9 +47,31 @@ pub enum Expr {
     Assignment {
         assignment: Box<Assignment>,
     },
+    Boolean {
+        boolean: Box<Boolean>,
+    },
+    Comparison {
+        comparison: Box<Comparison>,
+    },
+    IfElse {
+        if_else: Box<IfElse>,
+    },
     ReadVar {
         read_var: Box<ReadVar>,
-    }
+    },
+}
+
+#[derive(Debug)]
+pub struct IfElse {
+    pub cond: Box<Comparison>,
+    pub true_br: Box<Expr>,
+    pub false_br: Box<Expr>,
+}
+
+#[derive(Debug)]
+pub struct Comparison {
+    pub left: Box<ReadVar>,
+    pub right: Box<Num>,
 }
 
 #[derive(Debug)]
@@ -60,6 +82,11 @@ pub struct LiteralString {
 #[derive(Debug)]
 pub struct Num {
     pub value: i32,
+}
+
+#[derive(Debug)]
+pub struct Boolean {
+    pub value: bool,
 }
 
 #[derive(Debug)]

@@ -69,8 +69,30 @@ fn link_expr(
         tree::Expr::Invoke { ref invoke } => link_invoke(invoke, scope),
         tree::Expr::Assignment { ref assignment } => link_assignment(assignment, scope),
         tree::Expr::ReadVar { ref read_var } => link_readvar(read_var, scope),
-        _ => (),
+        tree::Expr::Comparison { ref comparison } => link_comparison(comparison, scope),
+        tree::Expr::IfElse { ref if_else } => link_if_else(if_else, scope),
+        _ => ()
     }
+}
+
+fn link_comparison(
+    comparison: &tree::Comparison,
+    scope: &mut scope::Scope,
+) {
+   link_readvar(&comparison.left, scope)
+}
+
+fn link_if_else(
+    if_else: &tree::IfElse,
+    scope: &mut scope::Scope,
+) {
+    link_comparison(&if_else.cond, scope);
+    scope.enter();
+    link_expr(&if_else.true_br, scope);
+    scope.leave();
+    scope.enter();
+    link_expr(&if_else.false_br, scope);
+    scope.leave();
 }
 
 fn link_readvar(
@@ -90,6 +112,7 @@ fn link_assignment(
     scope: &mut scope::Scope,
 ) {
     scope.declare(&assignment.var.name, scope::ScopeValue::Var(assignment.var.as_ref() as *const tree::Var));
+    link_expr(&assignment.expr, scope);
 }
 
 fn link_invoke(
@@ -187,7 +210,43 @@ fn build_expr(
         },
         syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString {
             literal_string: Box::new(build_literal_string(s))
-        }
+        },
+        syntax::tree::Expr::Boolean(ref b) => tree::Expr::Boolean {
+            boolean: Box::new(build_boolean(b))
+        },
+        syntax::tree::Expr::Comparison(ref c) => tree::Expr::Comparison {
+            comparison: Box::new(build_comparison(c))
+        },
+        syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse {
+            if_else: Box::new(build_if_else(if_else))
+        },
+    }
+}
+
+fn build_boolean(
+    boolean: &syntax::tree::Boolean
+) -> tree::Boolean {
+    tree::Boolean {
+        value: boolean.value
+    }
+}
+
+fn build_comparison(
+    comparison: &syntax::tree::Comparison
+) -> tree::Comparison {
+    tree::Comparison {
+        left: Box::new(build_read_var(&comparison.left)),
+        right: Box::new(build_num(&comparison.right)),
+    }
+}
+
+fn build_if_else(
+    if_else: &syntax::tree::IfElse
+) -> tree::IfElse {
+    tree::IfElse {
+        cond: Box::new(build_comparison(&if_else.cond)),
+        true_br: Box::new(build_expr(&if_else.true_br)),
+        false_br: Box::new(build_expr(&if_else.false_br)),
     }
 }
 
