@@ -31,6 +31,10 @@ ClassExtend: Vec<String> = {
   }
 };
 
+LlvmClassName: String = {
+  r"@[A-Z][a-zA-Z0-9_]*" => String::from(<>),
+};
+
 ClassName: String = {
   r"[A-Z][a-zA-Z0-9_]*" => String::from(<>),
 };
@@ -48,6 +52,14 @@ Expr: Box<Expr> = {
   <LiteralString>,
   <IfElse>,
   <ComparisonExpr>,
+  <ClassInstance>
+};
+
+ClassInstance: Box<Expr> = {
+  <name:ClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, is_llvm: false, expr }))),
+  <name:LlvmClassName> "(" <expr:Expr> ")" => {
+    Box::new(Expr::ClassInstance(Box::new(ClassInstance { name: String::from(&name[1..name.len()]), is_llvm: true, expr })))
+  },
 };
 
 // TODO(tanin): Comparison should take Exprs. But there is a problem with ambiguity. We should handle it

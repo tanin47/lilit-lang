@@ -33,32 +33,59 @@ pub struct Func {
     pub exprs: Vec<Expr>,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum ExprType {
+    Num,
+    String,
+    Boolean,
+    Class(* const ClassInstance)
+}
+
 #[derive(Debug)]
 pub enum Expr {
     Invoke {
         invoke: Box<Invoke>,
+        tpe: Cell<Option<ExprType>>,
     },
     Num {
         num: Box<Num>,
+        tpe: Cell<Option<ExprType>>,
     },
     LiteralString {
         literal_string: Box<LiteralString>,
+        tpe: Cell<Option<ExprType>>,
     },
     Assignment {
         assignment: Box<Assignment>,
+        tpe: Cell<Option<ExprType>>,
     },
     Boolean {
         boolean: Box<Boolean>,
+        tpe: Cell<Option<ExprType>>,
     },
     Comparison {
         comparison: Box<Comparison>,
+        tpe: Cell<Option<ExprType>>,
     },
     IfElse {
         if_else: Box<IfElse>,
+        tpe: Cell<Option<ExprType>>,
     },
     ReadVar {
         read_var: Box<ReadVar>,
+        tpe: Cell<Option<ExprType>>,
     },
+    ClassInstance {
+        class_instance: Box<ClassInstance>,
+        tpe: Cell<Option<ExprType>>,
+    },
+}
+
+#[derive(Debug)]
+pub struct ClassInstance {
+    pub name: String,
+    pub is_llvm: bool,
+    pub expr: Box<Expr>,
 }
 
 #[derive(Debug)]
@@ -111,5 +138,6 @@ pub struct ReadVar {
 #[derive(Debug)]
 pub struct Var {
     pub llvm_ref: Cell<Option<PointerValue>>,
+    pub expr_ref: Cell<Option<*const Expr>>,
     pub name: String,
 }

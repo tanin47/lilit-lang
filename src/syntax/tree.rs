@@ -34,6 +34,14 @@ pub enum Expr {
     LiteralString(Box<LiteralString>),
     Comparison(Box<Comparison>),
     IfElse(Box<IfElse>),
+    ClassInstance(Box<ClassInstance>),
+}
+
+#[derive(Debug)]
+pub struct ClassInstance {
+    pub name: String,
+    pub is_llvm: bool,
+    pub expr: Box<Expr>,
 }
 
 #[derive(Debug)]

@@ -6,11 +6,7 @@ def main()
   } else {
     print("That's not too old")
   }
-  val result = if age > 10 {
-    99
-  } else {
-    10
-  }
-  result
+  @LlvmClass("yeah")
+  10
 end
 

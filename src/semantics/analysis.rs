@@ -66,11 +66,11 @@ fn link_expr(
     scope: &mut scope::Scope,
 ) {
     match expr {
-        tree::Expr::Invoke { ref invoke } => link_invoke(invoke, scope),
-        tree::Expr::Assignment { ref assignment } => link_assignment(assignment, scope),
-        tree::Expr::ReadVar { ref read_var } => link_readvar(read_var, scope),
-        tree::Expr::Comparison { ref comparison } => link_comparison(comparison, scope),
-        tree::Expr::IfElse { ref if_else } => link_if_else(if_else, scope),
+        tree::Expr::Invoke { ref invoke, tpe } => link_invoke(invoke, scope),
+        tree::Expr::Assignment { ref assignment, tpe } => link_assignment(assignment, scope),
+        tree::Expr::ReadVar { ref read_var, tpe } => link_readvar(read_var, scope),
+        tree::Expr::Comparison { ref comparison, tpe } => link_comparison(comparison, scope),
+        tree::Expr::IfElse { ref if_else, tpe } => link_if_else(if_else, scope),
         _ => ()
     }
 }
@@ -198,28 +198,54 @@ fn build_expr(
     match *expr {
         syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke {
             invoke: Box::new(build_invoke(i)),
+            tpe: Cell::new(None),
         },
         syntax::tree::Expr::Num(ref n) => tree::Expr::Num {
             num: Box::new(build_num(n)),
+            tpe: Cell::new(Some(tree::ExprType::Num)),
         },
         syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment {
-            assignment: Box::new(build_assignment(a))
+            assignment: Box::new(build_assignment(a)),
+            tpe: Cell::new(None),
         },
         syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar {
-            read_var: Box::new(build_read_var(v))
+            read_var: Box::new(build_read_var(v)),
+            tpe: Cell::new(None),
         },
         syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString {
-            literal_string: Box::new(build_literal_string(s))
+            literal_string: Box::new(build_literal_string(s)),
+            tpe: Cell::new(Some(tree::ExprType::String)),
         },
         syntax::tree::Expr::Boolean(ref b) => tree::Expr::Boolean {
-            boolean: Box::new(build_boolean(b))
+            boolean: Box::new(build_boolean(b)),
+            tpe: Cell::new(Some(tree::ExprType::Boolean)),
         },
         syntax::tree::Expr::Comparison(ref c) => tree::Expr::Comparison {
-            comparison: Box::new(build_comparison(c))
+            comparison: Box::new(build_comparison(c)),
+            tpe: Cell::new(Some(tree::ExprType::Boolean)),
         },
         syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse {
-            if_else: Box::new(build_if_else(if_else))
+            if_else: Box::new(build_if_else(if_else)),
+            tpe: Cell::new(None),
         },
+        syntax::tree::Expr::ClassInstance(ref class_instance) => {
+            let instance = Box::new(build_class_instance(class_instance));
+            let instance_ref = instance.as_ref() as *const tree::ClassInstance;
+            tree::Expr::ClassInstance {
+                class_instance: instance,
+                tpe: Cell::new(Some(tree::ExprType::Class(instance_ref))),
+            }
+        }
+    }
+}
+
+fn build_class_instance(
+    class_instance: &syntax::tree::ClassInstance
+) -> tree::ClassInstance {
+    tree::ClassInstance {
+        name: class_instance.name.to_string(),
+        is_llvm: class_instance.is_llvm,
+        expr: Box::new(build_expr(&class_instance.expr)),
     }
 }
 
@@ -270,17 +296,20 @@ fn build_read_var(
 fn build_assignment(
     assignment: &syntax::tree::Assignment,
 ) -> tree::Assignment {
+    let expr = Box::new(build_expr(&assignment.expr));
     tree::Assignment {
-        var: Box::new(build_var(&assignment.var)),
-        expr: Box::new(build_expr(&assignment.expr)),
+        var: Box::new(build_var(&assignment.var, &expr)),
+        expr,
     }
 }
 
 fn build_var(
     var: &syntax::tree::Var,
+    expr: &tree::Expr,
 ) -> tree::Var {
     tree::Var {
         llvm_ref: Cell::new(None),
+        expr_ref: Cell::new(Some(expr as *const tree::Expr)),
         name: var.name.to_string(),
     }
 }
