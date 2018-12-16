@@ -63,6 +63,7 @@ Build
 ------
 
 
-1. Compile using `cargo run examples/test.l`
-2. Link it using `cc output.o -o output`. On Ubuntu 18.04, `-no-pie` is needed. I don't know why.
-3. Run `./output`.
+1. Compile using `cargo run examples/test.l`.
+2. Compile native code: `llc-6.0 -filetype=obj native/read.ll`.
+2. Link it using `cc output/main.o native/read.o -o main`. On Ubuntu 18.04, `-no-pie` is needed. I don't know why.
+3. Run `./main`.

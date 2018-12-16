@@ -1,12 +1,8 @@
 def main()
-  print("Please enter your age: ")
-  val age = parseNumber(read(1))
-  if age > 35 {
-    print("That's old")
-  } else {
-    print("That's not too old")
-  }
-  @LlvmClass("yeah")
-  10
+  @Void:printf+(@String("Type something: "))
+  val input = @String:read()
+  @Void:printf+(@String("You typed: "))
+  @Void:printf+(@String(input))
+  1
 end
 

@@ -30,6 +30,7 @@ pub struct Class {
 pub struct Func {
     pub llvm_ref: Cell<Option<FunctionValue>>,
     pub name: String,
+    pub args: Vec<Var>,
     pub exprs: Vec<Expr>,
 }
 
@@ -45,6 +46,10 @@ pub enum ExprType {
 pub enum Expr {
     Invoke {
         invoke: Box<Invoke>,
+        tpe: Cell<Option<ExprType>>,
+    },
+    LlvmInvoke {
+        invoke: Box<LlvmInvoke>,
         tpe: Cell<Option<ExprType>>,
     },
     Num {
@@ -117,10 +122,18 @@ pub struct Boolean {
 }
 
 #[derive(Debug)]
+pub struct LlvmInvoke {
+    pub name: String,
+    pub is_varargs: bool,
+    pub return_type: String,
+    pub args: Vec<Expr>,
+}
+
+#[derive(Debug)]
 pub struct Invoke {
     pub func_ref: Cell<Option<*const Func>>,
     pub name: String,
-    pub arg: Box<Expr>,
+    pub args: Vec<Expr>,
 }
 
 #[derive(Debug)]
@@ -138,6 +151,6 @@ pub struct ReadVar {
 #[derive(Debug)]
 pub struct Var {
     pub llvm_ref: Cell<Option<PointerValue>>,
-    pub expr_ref: Cell<Option<*const Expr>>,
+    pub expr_type_ref: Cell<Option<*const ExprType>>,
     pub name: String,
 }

@@ -3,6 +3,20 @@ use syntax::tree::*;
 
 grammar;
 
+Comma<T>: Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
+
+pub Exprs = Comma<Expr>;
+pub Vars = Comma<Var>;
+
 pub Mod: Box<Mod> = {
   <u:ModUnit*> => Box::new(Mod { units:u }),
 };
@@ -40,7 +54,7 @@ ClassName: String = {
 };
 
 Func: Box<Func> = {
-  "def" <name:Name> "(" ")" <exprs:Expr*> "end" => Box::new(Func { name:name, exprs:exprs }),
+  "def" <name:Name> "(" <args:Vars> ")" <exprs:Expr*> "end" => Box::new(Func { name, args, exprs }),
 };
 
 Expr: Box<Expr> = {
@@ -52,14 +66,13 @@ Expr: Box<Expr> = {
   <LiteralString>,
   <IfElse>,
   <ComparisonExpr>,
-  <ClassInstance>
+  <ClassInstance>,
+  <LlvmInvoke>
 };
 
 ClassInstance: Box<Expr> = {
   <name:ClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, is_llvm: false, expr }))),
-  <name:LlvmClassName> "(" <expr:Expr> ")" => {
-    Box::new(Expr::ClassInstance(Box::new(ClassInstance { name: String::from(&name[1..name.len()]), is_llvm: true, expr })))
-  },
+  <name:LlvmClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name: String::from(&name[1..name.len()]), is_llvm: true, expr }))),
 };
 
 // TODO(tanin): Comparison should take Exprs. But there is a problem with ambiguity. We should handle it
@@ -88,8 +101,25 @@ Assignment: Box<Expr> = {
 };
 
 Invoke: Box<Expr> = {
-  <name:Name> "(" <expr:Expr> ")" => Box::new(Expr::Invoke(Box::new(Invoke { name: name, arg: expr }))),
+  <name:Name> "(" <args:Exprs> ")" => Box::new(Expr::Invoke(Box::new(Invoke { name, args  }))),
 };
+
+LlvmInvoke: Box<Expr> = {
+  <name_with_return_type:LlvmInvokeName> "(" <args:Exprs> ")" => {
+    let mut tokens = name_with_return_type.split(':');
+    let return_type_with_prefix = String::from(tokens.next().unwrap());
+    let return_type = String::from(&return_type_with_prefix[1..return_type_with_prefix.len()]);
+    let name = String::from(tokens.next().unwrap());
+    let is_varargs = name.chars().last() == Some('+');
+    let name = if name.chars().last() == Some('+') {
+      let len = name.len();
+      String::from(&name[0..len-1])
+    } else {
+      name
+    };
+    Box::new(Expr::LlvmInvoke(Box::new(LlvmInvoke { name, is_varargs, return_type, args  })))
+  }
+}
 
 ReadVar: Box<Expr> = {
   <Var> => Box::new(Expr::Var(<>))
@@ -97,6 +127,10 @@ ReadVar: Box<Expr> = {
 
 Var: Box<Var> = {
   <Name> => Box::new(Var { name: <> })
+};
+
+LlvmInvokeName: String = {
+  r"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\+?" => String::from(<>),
 };
 
 Name: String = {

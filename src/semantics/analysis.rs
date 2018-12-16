@@ -4,6 +4,7 @@ use semantics::tree;
 use std::cell::Cell;
 use std::collections::HashMap;
 
+
 pub fn analyse(
     m: &syntax::tree::Mod,
 ) -> tree::Mod {
@@ -67,12 +68,34 @@ fn link_expr(
 ) {
     match expr {
         tree::Expr::Invoke { ref invoke, tpe } => link_invoke(invoke, scope),
+        tree::Expr::LlvmInvoke { ref invoke, tpe } => link_llvm_invoke(invoke, scope),
         tree::Expr::Assignment { ref assignment, tpe } => link_assignment(assignment, scope),
         tree::Expr::ReadVar { ref read_var, tpe } => link_readvar(read_var, scope),
         tree::Expr::Comparison { ref comparison, tpe } => link_comparison(comparison, scope),
         tree::Expr::IfElse { ref if_else, tpe } => link_if_else(if_else, scope),
+        tree::Expr::ClassInstance { ref class_instance, tpe } => link_class_instance(class_instance, scope),
         _ => ()
     }
+}
+
+fn link_llvm_invoke(
+    invoke: &tree::LlvmInvoke,
+    scope: &mut scope::Scope,
+) {
+    for arg in &invoke.args {
+        scope.enter();
+        link_expr(arg, scope);
+        scope.leave();
+    }
+}
+
+fn link_class_instance(
+    class_instance: &tree::ClassInstance,
+    scope: &mut scope::Scope,
+) {
+    scope.enter();
+    link_expr(&class_instance.expr, scope);
+    scope.leave();
 }
 
 fn link_comparison(
@@ -119,15 +142,19 @@ fn link_invoke(
     invoke: &tree::Invoke,
     scope: &mut scope::Scope,
 ) {
-    if invoke.name != "print" && invoke.name != "read" && invoke.name != "parseNumber" {
+    {
         let f = match scope.read_func(&invoke.name) {
             Some(func) => func,
             None => panic!("Unable to find the function {:?}", invoke.name),
         };
-        invoke.func_ref.set(Some(f as *const tree::Func))
+        invoke.func_ref.set(Some(f as *const tree::Func));
     }
 
-    link_expr(&invoke.arg, scope);
+    for arg in &invoke.args {
+        scope.enter();
+        link_expr(arg, scope);
+        scope.leave();
+    }
 }
 
 pub fn build_mod(
@@ -179,16 +206,21 @@ fn build_class(
 fn build_func(
     func: &syntax::tree::Func,
 ) -> tree::Func {
-    let mut vec = Vec::new();
+    let mut args = vec![];
+    for arg in &func.args {
+       args.push(build_var(arg))
+    }
 
-    for expr in &(*func).exprs {
-        vec.push(build_expr(expr))
+    let mut exprs = vec![];
+    for expr in &func.exprs {
+        exprs.push(build_expr(expr))
     }
 
     tree::Func {
         llvm_ref: Cell::new(None),
         name: func.name.to_string(),
-        exprs: vec,
+        args,
+        exprs,
     }
 }
 
@@ -198,6 +230,10 @@ fn build_expr(
     match *expr {
         syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke {
             invoke: Box::new(build_invoke(i)),
+            tpe: Cell::new(None),
+        },
+        syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke {
+            invoke: Box::new(build_llvm_invoke(i)),
             tpe: Cell::new(None),
         },
         syntax::tree::Expr::Num(ref n) => tree::Expr::Num {
@@ -298,18 +334,17 @@ fn build_assignment(
 ) -> tree::Assignment {
     let expr = Box::new(build_expr(&assignment.expr));
     tree::Assignment {
-        var: Box::new(build_var(&assignment.var, &expr)),
+        var: Box::new(build_var(&assignment.var)),
         expr,
     }
 }
 
 fn build_var(
     var: &syntax::tree::Var,
-    expr: &tree::Expr,
 ) -> tree::Var {
     tree::Var {
         llvm_ref: Cell::new(None),
-        expr_ref: Cell::new(Some(expr as *const tree::Expr)),
+        expr_type_ref: Cell::new(None),
         name: var.name.to_string(),
     }
 }
@@ -317,10 +352,33 @@ fn build_var(
 fn build_invoke(
     invoke: &syntax::tree::Invoke
 ) -> tree::Invoke {
+    let mut args: Vec<tree::Expr> = vec![];
+
+    for arg in &invoke.args {
+        args.push(build_expr(arg));
+    }
+
     tree::Invoke {
         func_ref: Cell::new(None),
         name: invoke.name.to_string(),
-        arg: Box::new(build_expr(&invoke.arg)),
+        args,
+    }
+}
+
+fn build_llvm_invoke(
+    invoke: &syntax::tree::LlvmInvoke
+) -> tree::LlvmInvoke {
+    let mut args: Vec<tree::Expr> = vec![];
+
+    for arg in &invoke.args {
+        args.push(build_expr(arg));
+    }
+
+    tree::LlvmInvoke {
+        name: invoke.name.to_string(),
+        is_varargs: invoke.is_varargs,
+        return_type: invoke.return_type.to_string(),
+        args,
     }
 }
 

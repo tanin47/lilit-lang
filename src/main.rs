@@ -57,8 +57,8 @@ fn main() {
         let target = Target::from_triple(&triple).unwrap();
         let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
 
-        let path =  Path::new("./output.o");
-        println!("Write LLVM IR to output.o");
+        let path =  Path::new("./output/main.o");
+        println!("Write LLVM IR to main.o");
         let result = target_machine.write_to_file(&module, FileType::Object, &path);
          // This is an object file. In order to run it as a binary,
          // we need to link it using `cc output.o -o output`.

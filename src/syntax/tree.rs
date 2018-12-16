@@ -21,12 +21,14 @@ pub struct Class {
 #[derive(Debug)]
 pub struct Func {
     pub name: String,
+    pub args: Vec<Box<Var>>,
     pub exprs: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]
 pub enum Expr {
     Invoke(Box<Invoke>),
+    LlvmInvoke(Box<LlvmInvoke>),
     Boolean(Box<Boolean>),
     Num(Box<Num>),
     Assignment(Box<Assignment>),
@@ -76,7 +78,15 @@ pub struct Var {
 #[derive(Debug)]
 pub struct Invoke {
     pub name: String,
-    pub arg: Box<Expr>,
+    pub args: Vec<Box<Expr>>,
+}
+
+#[derive(Debug)]
+pub struct LlvmInvoke {
+    pub name: String,
+    pub is_varargs: bool,
+    pub return_type: String,
+    pub args: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]
