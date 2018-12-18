@@ -1,11 +1,12 @@
-def main()
-  print("Please enter your age: ")
-  val age = parse(read(1))
-  if age > 35 {
-    print("That's old")
+def main(): Number
+  @Void:printf+(@String("Please enter your age: "))
+  val age = @I32:strtol(@String(@String:read()), @Pointer(@Pointer(@I8(0))), @I32(10))
+  val msg = if age > 35 {
+    "That's old"
   } else {
-    print("That's not too old")
+    "That's not too old"
   }
+  @Void:printf+(@String(msg))
   val result = if age > 10 {
     99
   } else {

@@ -54,7 +54,7 @@ ClassName: String = {
 };
 
 Func: Box<Func> = {
-  "def" <name:Name> "(" <args:Vars> ")" <exprs:Expr*> "end" => Box::new(Func { name, args, exprs }),
+  "def" <name:Name> "(" <args:Vars> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, args, return_type, exprs }),
 };
 
 Expr: Box<Expr> = {
@@ -67,12 +67,16 @@ Expr: Box<Expr> = {
   <IfElse>,
   <ComparisonExpr>,
   <ClassInstance>,
+  <LlvmClassInstance>,
   <LlvmInvoke>
 };
 
 ClassInstance: Box<Expr> = {
-  <name:ClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, is_llvm: false, expr }))),
-  <name:LlvmClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name: String::from(&name[1..name.len()]), is_llvm: true, expr }))),
+  <name:ClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, expr }))),
+};
+
+LlvmClassInstance: Box<Expr> = {
+  <name:LlvmClassName> "(" <expr:Expr> ")" => Box::new(Expr::LlvmClassInstance(Box::new(LlvmClassInstance { name: String::from(&name[1..name.len()]), expr }))),
 };
 
 // TODO(tanin): Comparison should take Exprs. But there is a problem with ambiguity. We should handle it

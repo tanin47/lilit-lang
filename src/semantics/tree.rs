@@ -31,6 +31,7 @@ pub struct Func {
     pub llvm_ref: Cell<Option<FunctionValue>>,
     pub name: String,
     pub args: Vec<Var>,
+    pub return_type: String,
     pub exprs: Vec<Expr>,
 }
 
@@ -39,7 +40,8 @@ pub enum ExprType {
     Num,
     String,
     Boolean,
-    Class(* const ClassInstance)
+    Class(* const ClassInstance),
+    LlvmClass(* const LlvmClassInstance),
 }
 
 #[derive(Debug)]
@@ -84,12 +86,21 @@ pub enum Expr {
         class_instance: Box<ClassInstance>,
         tpe: Cell<Option<ExprType>>,
     },
+    LlvmClassInstance {
+        class_instance: Box<LlvmClassInstance>,
+        tpe: Cell<Option<ExprType>>,
+    },
 }
 
 #[derive(Debug)]
 pub struct ClassInstance {
     pub name: String,
-    pub is_llvm: bool,
+    pub expr: Box<Expr>,
+}
+
+#[derive(Debug)]
+pub struct LlvmClassInstance {
+    pub name: String,
     pub expr: Box<Expr>,
 }
 

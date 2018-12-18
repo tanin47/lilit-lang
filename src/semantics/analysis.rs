@@ -74,6 +74,7 @@ fn link_expr(
         tree::Expr::Comparison { ref comparison, tpe } => link_comparison(comparison, scope),
         tree::Expr::IfElse { ref if_else, tpe } => link_if_else(if_else, scope),
         tree::Expr::ClassInstance { ref class_instance, tpe } => link_class_instance(class_instance, scope),
+        tree::Expr::LlvmClassInstance { ref class_instance, tpe } => link_llvm_class_instance(class_instance, scope),
         _ => ()
     }
 }
@@ -87,6 +88,15 @@ fn link_llvm_invoke(
         link_expr(arg, scope);
         scope.leave();
     }
+}
+
+fn link_llvm_class_instance(
+    class_instance: &tree::LlvmClassInstance,
+    scope: &mut scope::Scope,
+) {
+    scope.enter();
+    link_expr(&class_instance.expr, scope);
+    scope.leave();
 }
 
 fn link_class_instance(
@@ -220,6 +230,7 @@ fn build_func(
         llvm_ref: Cell::new(None),
         name: func.name.to_string(),
         args,
+        return_type: func.return_type.to_string(),
         exprs,
     }
 }
@@ -271,7 +282,24 @@ fn build_expr(
                 class_instance: instance,
                 tpe: Cell::new(Some(tree::ExprType::Class(instance_ref))),
             }
+        },
+        syntax::tree::Expr::LlvmClassInstance(ref class_instance) => {
+            let instance = Box::new(build_llvm_class_instance(class_instance));
+            let instance_ref = instance.as_ref() as *const tree::LlvmClassInstance;
+            tree::Expr::LlvmClassInstance {
+                class_instance: instance,
+                tpe: Cell::new(Some(tree::ExprType::LlvmClass(instance_ref))),
+            }
         }
+    }
+}
+
+fn build_llvm_class_instance(
+    class_instance: &syntax::tree::LlvmClassInstance
+) -> tree::LlvmClassInstance {
+    tree::LlvmClassInstance {
+        name: class_instance.name.to_string(),
+        expr: Box::new(build_expr(&class_instance.expr)),
     }
 }
 
@@ -280,7 +308,6 @@ fn build_class_instance(
 ) -> tree::ClassInstance {
     tree::ClassInstance {
         name: class_instance.name.to_string(),
-        is_llvm: class_instance.is_llvm,
         expr: Box::new(build_expr(&class_instance.expr)),
     }
 }

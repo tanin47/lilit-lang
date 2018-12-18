@@ -22,6 +22,7 @@ pub struct Class {
 pub struct Func {
     pub name: String,
     pub args: Vec<Box<Var>>,
+    pub return_type: String,
     pub exprs: Vec<Box<Expr>>,
 }
 
@@ -37,12 +38,18 @@ pub enum Expr {
     Comparison(Box<Comparison>),
     IfElse(Box<IfElse>),
     ClassInstance(Box<ClassInstance>),
+    LlvmClassInstance(Box<LlvmClassInstance>),
 }
 
 #[derive(Debug)]
 pub struct ClassInstance {
     pub name: String,
-    pub is_llvm: bool,
+    pub expr: Box<Expr>,
+}
+
+#[derive(Debug)]
+pub struct LlvmClassInstance {
+    pub name: String,
     pub expr: Box<Expr>,
 }
 
