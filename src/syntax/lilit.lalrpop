@@ -16,6 +16,7 @@ Comma<T>: Vec<T> = {
 
 pub Exprs = Comma<Expr>;
 pub Vars = Comma<Var>;
+pub ClassParams = Comma<ClassParam>;
 
 pub Mod: Box<Mod> = {
   <u:ModUnit*> => Box::new(Mod { units:u }),
@@ -27,14 +28,20 @@ ModUnit: Box<ModUnit> = {
 };
 
 Class: Box<Class> = {
-  "class" <n:ClassName> <e:ClassExtend?> <m:Func*> "end" => Box::new(Class {
-    name:n,
+  "class" <name:ClassName> "(" <params:ClassParams> ")" <e:ClassExtend?> <methods:Func*> "end" => Box::new(Class {
+    name,
+    params,
     extends: match e {
     	None => vec![],
     	Some(e) => e,
     },
-    methods:m,
+    methods,
   })
+};
+
+ClassParam: Box<ClassParam> = {
+  <var:Var> ":" <tpe:ClassName> => Box::new(ClassParam { var, tpe }),
+  <var:Var> ":" <tpe:LlvmClassName> => Box::new(ClassParam { var, tpe }),
 };
 
 ClassExtend: Vec<String> = {
@@ -58,21 +65,30 @@ Func: Box<Func> = {
 };
 
 Expr: Box<Expr> = {
-  <NumExpr>,
-  <Boolean>,
-  <Invoke>,
   <Assignment>,
+  <HighPrecedentExpr>
+};
+
+HighPrecedentExpr: Box<Expr> = {
+  <DotInvoke>,
+  <Num> => Box::new(Expr::Num(<>)),
+  <Boolean>,
+  <Invoke> => Box::new(Expr::Invoke(<>)),
   <ReadVar>,
   <LiteralString>,
   <IfElse>,
   <ComparisonExpr>,
   <ClassInstance>,
   <LlvmClassInstance>,
-  <LlvmInvoke>
+  <LlvmInvoke>,
+};
+
+DotInvoke: Box<Expr> = {
+  <expr:HighPrecedentExpr> "." <invoke:Invoke> => Box::new(Expr::DotInvoke(Box::new(DotInvoke { expr, invoke }))),
 };
 
 ClassInstance: Box<Expr> = {
-  <name:ClassName> "(" <expr:Expr> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, expr }))),
+  <name:ClassName> "(" <params:Exprs> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, params }))),
 };
 
 LlvmClassInstance: Box<Expr> = {
@@ -104,8 +120,8 @@ Assignment: Box<Expr> = {
   "val" <var:Var> "="  <expr:Expr> => Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
 };
 
-Invoke: Box<Expr> = {
-  <name:Name> "(" <args:Exprs> ")" => Box::new(Expr::Invoke(Box::new(Invoke { name, args  }))),
+Invoke: Box<Invoke> = {
+  <name:Name> "(" <args:Exprs> ")" => Box::new(Invoke { name, args  }),
 };
 
 LlvmInvoke: Box<Expr> = {
@@ -144,10 +160,6 @@ Name: String = {
 Boolean: Box<Expr> = {
   "true" => Box::new(Expr::Boolean(Box::new(Boolean { value: true }))),
   "false" => Box::new(Expr::Boolean(Box::new(Boolean { value: false }))),
-};
-
-NumExpr: Box<Expr> = {
-  <Num> => Box::new(Expr::Num(<>)),
 };
 
 Num: Box<Num> = {

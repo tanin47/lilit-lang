@@ -14,8 +14,15 @@ pub enum ModUnit {
 #[derive(Debug)]
 pub struct Class {
     pub name: String,
+    pub params: Vec<Box<ClassParam>>,
     pub extends: Vec<String>,
     pub methods: Vec<Box<Func>>,
+}
+
+#[derive(Debug)]
+pub struct ClassParam {
+    pub var: Box<Var>,
+    pub tpe: String
 }
 
 #[derive(Debug)]
@@ -39,12 +46,19 @@ pub enum Expr {
     IfElse(Box<IfElse>),
     ClassInstance(Box<ClassInstance>),
     LlvmClassInstance(Box<LlvmClassInstance>),
+    DotInvoke(Box<DotInvoke>),
+}
+
+#[derive(Debug)]
+pub struct DotInvoke {
+    pub expr: Box<Expr>,
+    pub invoke: Box<Invoke>,
 }
 
 #[derive(Debug)]
 pub struct ClassInstance {
     pub name: String,
-    pub expr: Box<Expr>,
+    pub params: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]

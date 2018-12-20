@@ -8,6 +8,8 @@ use std::rc::Rc;
 pub enum ScopeValue {
 	Var(*const tree::Var),
 	Func(*const tree::Func),
+	Method(*const tree::Func),
+	Class(*const tree::Class),
 }
 
 pub struct Scope {
@@ -23,7 +25,23 @@ impl Scope {
 		self.levels.pop();
 	}
 
-	pub fn declare(&mut self, key: &str, value: ScopeValue) {
+	pub fn make_method_key(class_name: &str, method_name: &str) -> String {
+		format!("__{}__{}", class_name, method_name)
+	}
+
+	pub fn declare(&mut self, value: ScopeValue) {
+		let key = match value {
+			ScopeValue::Var(var_ptr) => (unsafe { &*var_ptr }).name.to_string(),
+			ScopeValue::Func(func_ptr) => (unsafe { &*func_ptr }).name.to_string(),
+			ScopeValue::Class(class_ptr) => (unsafe { &*class_ptr }).name.to_string(),
+			ScopeValue::Method(ref func_ptr) => {
+				let func = unsafe { &**func_ptr };
+				let func_name = &func.name;
+				let klass = unsafe { &*func.parent_class_opt.get().unwrap() };
+
+                Scope::make_method_key(&klass.name, func_name)
+			},
+		};
 		let last_index = self.levels.len() - 1;
 		let map = &mut self.levels[last_index];
 		map.insert(key.to_string(), value);
@@ -39,6 +57,20 @@ impl Scope {
 		}
 
         None
+	}
+
+	pub fn read_class(&self, class_name: &str) -> Option<&tree::Class> {
+		match self.read(class_name) {
+			Some(&ScopeValue::Class(class)) => Some(unsafe { &*class }),
+			_ => None
+		}
+	}
+
+	pub fn read_method(&self, class_name: &str, method_name: &str) -> Option<&tree::Func> {
+		match self.read(&Scope::make_method_key(class_name, method_name)) {
+			Some(&ScopeValue::Method(func)) => Some(unsafe { &*func }),
+			_ => None
+		}
 	}
 
 	pub fn read_var(&self, key: &str) -> Option<&tree::Var> {
@@ -62,18 +94,28 @@ mod tests {
 
 	#[test]
 	fn it_enters_new_scope_declare_var_and_leave() {
-		let value = Box::new(tree::Var {
+		let klass = Box::new(tree::Class {
+			name: "klass".to_string(),
+		    params: vec![],
+		    extends: vec![],
+		    methods: vec![],
+		});
+		let func = Box::new(tree::Func {
 			llvm_ref: Cell::new(None),
-			name: "a".to_string(),
+		    parent_class_opt: Cell::new(Some(klass.as_ref())),
+		    name: "run".to_string(),
+		    args: vec![],
+		    return_type: "Int".to_string(),
+		    exprs: vec![],
 		});
 
 		let mut scope = Scope { levels: Vec::new() };
 
 		scope.enter();
 		assert_eq!(scope.levels.len(), 1);
-		scope.declare("a", ScopeValue::Var(value.as_ref() as *const tree::Var));
+		scope.declare(ScopeValue::Method(func.as_ref()));
 		{
-			assert_eq!(scope.read_var("a").unwrap() as *const tree::Var, value.as_ref() as *const tree::Var);
+			assert_eq!(scope.read_method(&klass.name, &func.name).unwrap() as *const tree::Func, func.as_ref() as *const tree::Func);
 		}
 
 		scope.leave();
@@ -88,16 +130,19 @@ mod tests {
         });
         let inner_value = Box::new(tree::Func {
             llvm_ref: Cell::new(None),
+            parent_class_opt: Cell::new(None),
 			name: "a".to_string(),
+			args: vec![],
+			return_type: "Int".to_string(),
             exprs: vec![],
         });
 
         let mut scope = Scope { levels: Vec::new() };
 
         scope.enter();
-        scope.declare("a", ScopeValue::Var(outer_value.as_ref() as *const tree::Var));
+        scope.declare(ScopeValue::Var(outer_value.as_ref() as *const tree::Var));
         scope.enter();
-        scope.declare("a", ScopeValue::Func(inner_value.as_ref() as *const tree::Func));
+        scope.declare(ScopeValue::Func(inner_value.as_ref() as *const tree::Func));
         assert_eq!(scope.read_func("a").unwrap() as *const tree::Func, inner_value.as_ref() as *const tree::Func);
 
         scope.leave();

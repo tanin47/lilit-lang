@@ -18,7 +18,7 @@ use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, C
 
 mod syntax;
 mod semantics;
-mod llvmgen;
+//mod llvmgen;
 
 fn main() {
     println!("Lilit 0.0.1\n");
@@ -42,24 +42,24 @@ fn main() {
     if let Ok(ref _ok_tree) = tree {
         let mut root = Box::new(semantics::analyse(_ok_tree));
         println!("{:?}\n", root);
-
-        Target::initialize_native(&InitializationConfig::default()).unwrap();
-
-        let context = Context::create();
-        let builder = context.create_builder();
-
-        println!("Start generating LLVM IR...");
-        let module = llvmgen::generate(&root, &context, &builder);
-        println!("Finished");
-        module.print_to_stderr();
-
-        let triple = TargetMachine::get_default_triple().to_string();
-        let target = Target::from_triple(&triple).unwrap();
-        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
-
-        let path =  Path::new("./output/main.o");
-        println!("Write LLVM IR to main.o");
-        let result = target_machine.write_to_file(&module, FileType::Object, &path);
+//
+//        Target::initialize_native(&InitializationConfig::default()).unwrap();
+//
+//        let context = Context::create();
+//        let builder = context.create_builder();
+//
+//        println!("Start generating LLVM IR...");
+//        let module = llvmgen::generate(&root, &context, &builder);
+//        println!("Finished");
+//        module.print_to_stderr();
+//
+//        let triple = TargetMachine::get_default_triple().to_string();
+//        let target = Target::from_triple(&triple).unwrap();
+//        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+//
+//        let path =  Path::new("./output/main.o");
+//        println!("Write LLVM IR to main.o");
+//        let result = target_machine.write_to_file(&module, FileType::Object, &path);
          // This is an object file. In order to run it as a binary,
          // we need to link it using `cc output.o -o output`.
          // Now you can run `./output`.

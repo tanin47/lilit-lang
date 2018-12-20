@@ -17,6 +17,20 @@ pub fn analyse(
     module
 }
 
+fn convert_to_expr_type(return_type_name: &str, scope: &mut scope::Scope) -> tree::ExprType {
+    if return_type_name == "Void" {
+        tree::ExprType::Void
+    } else if return_type_name == "Boolean" {
+        tree::ExprType::Boolean
+    } else if return_type_name == "Number" {
+        tree::ExprType::Number
+    } else if return_type_name == "String" {
+        tree::ExprType::String
+    } else {
+        tree::ExprType::Class(scope.read_class(return_type_name).unwrap())
+    }
+}
+
 fn link_mod(
     m: &tree::Mod,
     scope: &mut scope::Scope
@@ -25,10 +39,27 @@ fn link_mod(
     for unit in &m.units {
         match unit {
             tree::ModUnit::Func { ref func } => {
-                scope.declare(
-                    &func.name,
-                    scope::ScopeValue::Func(func.as_ref() as *const tree::Func)
-                )
+                scope.declare(scope::ScopeValue::Func(func.as_ref()));
+            },
+            tree::ModUnit::Class { ref class } => {
+                scope.declare(scope::ScopeValue::Class(class.as_ref()));
+                for method in &class.methods {
+                    method.parent_class_opt.set(Some(class.as_ref()));
+                    scope.declare(scope::ScopeValue::Method(method));
+                }
+            },
+            _ => (),
+        }
+    }
+    for unit in &m.units {
+        match unit {
+            tree::ModUnit::Func { ref func } => {
+                func.return_type.set(Some(convert_to_expr_type(&func.return_type_name, scope)));
+            },
+            tree::ModUnit::Class { ref class } => {
+                for method in &class.methods {
+                    method.return_type.set(Some(convert_to_expr_type(&method.return_type_name, scope)));
+                }
             },
             _ => (),
         }
@@ -45,7 +76,16 @@ fn link_mod_unit(
 ) {
     match unit {
         tree::ModUnit::Func { ref func } => link_func(func, scope),
-        _ => (),
+        tree::ModUnit::Class { ref class } => link_class(class, scope),
+    }
+}
+
+fn link_class(
+    class: &tree::Class,
+    scope: &mut scope::Scope,
+) {
+    for method in &class.methods {
+        link_func(method, scope);
     }
 }
 
@@ -67,15 +107,32 @@ fn link_expr(
     scope: &mut scope::Scope,
 ) {
     match expr {
-        tree::Expr::Invoke { ref invoke, tpe } => link_invoke(invoke, scope),
-        tree::Expr::LlvmInvoke { ref invoke, tpe } => link_llvm_invoke(invoke, scope),
-        tree::Expr::Assignment { ref assignment, tpe } => link_assignment(assignment, scope),
-        tree::Expr::ReadVar { ref read_var, tpe } => link_readvar(read_var, scope),
-        tree::Expr::Comparison { ref comparison, tpe } => link_comparison(comparison, scope),
-        tree::Expr::IfElse { ref if_else, tpe } => link_if_else(if_else, scope),
-        tree::Expr::ClassInstance { ref class_instance, tpe } => link_class_instance(class_instance, scope),
-        tree::Expr::LlvmClassInstance { ref class_instance, tpe } => link_llvm_class_instance(class_instance, scope),
-        _ => ()
+        tree::Expr::Invoke(ref invoke) => link_invoke(invoke, scope),
+        tree::Expr::LlvmInvoke(ref invoke) => link_llvm_invoke(invoke, scope),
+        tree::Expr::Assignment(ref assignment) => link_assignment(assignment, scope),
+        tree::Expr::ReadVar(ref read_var) => link_readvar(read_var, scope),
+        tree::Expr::Comparison(ref comparison) => link_comparison(comparison, scope),
+        tree::Expr::IfElse(ref if_else) => link_if_else(if_else, scope),
+        tree::Expr::ClassInstance(ref class_instance) => link_class_instance(class_instance, scope),
+        tree::Expr::LlvmClassInstance(ref class_instance) => link_llvm_class_instance(class_instance, scope),
+        tree::Expr::DotInvoke(ref dot_invoke) => link_dot_invoke(dot_invoke, scope),
+        tree::Expr::Num(ref num) => (),
+        tree::Expr::LiteralString(ref literal_string) => (),
+        tree::Expr::Boolean(ref boolean) => (),
+    }
+}
+
+fn link_dot_invoke(
+    dot_invoke: &tree::DotInvoke,
+    scope: &mut scope::Scope,
+) {
+    link_expr(&dot_invoke.expr, scope);
+
+    match dot_invoke.expr.get_type() {
+        tree::ExprType::Class(ref class) => {
+            link_method_invoke(&dot_invoke.invoke, unsafe { &**class }, scope);
+        },
+        _ => panic!("Expecting a class for DotInvoke"),
     }
 }
 
@@ -88,6 +145,8 @@ fn link_llvm_invoke(
         link_expr(arg, scope);
         scope.leave();
     }
+
+    invoke.tpe.set(Some(convert_to_expr_type(&invoke.return_type, scope)));
 }
 
 fn link_llvm_class_instance(
@@ -103,9 +162,12 @@ fn link_class_instance(
     class_instance: &tree::ClassInstance,
     scope: &mut scope::Scope,
 ) {
-    scope.enter();
-    link_expr(&class_instance.expr, scope);
-    scope.leave();
+    for param in &class_instance.params {
+        scope.enter();
+        link_expr(&param, scope);
+        scope.leave();
+    }
+    class_instance.tpe.set(Some(tree::ExprType::Class(scope.read_class(&class_instance.name).unwrap())));
 }
 
 fn link_comparison(
@@ -126,6 +188,7 @@ fn link_if_else(
     scope.enter();
     link_expr(&if_else.false_br, scope);
     scope.leave();
+    if_else.tpe.set(Some(if_else.true_br.get_type()))
 }
 
 fn link_readvar(
@@ -136,7 +199,8 @@ fn link_readvar(
         Some(v) => v,
         None => panic!("Unable to find the variable {:?}", readvar.name),
     };
-    readvar.assignment_ref.set(Some(v as *const tree::Var))
+    readvar.assignment_ref.set(Some(v as *const tree::Var));
+    readvar.tpe.set(v.tpe.get());
 }
 
 
@@ -144,8 +208,31 @@ fn link_assignment(
     assignment: &tree::Assignment,
     scope: &mut scope::Scope,
 ) {
-    scope.declare(&assignment.var.name, scope::ScopeValue::Var(assignment.var.as_ref() as *const tree::Var));
+    scope.declare(scope::ScopeValue::Var(assignment.var.as_ref() as *const tree::Var));
     link_expr(&assignment.expr, scope);
+
+    assignment.var.tpe.set(Some(assignment.expr.get_type()))
+}
+
+fn link_method_invoke(
+    invoke: &tree::Invoke,
+    class: &tree::Class,
+    scope: &mut scope::Scope,
+) {
+    {
+        let f = match scope.read_method(&class.name, &invoke.name) {
+            Some(func) => func,
+            None => panic!("Unable to find the method {}.{}", class.name, invoke.name),
+        };
+        invoke.func_ref.set(Some(f as *const tree::Func));
+        invoke.tpe.set(f.return_type.get());
+    }
+
+    for arg in &invoke.args {
+        scope.enter();
+        link_expr(arg, scope);
+        scope.leave();
+    }
 }
 
 fn link_invoke(
@@ -158,6 +245,7 @@ fn link_invoke(
             None => panic!("Unable to find the function {:?}", invoke.name),
         };
         invoke.func_ref.set(Some(f as *const tree::Func));
+        invoke.tpe.set(f.return_type.get());
     }
 
     for arg in &invoke.args {
@@ -196,6 +284,11 @@ fn build_mod_unit(
 fn build_class(
     class: &syntax::tree::Class,
 ) -> tree::Class {
+    let mut param_vec = vec![];
+    for param in &class.params {
+        param_vec.push(Box::new(build_class_param(&param)));
+    }
+
     let mut method_vec = vec![];
     for method in &class.methods {
         method_vec.push(build_func(&method));
@@ -208,8 +301,19 @@ fn build_class(
 
     tree::Class {
         name: class.name.to_string(),
+        params: param_vec,
         extends: extend_vec,
         methods: method_vec,
+    }
+}
+
+fn build_class_param(
+    class_param: &syntax::tree::ClassParam
+) -> tree::ClassParam {
+    tree::ClassParam {
+        var: Box::new(build_var(&class_param.var)),
+        tpe_name: class_param.tpe.to_string(),
+        tpe: Cell::new(None),
     }
 }
 
@@ -228,9 +332,11 @@ fn build_func(
 
     tree::Func {
         llvm_ref: Cell::new(None),
+        parent_class_opt: Cell::new(None),
         name: func.name.to_string(),
         args,
-        return_type: func.return_type.to_string(),
+        return_type_name: func.return_type.to_string(),
+        return_type: Cell::new(None),
         exprs,
     }
 }
@@ -239,58 +345,28 @@ fn build_expr(
     expr: &syntax::tree::Expr,
 ) -> tree::Expr {
     match *expr {
-        syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke {
-            invoke: Box::new(build_invoke(i)),
-            tpe: Cell::new(None),
-        },
-        syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke {
-            invoke: Box::new(build_llvm_invoke(i)),
-            tpe: Cell::new(None),
-        },
-        syntax::tree::Expr::Num(ref n) => tree::Expr::Num {
-            num: Box::new(build_num(n)),
-            tpe: Cell::new(Some(tree::ExprType::Num)),
-        },
-        syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment {
-            assignment: Box::new(build_assignment(a)),
-            tpe: Cell::new(None),
-        },
-        syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar {
-            read_var: Box::new(build_read_var(v)),
-            tpe: Cell::new(None),
-        },
-        syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString {
-            literal_string: Box::new(build_literal_string(s)),
-            tpe: Cell::new(Some(tree::ExprType::String)),
-        },
-        syntax::tree::Expr::Boolean(ref b) => tree::Expr::Boolean {
-            boolean: Box::new(build_boolean(b)),
-            tpe: Cell::new(Some(tree::ExprType::Boolean)),
-        },
-        syntax::tree::Expr::Comparison(ref c) => tree::Expr::Comparison {
-            comparison: Box::new(build_comparison(c)),
-            tpe: Cell::new(Some(tree::ExprType::Boolean)),
-        },
-        syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse {
-            if_else: Box::new(build_if_else(if_else)),
-            tpe: Cell::new(None),
-        },
-        syntax::tree::Expr::ClassInstance(ref class_instance) => {
-            let instance = Box::new(build_class_instance(class_instance));
-            let instance_ref = instance.as_ref() as *const tree::ClassInstance;
-            tree::Expr::ClassInstance {
-                class_instance: instance,
-                tpe: Cell::new(Some(tree::ExprType::Class(instance_ref))),
-            }
-        },
-        syntax::tree::Expr::LlvmClassInstance(ref class_instance) => {
-            let instance = Box::new(build_llvm_class_instance(class_instance));
-            let instance_ref = instance.as_ref() as *const tree::LlvmClassInstance;
-            tree::Expr::LlvmClassInstance {
-                class_instance: instance,
-                tpe: Cell::new(Some(tree::ExprType::LlvmClass(instance_ref))),
-            }
-        }
+        syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke(Box::new(build_invoke(i))),
+        syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke(Box::new(build_llvm_invoke(i))),
+        syntax::tree::Expr::Num(ref n) => tree::Expr::Num(Box::new(build_num(n))),
+        syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment(Box::new(build_assignment(a))),
+        syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar(Box::new(build_read_var(v))),
+        syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString(Box::new(build_literal_string(s))),
+        syntax::tree::Expr::Boolean(ref b) => tree::Expr::Boolean(Box::new(build_boolean(b))),
+        syntax::tree::Expr::Comparison(ref c) => tree::Expr::Comparison(Box::new(build_comparison(c))),
+        syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse(Box::new(build_if_else(if_else))),
+        syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance))),
+        syntax::tree::Expr::LlvmClassInstance(ref class_instance) => tree::Expr::LlvmClassInstance(Box::new(build_llvm_class_instance(class_instance))),
+        syntax::tree::Expr::DotInvoke(ref dot_invoke) => tree::Expr::DotInvoke(Box::new(build_dot_invoke(dot_invoke))),
+    }
+}
+
+fn build_dot_invoke(
+    dot_invoke: &syntax::tree::DotInvoke
+) -> tree::DotInvoke {
+    tree::DotInvoke {
+        expr: Box::new(build_expr(&dot_invoke.expr)),
+        invoke: Box::new(build_invoke(&dot_invoke.invoke)),
+        tpe: Cell::new(None),
     }
 }
 
@@ -300,15 +376,22 @@ fn build_llvm_class_instance(
     tree::LlvmClassInstance {
         name: class_instance.name.to_string(),
         expr: Box::new(build_expr(&class_instance.expr)),
+        tpe: Cell::new(None),
     }
 }
 
 fn build_class_instance(
     class_instance: &syntax::tree::ClassInstance
 ) -> tree::ClassInstance {
+    let mut param_vec = vec![];
+    for param in &class_instance.params {
+       param_vec.push(Box::new(build_expr(&param)));
+    }
+
     tree::ClassInstance {
         name: class_instance.name.to_string(),
-        expr: Box::new(build_expr(&class_instance.expr)),
+        params: param_vec,
+        tpe: Cell::new(None),
     }
 }
 
@@ -316,7 +399,8 @@ fn build_boolean(
     boolean: &syntax::tree::Boolean
 ) -> tree::Boolean {
     tree::Boolean {
-        value: boolean.value
+        value: boolean.value,
+        tpe: tree::ExprType::Boolean,
     }
 }
 
@@ -326,6 +410,7 @@ fn build_comparison(
     tree::Comparison {
         left: Box::new(build_read_var(&comparison.left)),
         right: Box::new(build_num(&comparison.right)),
+        tpe: tree::ExprType::Boolean,
     }
 }
 
@@ -336,6 +421,7 @@ fn build_if_else(
         cond: Box::new(build_comparison(&if_else.cond)),
         true_br: Box::new(build_expr(&if_else.true_br)),
         false_br: Box::new(build_expr(&if_else.false_br)),
+        tpe: Cell::new(None),
     }
 }
 
@@ -343,7 +429,8 @@ fn build_literal_string(
     literal_string: &syntax::tree::LiteralString,
 ) -> tree::LiteralString {
     tree::LiteralString {
-        content: literal_string.content.to_string()
+        content: literal_string.content.to_string(),
+        tpe: tree::ExprType::String,
     }
 }
 
@@ -353,6 +440,7 @@ fn build_read_var(
     tree::ReadVar {
         assignment_ref: Cell::new(None),
         name: var.name.to_string(),
+        tpe: Cell::new(None),
     }
 }
 
@@ -363,6 +451,7 @@ fn build_assignment(
     tree::Assignment {
         var: Box::new(build_var(&assignment.var)),
         expr,
+        tpe: Cell::new(None),
     }
 }
 
@@ -371,7 +460,7 @@ fn build_var(
 ) -> tree::Var {
     tree::Var {
         llvm_ref: Cell::new(None),
-        expr_type_ref: Cell::new(None),
+        tpe: Cell::new(None),
         name: var.name.to_string(),
     }
 }
@@ -389,6 +478,7 @@ fn build_invoke(
         func_ref: Cell::new(None),
         name: invoke.name.to_string(),
         args,
+        tpe: Cell::new(None),
     }
 }
 
@@ -406,6 +496,7 @@ fn build_llvm_invoke(
         is_varargs: invoke.is_varargs,
         return_type: invoke.return_type.to_string(),
         args,
+        tpe: Cell::new(None),
     }
 }
 
@@ -414,62 +505,7 @@ fn build_num(
 ) -> tree::Num {
     tree::Num {
         value: num.value,
+        tpe: tree::ExprType::Number,
     }
 }
 
-//
-//#[cfg(test)]
-//mod tests {
-//    use super::*;
-//
-//    #[test]
-//    fn it_test() {
-//        let var = Box::new(syntax::tree::Var { id: Box::new(syntax::tree::Id { name: "a".to_string() }) });
-//        let value = Box::new(tree::Var {
-//            llvm_ref: Cell::new(None),
-//            id: Box::new(tree::Id { syntax: &var.id } ),
-//            syntax: &var,
-//        });
-//
-//        let read_var = Box::new(tree::ReadVar{
-//            origin: Cell::new(None),
-//            syntax: &var,
-//        });
-//
-////        let mut scope = scope::Scope { levels: Vec::new() };
-////        scope.enter();
-//////        scope.declare(value.id.syntax.name.to_string(), scope::ScopeValue::Var(&value));
-//////        read_var.origin.set(Some(scope.read_var(&read_var.syntax.id.name).unwrap()));
-//////        test_declare(&value, &mut scope);
-//////        test_link(&read_var, &mut scope);
-////        test_wrapper(&value, &read_var, &mut scope);
-////        scope.leave()
-//    }
-//
-////    fn test_wrapper<'s, 'm:'s, 'd:'s, 'read_var_ref:'s + 'd, 'syntax:'read_var_ref>(
-////        value: &'read_var_ref tree::Var<'syntax>,
-////        readvar: &'d tree::ReadVar<'read_var_ref, 'syntax>,
-////        scope: &'s mut scope::Scope<'read_var_ref, 'syntax>,
-////    ) {
-////        test_declare(value, scope);
-////        test_link(readvar, scope);
-////    }
-////
-////    fn test_declare<'s, 'm:'s, 'syntax:'m>(
-////        value: &'m tree::Var<'syntax>,
-////        scope: &'s mut scope::Scope<'m, 'syntax>,
-////    ) {
-////        scope.declare(value.id.syntax.name.to_string(), scope::ScopeValue::Var(value));
-////    }
-////
-////    fn test_link<'s, 'm:'s, 'read_var_ref:'s, 'syntax:'read_var_ref>(
-////        readvar: &'m tree::ReadVar<'read_var_ref, 'syntax>,
-////        scope: &'s mut scope::Scope<'read_var_ref, 'syntax>
-////    ) {
-////        let v = match scope.read_var(&readvar.syntax.id.name) {
-////            Some(v) => v,
-////            None => panic!("Unable to find the variable {:?}", readvar.syntax.id.name),
-////        };
-////        readvar.origin.set(Some(&*v))
-////    }
-//}

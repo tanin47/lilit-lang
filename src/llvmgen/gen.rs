@@ -255,7 +255,7 @@ fn gen_if_else(
     let true_block = context.context.append_basic_block(context.func, "true_block");
     let false_block = context.context.append_basic_block(context.func, "false_block");
     let end_block = context.context.append_basic_block(context.func, "end");
-    context.builder.build_conditional_branch(comparison, &true_block, &false_block);
+    let jump_instruction = context.builder.build_conditional_branch(comparison, &true_block, &false_block);
 
     context.builder.position_at_end(&true_block);
     let true_value = gen_expr(&if_else.true_br, context);
@@ -265,6 +265,7 @@ fn gen_if_else(
 
     match (&true_value, &false_value) {
         (Value::Number(_), Value::Number(_)) => {
+            context.builder.position_before(&jump_instruction);
             let ret_pointer = context.builder.build_alloca(context.context.i32_type(), "ret_if_else");
 
             context.builder.position_at_end(&true_block);
@@ -282,6 +283,7 @@ fn gen_if_else(
             }
         },
         (Value::String(_), Value::String(_)) => {
+            context.builder.position_before(&jump_instruction);
             let ret_pointer = context.builder.build_alloca(context.core.string_struct_type.ptr_type(AddressSpace::Generic), "ret_if_else");
 
             context.builder.position_at_end(&true_block);
@@ -299,6 +301,7 @@ fn gen_if_else(
             }
         },
         (Value::Boolean(_), Value::Boolean(_)) => {
+            context.builder.position_before(&jump_instruction);
             let ret_pointer = context.builder.build_alloca(context.context.i32_type(), "ret_if_else");
 
             context.builder.position_at_end(&true_block);
@@ -315,8 +318,17 @@ fn gen_if_else(
                 _ => panic!("")
             }
         },
-        (Value::Void, _) => Value::Void,
-        (_, Value::Void) => Value::Void,
+        (Value::Void, _) | (_, Value::Void) => {
+            context.builder.position_at_end(&true_block);
+            context.builder.build_unconditional_branch(&end_block);
+
+            context.builder.position_at_end(&false_block);
+            context.builder.build_unconditional_branch(&end_block);
+
+            context.builder.position_at_end(&end_block);
+
+            Value::Void
+        },
         _ => panic!("")
     }
 }
