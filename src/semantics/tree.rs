@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use std::cell::Cell;
 use syntax;
 use inkwell::values::{FunctionValue, PointerValue};
+use inkwell::types::StructType;
 
 #[derive(Debug)]
 pub struct Mod {
@@ -25,6 +26,7 @@ pub struct Class {
     pub params: Vec<Box<ClassParam>>,
     pub extends: Vec<String>,
     pub methods: Vec<Func>,
+    pub llvm_struct_type_ref: Cell<Option<StructType>>
 }
 
 #[derive(Debug)]
@@ -100,6 +102,7 @@ pub struct DotInvoke {
 pub struct ClassInstance {
     pub name: String,
     pub params: Vec<Box<Expr>>,
+    pub class_ref: Cell<Option<*const Class>>,
     pub tpe: Cell<Option<ExprType>>,
 }
 

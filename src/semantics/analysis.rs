@@ -167,7 +167,9 @@ fn link_class_instance(
         link_expr(&param, scope);
         scope.leave();
     }
-    class_instance.tpe.set(Some(tree::ExprType::Class(scope.read_class(&class_instance.name).unwrap())));
+    let class = scope.read_class(&class_instance.name).unwrap();
+    class_instance.tpe.set(Some(tree::ExprType::Class(class)));
+    class_instance.class_ref.set(Some(class));
 }
 
 fn link_comparison(
@@ -304,6 +306,7 @@ fn build_class(
         params: param_vec,
         extends: extend_vec,
         methods: method_vec,
+        llvm_struct_type_ref: Cell::new(None),
     }
 }
 
@@ -392,6 +395,7 @@ fn build_class_instance(
         name: class_instance.name.to_string(),
         params: param_vec,
         tpe: Cell::new(None),
+        class_ref: Cell::new(None),
     }
 }
 

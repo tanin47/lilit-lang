@@ -98,7 +98,58 @@ fn gen_mod_unit(
         tree::ModUnit::Func { ref func } => {
             gen_func(func, context);
         },
+        tree::ModUnit::Class { ref class } => {
+            gen_class(class, context);
+        },
         _ => (),
+    }
+}
+
+fn gen_class(
+    class: &tree::Class,
+    context: &ModContext
+) {
+    // TODO: Setup class params
+    let class_struct = StructType::struct_type(
+        &[],
+        false
+    );
+    class.llvm_struct_type_ref.set(Some(class_struct));
+
+    for method in &class.methods {
+       gen_method(method, class, context) ;
+    }
+}
+
+fn gen_method(
+    method: &tree::Func,
+    class: &tree::Class,
+    context: &ModContext,
+) {
+    // TODO: This should read from the method.return_type
+    let i32_type = context.context.i32_type();
+    let fn_type = i32_type.fn_type(&[], false);
+
+    let func_name = format!("__{}__{}", class.name, method.name);
+    let function = context.module.add_function(&func_name, fn_type, None);
+    method.llvm_ref.replace(Some(function));
+
+    let first_block = context.context.append_basic_block(&function, "first_block");
+    context.builder.position_at_end(&first_block);
+
+    let fn_context = FnContext {
+        func: &function,
+        module: context.module,
+        context: context.context,
+        builder: context.builder,
+        core: context.core,
+    };
+
+    for (index, expr) in method.exprs.iter().enumerate() {
+        let ret = gen_expr(expr, &fn_context);
+        if index == (method.exprs.len() - 1) {
+            context.builder.build_return(Some(&convert(&ret)));
+        }
     }
 }
 
@@ -106,6 +157,7 @@ fn gen_func(
     func: &tree::Func,
     context: &ModContext,
 ) {
+    // TODO: This should read from the method.return_type
     let i32_type = context.context.i32_type();
     let fn_type = i32_type.fn_type(&[], false);
 
@@ -136,39 +188,46 @@ fn gen_expr(
     context: &FnContext
 ) -> Value {
     match expr {
-        tree::Expr::Invoke { ref invoke, tpe: _ } => {
-            gen_invoke(invoke, context)
+        tree::Expr::Invoke(ref invoke) => gen_invoke(invoke, context),
+        tree::Expr::DotInvoke(ref invoke) => gen_dot_invoke(invoke, context),
+        tree::Expr::LlvmInvoke(ref invoke) => gen_llvm_invoke(invoke, context),
+        tree::Expr::Num(ref num) => gen_num(num, context),
+        tree::Expr::Assignment(ref assignment) => gen_assignment(assignment, context),
+        tree::Expr::ReadVar(ref read_var) => gen_read_var(read_var, context),
+        tree::Expr::LiteralString(ref literal_string) => gen_string(literal_string, context),
+        tree::Expr::Boolean(ref boolean) => gen_boolean(boolean, context),
+        tree::Expr::Comparison(ref comparison) => gen_comparison(comparison, context),
+        tree::Expr::IfElse(ref if_else) => gen_if_else(if_else, context),
+        tree::Expr::ClassInstance(ref class_instance) => gen_class_instance(class_instance, context),
+        tree::Expr::LlvmClassInstance(ref class_instance) => gen_llvm_class_instance(class_instance, context),
+    }
+}
+
+fn gen_dot_invoke(
+    dot_invoke: &tree::DotInvoke,
+    context: &FnContext
+) -> Value {
+    let expr = gen_expr(&dot_invoke.expr, context);
+    let llvm_expr = convert(&expr);
+
+    let func = unsafe { &*dot_invoke.invoke.func_ref.get().unwrap() };
+    let llvm_ret = context.builder.build_call(func.llvm_ref.get().unwrap(), &[llvm_expr], &dot_invoke.invoke.name);
+
+    match func.return_type.get().unwrap() {
+        tree::ExprType::Number => {
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::IntValue(i) => Value::Number(i),
+                _ => panic!(""),
+            }
         },
-        tree::Expr::LlvmInvoke { ref invoke, tpe: _ } => {
-            gen_llvm_invoke(invoke, context)
+        tree::ExprType::String => {
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::PointerValue(p) => Value::String(p),
+                _ => panic!(""),
+            }
         },
-        tree::Expr::Num { ref num, tpe: _ } => {
-            gen_num(num, context)
-        },
-        tree::Expr::Assignment { ref assignment, tpe: _ } => {
-            gen_assignment(assignment, context)
-        },
-        tree::Expr::ReadVar { ref read_var, tpe: _ } => {
-            gen_read_var(read_var, context)
-        },
-        tree::Expr::LiteralString { ref literal_string, tpe: _ } => {
-            gen_string(literal_string, context)
-        },
-        tree::Expr::Boolean { ref boolean, tpe: _ } => {
-            gen_boolean(boolean, context)
-        },
-        tree::Expr::Comparison { ref comparison, tpe: _ } => {
-            gen_comparison(comparison, context)
-        },
-        tree::Expr::IfElse { ref if_else, tpe: _ } => {
-            gen_if_else(if_else, context)
-        },
-        tree::Expr::ClassInstance { ref class_instance, tpe: _ } => {
-            gen_class_instance(class_instance, context)
-        },
-        tree::Expr::LlvmClassInstance { ref class_instance, tpe: _ } => {
-            gen_llvm_class_instance(class_instance, context)
-        },
+        tree::ExprType::Void => Value::Void,
+        _ => panic!(""),
     }
 }
 
@@ -176,26 +235,21 @@ fn gen_class_instance(
     class_instance: &tree::ClassInstance,
     context: &FnContext
 ) -> Value {
-    let s = match gen_expr(&class_instance.expr, context) {
-        Value::String(ptr) => ptr,
-        _ => panic!("A class expects one string as its parameter"),
-    };
-    let class_struct = StructType::struct_type(
-        &[
-            s.get_type().into()
-        ],
-        false
-    );
-    let instance= context.builder.build_alloca(class_struct, "class");
-    let first_param = unsafe {
-        context.builder.build_in_bounds_gep(
-            instance,
-            &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
-            "gep")
-    };
-    context.builder.build_store(first_param, s);
+//    let s = match gen_expr(&class_instance.expr, context) {
+//        Value::String(ptr) => ptr,
+//        _ => panic!("A class expects one string as its parameter"),
+//    };
+    let class = unsafe { &*class_instance.class_ref.get().unwrap() };
+    let instance= context.builder.build_alloca(class.llvm_struct_type_ref.get().unwrap(), "class");
+//    let first_param = unsafe {
+//        context.builder.build_in_bounds_gep(
+//            instance,
+//            &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
+//            "gep")
+//    };
+//    context.builder.build_store(first_param, s);
 
-    Value::Class(instance, class_instance as *const tree::ClassInstance)
+    Value::Class(instance, class_instance)
 }
 
 fn gen_llvm_class_instance(
@@ -500,6 +554,12 @@ fn gen_assignment(
            let ptr_type = context.core.string_struct_type.ptr_type(AddressSpace::Generic);
            context.builder.build_alloca(ptr_type, &assignment.var.name)
        },
+       Value::Class(p, instance) => {
+           let struct_type = unsafe { (&*(&*instance).class_ref.get().unwrap()).llvm_struct_type_ref.get().unwrap() };
+           let ptr_type = struct_type.ptr_type(AddressSpace::Generic);
+           context.builder.build_alloca(ptr_type, &assignment.var.name)
+
+       },
        _ => panic!("Unknow expr")
    } ;
 
@@ -555,7 +615,7 @@ fn get_llvm_type(value: &Value, context: &FnContext) -> BasicTypeEnum {
                     BasicValueEnum::PointerValue(p) => {
                         let inner_instance = unsafe {
                             match *klass.expr {
-                                tree::Expr::LlvmClassInstance { ref class_instance, tpe: _ } => class_instance,
+                                tree::Expr::LlvmClassInstance(ref class_instance) => class_instance,
                                 _ => panic!(""),
                             }
                         };
@@ -611,7 +671,7 @@ fn get_llvm_value(value: &Value, context: &FnContext) -> BasicValueEnum {
                 };
                 let inner_instance = unsafe {
                     match *klass.expr {
-                        tree::Expr::LlvmClassInstance { ref class_instance, tpe: _ } => class_instance,
+                        tree::Expr::LlvmClassInstance(ref class_instance) => class_instance,
                         _ => panic!(),
                     }
                 };
@@ -711,19 +771,20 @@ fn gen_invoke(
     let func = unsafe { &*invoke.func_ref.get().unwrap() };
     let llvm_ret = context.builder.build_call(func.llvm_ref.get().unwrap(), &[], &invoke.name);
 
-    if func.return_type == "Number" {
-        match llvm_ret.try_as_basic_value().left().unwrap() {
-            BasicValueEnum::IntValue(i) => Value::Number(i),
-            _ => panic!(""),
-        }
-    } else if func.return_type == "String" {
-        match llvm_ret.try_as_basic_value().left().unwrap() {
-            BasicValueEnum::PointerValue(p) => Value::String(p),
-            _ => panic!(""),
-        }
-    } else if func.return_type == "Void" {
-        Value::Void
-    } else {
-        panic!("")
+    match func.return_type.get().unwrap() {
+        tree::ExprType::Number => {
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::IntValue(i) => Value::Number(i),
+                _ => panic!(""),
+            }
+        },
+        tree::ExprType::String => {
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::PointerValue(p) => Value::String(p),
+                _ => panic!(""),
+            }
+        },
+        tree::ExprType::Void => Value::Void,
+        _ => panic!(""),
     }
 }
