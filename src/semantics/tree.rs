@@ -70,6 +70,7 @@ pub enum Expr {
     ClassInstance(Box<ClassInstance>),
     LlvmClassInstance(Box<LlvmClassInstance>),
     DotInvoke(Box<DotInvoke>),
+    DotMember(Box<DotMember>),
 }
 
 impl Expr {
@@ -87,8 +88,23 @@ impl Expr {
             Expr::ClassInstance(i) => i.tpe.get().unwrap(),
             Expr::LlvmClassInstance(i) => i.tpe.get().unwrap(),
             Expr::DotInvoke(d) => d.tpe.get().unwrap(),
+            Expr::DotMember(d) => d.tpe.get().unwrap(),
         }
     }
+}
+
+#[derive(Debug)]
+pub struct DotMember {
+    pub expr: Box<Expr>,
+    pub member: Box<Member>,
+    pub tpe: Cell<Option<ExprType>>
+}
+
+#[derive(Debug)]
+pub struct Member {
+    pub name: String,
+    pub param_index: Cell<Option<i32>>,
+    pub tpe: Cell<Option<ExprType>>
 }
 
 #[derive(Debug)]

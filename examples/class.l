@@ -5,6 +5,7 @@ class Animal(name: String, age: Number)
 end
 
 def main(): Number
-  val a = Animal("Test", 40)
+  val a = Animal("Allie", 10)
+  @Void:printf+(@String(a.name))
   a.run()
 end

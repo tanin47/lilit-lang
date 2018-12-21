@@ -84,9 +84,28 @@ fn link_class(
     class: &tree::Class,
     scope: &mut scope::Scope,
 ) {
-    for method in &class.methods {
-        link_func(method, scope);
+    scope.enter();
+    for param in &class.params {
+        param.tpe.set(Some(convert_to_expr_type(&param.tpe_name, scope)));
+//        scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
     }
+    for method in &class.methods {
+        link_method(method, scope);
+    }
+    scope.leave();
+}
+
+fn link_method(
+    func: &tree::Func,
+    scope: &mut scope::Scope,
+) {
+    scope.enter();
+
+    for expr in &func.exprs {
+        link_expr(expr, scope)
+    }
+
+    scope.leave();
 }
 
 fn link_func(
@@ -116,9 +135,39 @@ fn link_expr(
         tree::Expr::ClassInstance(ref class_instance) => link_class_instance(class_instance, scope),
         tree::Expr::LlvmClassInstance(ref class_instance) => link_llvm_class_instance(class_instance, scope),
         tree::Expr::DotInvoke(ref dot_invoke) => link_dot_invoke(dot_invoke, scope),
+        tree::Expr::DotMember(ref dot_member) => link_dot_member(dot_member, scope),
         tree::Expr::Num(ref num) => (),
         tree::Expr::LiteralString(ref literal_string) => (),
         tree::Expr::Boolean(ref boolean) => (),
+    }
+}
+
+fn link_dot_member(
+    dot_member: &tree::DotMember,
+    scope: &mut scope::Scope,
+) {
+    link_expr(&dot_member.expr, scope);
+
+    match dot_member.expr.get_type() {
+        tree::ExprType::Class(ref class) => {
+            link_member(&dot_member.member, unsafe { &**class }, scope);
+        },
+        _ => panic!("Expecting a class for DotMember.expr"),
+    }
+
+    dot_member.tpe.set(dot_member.member.tpe.get());
+}
+
+fn link_member(
+    member: &tree::Member,
+    class: &tree::Class,
+    scope: &mut scope::Scope
+) {
+    for (index, param) in class.params.iter().enumerate() {
+        if param.var.name == member.name {
+            member.param_index.set(Some(index as i32));
+            member.tpe.set(param.tpe.get());
+        }
     }
 }
 
@@ -132,7 +181,7 @@ fn link_dot_invoke(
         tree::ExprType::Class(ref class) => {
             link_method_invoke(&dot_invoke.invoke, unsafe { &**class }, scope);
         },
-        _ => panic!("Expecting a class for DotInvoke"),
+        _ => panic!("Expecting a class for DotInvoke.expr"),
     }
 }
 
@@ -291,14 +340,14 @@ fn build_class(
         param_vec.push(Box::new(build_class_param(&param)));
     }
 
-    let mut method_vec = vec![];
-    for method in &class.methods {
-        method_vec.push(build_func(&method));
-    }
-
     let mut extend_vec = vec![];
     for extend in &class.extends {
         extend_vec.push(extend.to_string());
+    }
+
+    let mut method_vec = vec![];
+    for method in &class.methods {
+        method_vec.push(build_func(&method));
     }
 
     tree::Class {
@@ -317,6 +366,30 @@ fn build_class_param(
         var: Box::new(build_var(&class_param.var)),
         tpe_name: class_param.tpe.to_string(),
         tpe: Cell::new(None),
+    }
+}
+
+fn build_method(
+    func: &syntax::tree::Func,
+) -> tree::Func {
+    let mut args = vec![];
+    for arg in &func.args {
+        args.push(build_var(arg))
+    }
+
+    let mut exprs = vec![];
+    for expr in &func.exprs {
+        exprs.push(build_expr(expr))
+    }
+
+    tree::Func {
+        llvm_ref: Cell::new(None),
+        parent_class_opt: Cell::new(None),
+        name: func.name.to_string(),
+        args,
+        return_type_name: func.return_type.to_string(),
+        return_type: Cell::new(None),
+        exprs,
     }
 }
 
@@ -360,6 +433,27 @@ fn build_expr(
         syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance))),
         syntax::tree::Expr::LlvmClassInstance(ref class_instance) => tree::Expr::LlvmClassInstance(Box::new(build_llvm_class_instance(class_instance))),
         syntax::tree::Expr::DotInvoke(ref dot_invoke) => tree::Expr::DotInvoke(Box::new(build_dot_invoke(dot_invoke))),
+        syntax::tree::Expr::DotMember(ref dot_member) => tree::Expr::DotMember(Box::new(build_dot_member(dot_member))),
+    }
+}
+
+fn build_dot_member(
+    dot_member: &syntax::tree::DotMember
+) -> tree::DotMember {
+    tree::DotMember {
+        expr: Box::new(build_expr(&dot_member.expr)),
+        member: Box::new(build_member(&dot_member.member)),
+        tpe: Cell::new(None),
+    }
+}
+
+fn build_member(
+    member: &syntax::tree::Var
+) -> tree::Member {
+    tree::Member {
+        name: member.name.to_string(),
+        param_index: Cell::new(None),
+        tpe: Cell::new(None),
     }
 }
 

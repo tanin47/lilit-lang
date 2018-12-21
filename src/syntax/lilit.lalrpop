@@ -71,6 +71,7 @@ Expr: Box<Expr> = {
 
 HighPrecedentExpr: Box<Expr> = {
   <DotInvoke>,
+  <DotMember>,
   <Num> => Box::new(Expr::Num(<>)),
   <Boolean>,
   <Invoke> => Box::new(Expr::Invoke(<>)),
@@ -81,6 +82,10 @@ HighPrecedentExpr: Box<Expr> = {
   <ClassInstance>,
   <LlvmClassInstance>,
   <LlvmInvoke>,
+};
+
+DotMember: Box<Expr> = {
+  <expr:HighPrecedentExpr> "." <member:Var> => Box::new(Expr::DotMember(Box::new(DotMember { expr, member }))),
 };
 
 DotInvoke: Box<Expr> = {

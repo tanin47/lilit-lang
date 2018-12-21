@@ -47,6 +47,13 @@ pub enum Expr {
     ClassInstance(Box<ClassInstance>),
     LlvmClassInstance(Box<LlvmClassInstance>),
     DotInvoke(Box<DotInvoke>),
+    DotMember(Box<DotMember>),
+}
+
+#[derive(Debug)]
+pub struct DotMember {
+    pub expr: Box<Expr>,
+    pub member: Box<Var>,
 }
 
 #[derive(Debug)]
