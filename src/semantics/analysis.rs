@@ -87,19 +87,29 @@ fn link_class(
     scope.enter();
     for param in &class.params {
         param.tpe.set(Some(convert_to_expr_type(&param.tpe_name, scope)));
-//        scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
     }
     for method in &class.methods {
-        link_method(method, scope);
+        link_method(method, class, scope);
     }
     scope.leave();
 }
 
 fn link_method(
     func: &tree::Func,
+    class: &tree::Class,
     scope: &mut scope::Scope,
 ) {
     scope.enter();
+    let this_param = &func.args[0];
+    this_param.tpe.set(Some(tree::ExprType::Class(class)));
+
+    for param in &class.params {
+        scope.declare(scope::ScopeValue::Member(param.var.as_ref(), this_param));
+    }
+
+    for param in &func.args {
+        scope.declare(scope::ScopeValue::Var(param));
+    }
 
     for expr in &func.exprs {
         link_expr(expr, scope)
@@ -113,6 +123,10 @@ fn link_func(
     scope: &mut scope::Scope,
 ) {
     scope.enter();
+
+    for param in &func.args {
+        scope.declare(scope::ScopeValue::Var(param));
+    }
 
     for expr in &func.exprs {
         link_expr(expr, scope)
@@ -246,12 +260,31 @@ fn link_readvar(
     readvar: &tree::ReadVar,
     scope: &mut scope::Scope,
 ) {
-    let v = match scope.read_var(&readvar.name) {
-        Some(v) => v,
-        None => panic!("Unable to find the variable {:?}", readvar.name),
+    match scope.read(&readvar.name) {
+        Some(scope::ScopeValue::Var(v_ptr)) => {
+            let v = unsafe { &**v_ptr };
+            readvar.assignment_ref.set(Some(v));
+            readvar.tpe.set(v.tpe.get());
+        },
+        Some(scope::ScopeValue::Member(m_ptr, this_ptr)) => {
+            let this = unsafe { &**this_ptr } ;
+            let m = unsafe { &**m_ptr } ;
+            readvar.assignment_ref.set(Some(this));
+            match this.tpe.get().unwrap() {
+                tree::ExprType::Class(ref class_ptr) => {
+                    let class = unsafe { &**class_ptr };
+                    for (index, param) in class.params.iter().enumerate() {
+                        if param.var.name == m.name {
+                            readvar.member_param_index.set(Some(index as i32));
+                            readvar.tpe.set(param.tpe.get());
+                        }
+                    }
+                },
+                _ => panic!("Expecting a class for DotMember.expr"),
+            }
+        },
+        _ => panic!("Unable to find the variable {:?}", readvar.name),
     };
-    readvar.assignment_ref.set(Some(v as *const tree::Var));
-    readvar.tpe.set(v.tpe.get());
 }
 
 
@@ -347,7 +380,7 @@ fn build_class(
 
     let mut method_vec = vec![];
     for method in &class.methods {
-        method_vec.push(build_func(&method));
+        method_vec.push(build_method(&method));
     }
 
     tree::Class {
@@ -370,24 +403,29 @@ fn build_class_param(
 }
 
 fn build_method(
-    func: &syntax::tree::Func,
+    method: &syntax::tree::Func,
 ) -> tree::Func {
     let mut args = vec![];
-    for arg in &func.args {
+    args.push(tree::Var {
+        llvm_ref: Cell::new(None),
+        tpe: Cell::new(None),
+        name: "__self".to_string(),
+    });
+    for arg in &method.args {
         args.push(build_var(arg))
     }
 
     let mut exprs = vec![];
-    for expr in &func.exprs {
+    for expr in &method.exprs {
         exprs.push(build_expr(expr))
     }
 
     tree::Func {
         llvm_ref: Cell::new(None),
         parent_class_opt: Cell::new(None),
-        name: func.name.to_string(),
+        name: method.name.to_string(),
         args,
-        return_type_name: func.return_type.to_string(),
+        return_type_name: method.return_type.to_string(),
         return_type: Cell::new(None),
         exprs,
     }
@@ -539,6 +577,7 @@ fn build_read_var(
         assignment_ref: Cell::new(None),
         name: var.name.to_string(),
         tpe: Cell::new(None),
+        member_param_index: Cell::new(None),
     }
 }
 

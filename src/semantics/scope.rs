@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 pub enum ScopeValue {
 	Var(*const tree::Var),
+	Member(*const tree::Var, *const tree::Var),
 	Func(*const tree::Func),
 	Method(*const tree::Func),
 	Class(*const tree::Class),
@@ -32,6 +33,7 @@ impl Scope {
 	pub fn declare(&mut self, value: ScopeValue) {
 		let key = match value {
 			ScopeValue::Var(var_ptr) => (unsafe { &*var_ptr }).name.to_string(),
+			ScopeValue::Member(var_ptr, this) => (unsafe { &*var_ptr }).name.to_string(),
 			ScopeValue::Func(func_ptr) => (unsafe { &*func_ptr }).name.to_string(),
 			ScopeValue::Class(class_ptr) => (unsafe { &*class_ptr }).name.to_string(),
 			ScopeValue::Method(ref func_ptr) => {

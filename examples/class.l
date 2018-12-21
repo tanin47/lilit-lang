@@ -1,5 +1,6 @@
 class Animal(name: String, age: Number)
   def run(): Number
+    @Void:printf+(@String(name))
     14
   end
 end

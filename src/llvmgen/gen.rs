@@ -19,6 +19,7 @@ use inkwell::values::VectorValue;
 
 use semantics::tree;
 use inkwell::types::PointerType;
+use inkwell::types::BasicType;
 
 #[derive(Debug)]
 enum Value {
@@ -138,7 +139,21 @@ fn gen_method(
 ) {
     // TODO: This should read from the method.return_type
     let i32_type = context.context.i32_type();
-    let fn_type = i32_type.fn_type(&[], false);
+    let mut params: Vec<BasicTypeEnum> = vec![];
+    for param in &method.args {
+        params.push(match param.tpe.get().unwrap() {
+            tree::ExprType::Number => context.context.i32_type().into(),
+            tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
+            tree::ExprType::Boolean => context.context.i32_type().into(),
+            tree::ExprType::Class(class_ptr) => {
+                let class = unsafe { &*class_ptr };
+                class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
+            },
+            _ => panic!(),
+        })
+    }
+
+    let fn_type = i32_type.fn_type(&params, false);
 
     let func_name = format!("__{}__{}", class.name, method.name);
     let function = context.module.add_function(&func_name, fn_type, None);
@@ -146,6 +161,24 @@ fn gen_method(
 
     let first_block = context.context.append_basic_block(&function, "first_block");
     context.builder.position_at_end(&first_block);
+
+    for (index, param) in method.args.iter().enumerate() {
+        let tpe: BasicTypeEnum = match param.tpe.get().unwrap() {
+            tree::ExprType::Number => context.context.i32_type().into(),
+            tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
+            tree::ExprType::Boolean => context.context.i32_type().into(),
+            tree::ExprType::Class(class_ptr) => {
+                let class = unsafe { &*class_ptr };
+                class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
+            },
+            _ => panic!()
+        };
+        println!("{:?}", tpe);
+        let ptr = context.builder.build_alloca(tpe, "param");
+        println!("Allocated");
+        context.builder.build_store(ptr, function.get_nth_param(index as u32).unwrap());
+        param.llvm_ref.set(Some(ptr));
+    }
 
     let fn_context = FnContext {
         func: &function,
@@ -219,7 +252,6 @@ fn gen_dot_member(
     context: &FnContext
 ) -> Value {
     let expr = gen_expr(&dot_member.expr, context);
-    println!("{:?}", expr);
     let llvm_expr = match expr {
         Value::Class(ptr, class) => ptr,
         _ => panic!(),
@@ -580,33 +612,68 @@ fn gen_read_var(
     var: &tree::ReadVar,
     context: &FnContext,
 ) -> Value {
-    let assignment = unsafe { &*var.assignment_ref.get().unwrap() };
-    let i32_type = context.context.i32_type();
-    let value = context.builder.build_load(
-        assignment.llvm_ref.get().unwrap(),
-        &var.name
-    );
-    match var.tpe.get().unwrap() {
-        tree::ExprType::Class(class) => {
-            let ptr = match value {
-                BasicValueEnum::PointerValue(p) => p,
-                _ => panic!()
-            };
-            Value::Class(ptr, class)
-        },
-        tree::ExprType::Number => {
-            match value {
-                BasicValueEnum::IntValue(i) => Value::Number(i),
-                _ => panic!()
-            }
-        },
-        tree::ExprType::String => {
-            match value {
-                BasicValueEnum::PointerValue(p) => Value::String(p),
-                _ => panic!()
-            }
-        },
-        _ => panic!(),
+    if let Some(param_index) = var.member_param_index.get() {
+        let assignment = unsafe { &*var.assignment_ref.get().unwrap() };
+
+        let llvm_class_instance_pointer = match context.builder.build_load(assignment.llvm_ref.get().unwrap(), "load class instance") {
+            BasicValueEnum::PointerValue(p) => p,
+            _ => panic!()
+        };
+
+        let ptr = unsafe {
+            context.builder.build_in_bounds_gep(
+                llvm_class_instance_pointer,
+                &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int((param_index as u64), false)],
+                "gep")
+        };
+
+        let llvm_ret = context.builder.build_load(ptr, &format!("load member {}", var.name));
+
+        match var.tpe.get().unwrap() {
+            tree::ExprType::Number => {
+                match llvm_ret {
+                    BasicValueEnum::IntValue(i) => Value::Number(i),
+                    _ => panic!(""),
+                }
+            },
+            tree::ExprType::String => {
+                match llvm_ret {
+                    BasicValueEnum::PointerValue(p) => Value::String(p),
+                    _ => panic!(""),
+                }
+            },
+            tree::ExprType::Void => Value::Void,
+            _ => panic!(""),
+        }
+    } else {
+        let assignment = unsafe { &*var.assignment_ref.get().unwrap() };
+        let i32_type = context.context.i32_type();
+        let value = context.builder.build_load(
+            assignment.llvm_ref.get().unwrap(),
+            &var.name
+        );
+        match var.tpe.get().unwrap() {
+            tree::ExprType::Class(class) => {
+                let ptr = match value {
+                    BasicValueEnum::PointerValue(p) => p,
+                    _ => panic!()
+                };
+                Value::Class(ptr, class)
+            },
+            tree::ExprType::Number => {
+                match value {
+                    BasicValueEnum::IntValue(i) => Value::Number(i),
+                    _ => panic!()
+                }
+            },
+            tree::ExprType::String => {
+                match value {
+                    BasicValueEnum::PointerValue(p) => Value::String(p),
+                    _ => panic!()
+                }
+            },
+            _ => panic!(),
+        }
     }
 }
 

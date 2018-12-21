@@ -191,6 +191,7 @@ pub struct ReadVar {
     pub assignment_ref: Cell<Option<*const Var>>,
     pub name: String,
     pub tpe: Cell<Option<ExprType>>,
+    pub member_param_index: Cell<Option<i32>>,
 }
 
 #[derive(Debug)]
