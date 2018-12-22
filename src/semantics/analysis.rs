@@ -3,6 +3,7 @@ use semantics::scope;
 use semantics::tree;
 use std::cell::Cell;
 use std::collections::HashMap;
+use llvmgen::native::gen::NativeTypeEnum;
 
 
 pub fn analyse(
@@ -208,8 +209,6 @@ fn link_llvm_invoke(
         link_expr(arg, scope);
         scope.leave();
     }
-
-    invoke.tpe.set(Some(convert_to_expr_type(&invoke.return_type, scope)));
 }
 
 fn link_llvm_class_instance(
@@ -508,10 +507,13 @@ fn build_dot_invoke(
 fn build_llvm_class_instance(
     class_instance: &syntax::tree::LlvmClassInstance
 ) -> tree::LlvmClassInstance {
+    let class = Box::new(tree::LlvmClass {
+        tpe: NativeTypeEnum::get(&class_instance.name),
+    });
+
     tree::LlvmClassInstance {
-        name: class_instance.name.to_string(),
         expr: Box::new(build_expr(&class_instance.expr)),
-        tpe: Cell::new(None),
+        class,
     }
 }
 
@@ -628,12 +630,15 @@ fn build_llvm_invoke(
         args.push(build_expr(arg));
     }
 
+    let return_type = tree::LlvmClass {
+        tpe: NativeTypeEnum::get(&invoke.return_type),
+    };
+
     tree::LlvmInvoke {
         name: invoke.name.to_string(),
         is_varargs: invoke.is_varargs,
-        return_type: invoke.return_type.to_string(),
+        return_type,
         args,
-        tpe: Cell::new(None),
     }
 }
 

@@ -20,30 +20,31 @@ use inkwell::values::VectorValue;
 use semantics::tree;
 use inkwell::types::PointerType;
 use inkwell::types::BasicType;
+use llvmgen::native;
 
 #[derive(Debug)]
-enum Value {
+pub enum Value {
     Void,
     Number(IntValue),
     Boolean(IntValue),
     String(PointerValue),
     Class(PointerValue, *const tree::Class),
-    LlvmClass(PointerValue, *const tree::LlvmClassInstance),
+    LlvmClass(native::gen::NativeEnum),
 }
 
-fn convert(value: &Value) -> BasicValueEnum {
+pub fn convert(value: &Value) -> BasicValueEnum {
     match value {
         Value::Number(i) => (*i).into(),
         Value::Boolean(b) => (*b).into(),
         Value::String(p) => (*p).into(),
         Value::Class(p, c) => (*p).into(),
-        Value::LlvmClass(p, c) => (*p).into(),
+        Value::LlvmClass(n) => n.get_ptr().into(),
         Value::Void => panic!("can't convert void"),
     }
 }
 
-struct Core {
-    string_struct_type: StructType
+pub struct Core {
+    pub string_struct_type: StructType
 }
 
 struct ModContext<'a, 'b, 'c, 'd> {
@@ -53,12 +54,12 @@ struct ModContext<'a, 'b, 'c, 'd> {
     core: &'d Core,
 }
 
-struct FnContext<'a, 'b, 'c, 'd, 'e> {
-    func: &'a FunctionValue,
-    module: &'b Module,
-    context: &'c Context,
-    builder: &'d Builder,
-    core: &'e Core,
+pub struct FnContext<'a, 'b, 'c, 'd, 'e> {
+    pub func: &'a FunctionValue,
+    pub module: &'b Module,
+    pub context: &'c Context,
+    pub builder: &'d Builder,
+    pub core: &'e Core,
 }
 
 pub fn generate(
@@ -226,7 +227,7 @@ fn gen_func(
     }
 }
 
-fn gen_expr(
+pub fn gen_expr(
     expr: &tree::Expr,
     context: &FnContext
 ) -> Value {
@@ -234,7 +235,7 @@ fn gen_expr(
         tree::Expr::Invoke(ref invoke) => gen_invoke(invoke, context),
         tree::Expr::DotInvoke(ref invoke) => gen_dot_invoke(invoke, context),
         tree::Expr::DotMember(ref member) => gen_dot_member(member, context),
-        tree::Expr::LlvmInvoke(ref invoke) => gen_llvm_invoke(invoke, context),
+        tree::Expr::LlvmInvoke(ref invoke) => native::gen_invoke(invoke, context),
         tree::Expr::Num(ref num) => gen_num(num, context),
         tree::Expr::Assignment(ref assignment) => gen_assignment(assignment, context),
         tree::Expr::ReadVar(ref read_var) => gen_read_var(read_var, context),
@@ -243,7 +244,7 @@ fn gen_expr(
         tree::Expr::Comparison(ref comparison) => gen_comparison(comparison, context),
         tree::Expr::IfElse(ref if_else) => gen_if_else(if_else, context),
         tree::Expr::ClassInstance(ref class_instance) => gen_class_instance(class_instance, context),
-        tree::Expr::LlvmClassInstance(ref class_instance) => gen_llvm_class_instance(class_instance, context),
+        tree::Expr::LlvmClassInstance(ref class_instance) => native::instantiate(class_instance, context),
     }
 }
 
@@ -336,30 +337,6 @@ fn gen_class_instance(
     }
 
     Value::Class(instance, class_instance.class_ref.get().unwrap())
-}
-
-fn gen_llvm_class_instance(
-    class_instance: &tree::LlvmClassInstance,
-    context: &FnContext
-) -> Value {
-    let value = gen_expr(&class_instance.expr, context);
-    let tpe: BasicTypeEnum = match value {
-        Value::String(ptr) => ptr.get_type().into(),
-        Value::LlvmClass(ptr, _) => ptr.get_type().into(),
-        Value::Number(i) => i.get_type().into(),
-        _ => panic!("A class expects one string as its parameter"),
-    };
-    let class_struct = StructType::struct_type(&[tpe], false);
-    let instance= context.builder.build_alloca(class_struct, "class");
-    let first_param = unsafe {
-        context.builder.build_in_bounds_gep(
-            instance,
-            &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
-            "gep")
-    };
-    context.builder.build_store(first_param, convert(&value));
-
-    Value::LlvmClass(instance, class_instance as *const tree::LlvmClassInstance)
 }
 
 fn gen_boolean(
@@ -526,88 +503,6 @@ fn gen_string(
     Value::String(string)
 }
 
-fn gen_string_from_cstring(
-    cstring: PointerValue,
-    context: &FnContext
-) -> Value {
-    let strlen = match context.module.get_function("strlen") {
-        Some(f) => f,
-        None => {
-            let fn_type = context.context.i64_type().fn_type(
-                &[
-                    context.context.i8_type().ptr_type(AddressSpace::Generic).into()
-                ],
-                false);
-            context.module.add_function("strlen", fn_type, Some(Linkage::External))
-        },
-    };
-    let ret_strlen = context.builder.build_call(strlen, &[cstring.into()], "strlen");
-    let cstring_size = match ret_strlen.try_as_basic_value().left().unwrap() {
-        BasicValueEnum::IntValue(i) => i,
-        _ => panic!("unable to get string's length")
-    };
-
-    let i8_type = context.context.i8_type();
-    let i32_type = context.context.i32_type();
-
-    let string = context.builder.build_alloca(context.core.string_struct_type, "string");
-
-    let size_with_terminator = cstring_size.const_add(context.context.i32_type().const_int(1, false));
-    let array = context.builder.build_array_alloca(i8_type, size_with_terminator,  "string_array");
-
-    let memcpy = match context.module.get_function("llvm.memcpy.p0i8.p0i8.i64") {
-        None => {
-           context.module.add_function(
-               "llvm.memcpy.p0i8.p0i8.i64",
-               context.context.i64_type().fn_type(
-                   &[
-                       i8_type.ptr_type(AddressSpace::Generic).into(),
-                       i8_type.ptr_type(AddressSpace::Generic).into(),
-                       context.context.i64_type().into(),
-                       context.context.i32_type().into(),
-                       context.context.bool_type().into()
-                   ],
-                   false
-               ),
-               Some(Linkage::External)
-           )
-        }
-        Some(f) => f,
-    };
-
-    context.builder.build_call(
-        memcpy,
-        &[
-            array.into(),
-            cstring.into(),
-            size_with_terminator.into(),
-            context.context.i32_type().const_int(4, false).into(),
-            context.context.bool_type().const_zero().into()
-        ],
-        "memcpy"
-    );
-
-    let size_pointer = unsafe {
-        context.builder.build_in_bounds_gep(
-            string,
-            &[i32_type.const_int(0, false), i32_type.const_int(0, false)],
-            "gep"
-        )
-    };
-    context.builder.build_store(size_pointer, cstring_size);
-
-    let content_pointer = unsafe {
-        context.builder.build_in_bounds_gep(
-            string,
-            &[i32_type.const_int(0, false), i32_type.const_int(1, false)],
-            "gep"
-        )
-    };
-    context.builder.build_store(content_pointer, array);
-
-    Value::String(string)
-}
-
 fn gen_read_var(
     var: &tree::ReadVar,
     context: &FnContext,
@@ -713,193 +608,6 @@ fn gen_num(
 ) -> Value {
     let i32_type = context.context.i32_type();
     Value::Number(i32_type.const_int(num.value as u64, false))
-}
-
-fn get_llvm_type(value: &Value, context: &FnContext) -> BasicTypeEnum {
-    println!("{:?}", value);
-    match value {
-        Value::LlvmClass(ptr, klass_ptr) => {
-            let klass = unsafe { &**klass_ptr };
-            let first_param_pointer = unsafe {
-                context.builder.build_in_bounds_gep(
-                    *ptr,
-                    &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
-                    "gep")
-            };
-            if klass.name == "String" {
-                match context.builder.build_load(first_param_pointer, "load_first_param") {
-                    BasicValueEnum::PointerValue(i) => {
-                        let string_pointer = unsafe {
-                            context.builder.build_in_bounds_gep(
-                                i,
-                                &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(1, false)],
-                                "gep")
-                        };
-                        match context.builder.build_load(string_pointer, "load_string_pointer") {
-                            BasicValueEnum::PointerValue(p) => p.get_type().into(),
-                            _ => panic!(""),
-                        }
-                    },
-                    _ => panic!(""),
-                }
-            } else if  klass.name == "I32" || klass.name == "I8" {
-                match context.builder.build_load(first_param_pointer, "load_first_param") {
-                    BasicValueEnum::IntValue(i) => i.get_type().into(),
-                    _ => panic!("")
-                }
-            } else if klass.name == "Pointer" {
-                println!("load {:?}", first_param_pointer);
-                match context.builder.build_load(first_param_pointer, "load_first_param") {
-                    BasicValueEnum::PointerValue(p) => {
-                        let inner_instance = unsafe {
-                            match *klass.expr {
-                                tree::Expr::LlvmClassInstance(ref class_instance) => class_instance,
-                                _ => panic!(""),
-                            }
-                        };
-                        let tpe = get_llvm_type(&Value::LlvmClass(p, &**inner_instance as *const tree::LlvmClassInstance), context);
-                        println!("type {:?}", tpe);
-                        match tpe {
-                            BasicTypeEnum::IntType(i) => i.ptr_type(AddressSpace::Generic).into(),
-                            BasicTypeEnum::PointerType(p) => p.ptr_type(AddressSpace::Generic).into(),
-                            _ => panic!(),
-                        }
-                    },
-                    _ => panic!(),
-                }
-            } else {
-                panic!()
-            }
-        },
-        _ => panic!(),
-    }
-}
-
-fn get_llvm_value(value: &Value, context: &FnContext) -> BasicValueEnum {
-    match value {
-        Value::LlvmClass(ptr, klass_ptr) => {
-            let klass = unsafe { &**klass_ptr };
-            let first_param_pointer = unsafe {
-                context.builder.build_in_bounds_gep(
-                    *ptr,
-                    &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
-                    "gep")
-            };
-
-            if klass.name == "String" {
-                let first_param = match context.builder.build_load(first_param_pointer, "load_first_param") {
-                    BasicValueEnum::PointerValue(p) => p,
-                    _ => panic!(),
-                };
-                let content_pointer = unsafe {
-                    context.builder.build_in_bounds_gep(
-                        first_param,
-                        &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(1, false)],
-                        "gep"
-                    )
-                };
-
-                context.builder.build_load(content_pointer, "load_string")
-            } else if klass.name == "I32" || klass.name == "I8" {
-                context.builder.build_load(first_param_pointer, "load_i32")
-            } else if klass.name == "Pointer" {
-                let first_param = match context.builder.build_load(first_param_pointer, "load_first_param") {
-                    BasicValueEnum::PointerValue(p) => p,
-                    _ => panic!(),
-                };
-                let inner_instance = unsafe {
-                    match *klass.expr {
-                        tree::Expr::LlvmClassInstance(ref class_instance) => class_instance,
-                        _ => panic!(),
-                    }
-                };
-                let value = get_llvm_value(&Value::LlvmClass(first_param, &**inner_instance as *const tree::LlvmClassInstance), context);
-                match value {
-                    BasicValueEnum::IntValue(i) => i.get_type().ptr_type(AddressSpace::Generic).const_zero().into(),
-                    BasicValueEnum::PointerValue(inner) => {
-                        let ptr = context.builder.build_alloca(inner.get_type().ptr_type(AddressSpace::Generic), "pointer_of_pointer");
-                        context.builder.build_store(ptr, inner);
-                        ptr.into()
-                    }
-                    _ => panic!(),
-                }
-            } else {
-                panic!()
-            }
-        },
-        _ => panic!(),
-    }
-}
-
-fn gen_llvm_invoke(
-    invoke: &tree::LlvmInvoke,
-    context: &FnContext,
-) -> Value {
-    let mut args: Vec<Value> = vec![];
-    for arg in &invoke.args {
-        args.push(gen_expr(arg, context));
-    }
-
-    println!("Invoke {:?}", invoke);
-    println!("Get llvm types");
-    let llvm_func = match context.module.get_function(&invoke.name) {
-        Some(f) => f,
-        None => {
-            let mut args_types: Vec<BasicTypeEnum> = vec![];
-            for arg in &args {
-                println!("arg {:?}", arg);
-                args_types.push(get_llvm_type(arg, context))
-            }
-            let llvm_func_type = if invoke.return_type == "Void" {
-                context.context.void_type().fn_type(
-                    &args_types,
-                    invoke.is_varargs
-                )
-            } else if invoke.return_type == "String" {
-                context.context.i8_type().ptr_type(AddressSpace::Generic).fn_type(
-                    &args_types,
-                    invoke.is_varargs
-                )
-            } else if invoke.return_type == "I32" {
-                context.context.i32_type().fn_type(
-                    &args_types,
-                    invoke.is_varargs
-                )
-            } else {
-                panic!("")
-            };
-            context.module.add_function(
-                &invoke.name,
-                llvm_func_type,
-                Some(Linkage::External)
-            )
-        },
-    };
-
-    println!("Get llvm args");
-    let mut llvm_args: Vec<BasicValueEnum> = vec![];
-    for arg in &args {
-        llvm_args.push(get_llvm_value(arg, context));
-    }
-
-    let llvm_ret = context.builder.build_call(llvm_func, &llvm_args, "");
-
-    if invoke.return_type == "Void" {
-        Value::Void
-    } else if invoke.return_type == "I32" {
-        match llvm_ret.try_as_basic_value().left().unwrap() {
-            BasicValueEnum::IntValue(i) => Value::Number(i),
-            _ => panic!(),
-        }
-    } else if invoke.return_type == "String" {
-        let p = match llvm_ret.try_as_basic_value().left().unwrap() {
-            BasicValueEnum::PointerValue(ptr) => ptr,
-            _ => panic!(),
-        };
-        gen_string_from_cstring(p, context)
-    } else {
-        panic!("Unrecognized llvm invoke return type")
-    }
 }
 
 fn gen_invoke(

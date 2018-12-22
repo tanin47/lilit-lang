@@ -1,9 +1,12 @@
+use std::cell::Cell;
 use std::fmt::{Debug, Error, Formatter};
 use std::marker::PhantomData;
-use std::cell::Cell;
-use syntax;
-use inkwell::values::{FunctionValue, PointerValue};
+
 use inkwell::types::StructType;
+use inkwell::values::{FunctionValue, PointerValue};
+
+use llvmgen::native::gen::NativeTypeEnum;
+use syntax;
 
 #[derive(Debug)]
 pub struct Mod {
@@ -18,6 +21,11 @@ pub enum ModUnit {
     Class {
         class: Box<Class>,
     }
+}
+
+#[derive(Debug)]
+pub struct LlvmClass {
+    pub tpe: NativeTypeEnum,
 }
 
 #[derive(Debug)]
@@ -54,6 +62,7 @@ pub enum ExprType {
     String,
     Boolean,
     Class(*const Class),
+    LlvmClass(*const LlvmClass),
 }
 
 #[derive(Debug)]
@@ -77,7 +86,7 @@ impl Expr {
     pub fn get_type(&self) -> ExprType {
         match self {
             Expr::Invoke(invoke) => invoke.tpe.get().unwrap(),
-            Expr::LlvmInvoke(invoke) => invoke.tpe.get().unwrap(),
+            Expr::LlvmInvoke(invoke) => invoke.return_type.tpe.get_expr_type(),
             Expr::Num(num) => num.tpe,
             Expr::LiteralString(s) => s.tpe,
             Expr::Assignment(a) => a.tpe.get().unwrap(),
@@ -86,7 +95,7 @@ impl Expr {
             Expr::IfElse(i) => i.tpe.get().unwrap(),
             Expr::ReadVar(r) => r.tpe.get().unwrap(),
             Expr::ClassInstance(i) => i.tpe.get().unwrap(),
-            Expr::LlvmClassInstance(i) => i.tpe.get().unwrap(),
+            Expr::LlvmClassInstance(i) => ExprType::LlvmClass(i.class.as_ref()),
             Expr::DotInvoke(d) => d.tpe.get().unwrap(),
             Expr::DotMember(d) => d.tpe.get().unwrap(),
         }
@@ -124,9 +133,8 @@ pub struct ClassInstance {
 
 #[derive(Debug)]
 pub struct LlvmClassInstance {
-    pub name: String,
     pub expr: Box<Expr>,
-    pub tpe: Cell<Option<ExprType>>,
+    pub class: Box<LlvmClass>,
 }
 
 #[derive(Debug)]
@@ -166,9 +174,8 @@ pub struct Boolean {
 pub struct LlvmInvoke {
     pub name: String,
     pub is_varargs: bool,
-    pub return_type: String,
+    pub return_type: LlvmClass,
     pub args: Vec<Expr>,
-    pub tpe: Cell<Option<ExprType>>,
 }
 
 #[derive(Debug)]
