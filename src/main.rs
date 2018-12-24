@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use std::cell::RefCell;
 use std::env;
 use std::fs::File;

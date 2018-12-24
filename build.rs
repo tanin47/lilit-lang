@@ -1,3 +1,5 @@
+#[allow(warnings)]
+
 extern crate lalrpop;
 
 fn main() {

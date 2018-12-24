@@ -5,7 +5,6 @@ use std::marker::PhantomData;
 use inkwell::types::StructType;
 use inkwell::values::{FunctionValue, PointerValue};
 
-use llvmgen::native::gen::NativeTypeEnum;
 use syntax;
 
 #[derive(Debug)]
@@ -15,30 +14,23 @@ pub struct Mod {
 
 #[derive(Debug)]
 pub enum ModUnit {
-    Func {
-    	func: Box<Func>,
-    },
-    Class {
-        class: Box<Class>,
-    }
-}
+    Func(Box<Func>),
+    Class(Box<Class>),
 
-#[derive(Debug)]
-pub struct LlvmClass {
-    pub tpe: NativeTypeEnum,
 }
 
 #[derive(Debug)]
 pub struct Class {
     pub name: String,
-    pub params: Vec<Box<ClassParam>>,
+    pub params: Vec<Box<Param>>,
     pub extends: Vec<String>,
     pub methods: Vec<Func>,
+    pub is_llvm: bool,
     pub llvm_struct_type_ref: Cell<Option<StructType>>
 }
 
 #[derive(Debug)]
-pub struct ClassParam {
+pub struct Param {
     pub var: Box<Var>,
     pub tpe_name: String,
     pub tpe: Cell<Option<ExprType>>,
@@ -49,7 +41,7 @@ pub struct Func {
     pub llvm_ref: Cell<Option<FunctionValue>>,
     pub parent_class_opt: Cell<Option<* const Class>>,
     pub name: String,
-    pub args: Vec<Var>,
+    pub params: Vec<Param>,
     pub return_type_name: String,
     pub return_type: Cell<Option<ExprType>>,
     pub exprs: Vec<Expr>,
@@ -62,7 +54,6 @@ pub enum ExprType {
     String,
     Boolean,
     Class(*const Class),
-    LlvmClass(*const LlvmClass),
 }
 
 #[derive(Debug)]
@@ -77,7 +68,6 @@ pub enum Expr {
     IfElse(Box<IfElse>),
     ReadVar(Box<ReadVar>),
     ClassInstance(Box<ClassInstance>),
-    LlvmClassInstance(Box<LlvmClassInstance>),
     DotInvoke(Box<DotInvoke>),
     DotMember(Box<DotMember>),
 }
@@ -86,7 +76,7 @@ impl Expr {
     pub fn get_type(&self) -> ExprType {
         match self {
             Expr::Invoke(invoke) => invoke.tpe.get().unwrap(),
-            Expr::LlvmInvoke(invoke) => invoke.return_type.tpe.get_expr_type(),
+            Expr::LlvmInvoke(invoke) => invoke.return_type.get().unwrap(),
             Expr::Num(num) => num.tpe,
             Expr::LiteralString(s) => s.tpe,
             Expr::Assignment(a) => a.tpe.get().unwrap(),
@@ -95,7 +85,6 @@ impl Expr {
             Expr::IfElse(i) => i.tpe.get().unwrap(),
             Expr::ReadVar(r) => r.tpe.get().unwrap(),
             Expr::ClassInstance(i) => i.tpe.get().unwrap(),
-            Expr::LlvmClassInstance(i) => ExprType::LlvmClass(i.class.as_ref()),
             Expr::DotInvoke(d) => d.tpe.get().unwrap(),
             Expr::DotMember(d) => d.tpe.get().unwrap(),
         }
@@ -129,12 +118,6 @@ pub struct ClassInstance {
     pub params: Vec<Box<Expr>>,
     pub class_ref: Cell<Option<*const Class>>,
     pub tpe: Cell<Option<ExprType>>,
-}
-
-#[derive(Debug)]
-pub struct LlvmClassInstance {
-    pub expr: Box<Expr>,
-    pub class: Box<LlvmClass>,
 }
 
 #[derive(Debug)]
@@ -174,7 +157,7 @@ pub struct Boolean {
 pub struct LlvmInvoke {
     pub name: String,
     pub is_varargs: bool,
-    pub return_type: LlvmClass,
+    pub return_type: Cell<Option<ExprType>>,
     pub args: Vec<Expr>,
 }
 

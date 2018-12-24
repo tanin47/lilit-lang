@@ -3,7 +3,6 @@ use semantics::scope;
 use semantics::tree;
 use std::cell::Cell;
 use std::collections::HashMap;
-use llvmgen::native::gen::NativeTypeEnum;
 
 
 pub fn analyse(
@@ -39,30 +38,28 @@ fn link_mod(
     scope.enter();
     for unit in &m.units {
         match unit {
-            tree::ModUnit::Func { ref func } => {
+            tree::ModUnit::Func(ref func) => {
                 scope.declare(scope::ScopeValue::Func(func.as_ref()));
             },
-            tree::ModUnit::Class { ref class } => {
+            tree::ModUnit::Class(ref class) => {
                 scope.declare(scope::ScopeValue::Class(class.as_ref()));
                 for method in &class.methods {
                     method.parent_class_opt.set(Some(class.as_ref()));
                     scope.declare(scope::ScopeValue::Method(method));
                 }
             },
-            _ => (),
         }
     }
     for unit in &m.units {
         match unit {
-            tree::ModUnit::Func { ref func } => {
+            tree::ModUnit::Func(ref func) => {
                 func.return_type.set(Some(convert_to_expr_type(&func.return_type_name, scope)));
             },
-            tree::ModUnit::Class { ref class } => {
+            tree::ModUnit::Class(ref class) => {
                 for method in &class.methods {
                     method.return_type.set(Some(convert_to_expr_type(&method.return_type_name, scope)));
                 }
             },
-            _ => (),
         }
     }
     for unit in &m.units {
@@ -76,8 +73,8 @@ fn link_mod_unit(
     scope: &mut scope::Scope,
 ) {
     match unit {
-        tree::ModUnit::Func { ref func } => link_func(func, scope),
-        tree::ModUnit::Class { ref class } => link_class(class, scope),
+        tree::ModUnit::Func(ref func) => link_func(func, scope),
+        tree::ModUnit::Class(ref class) => link_class(class, scope),
     }
 }
 
@@ -101,15 +98,16 @@ fn link_method(
     scope: &mut scope::Scope,
 ) {
     scope.enter();
-    let this_param = &func.args[0];
-    this_param.tpe.set(Some(tree::ExprType::Class(class)));
+    let this_param = &func.params[0];
 
     for param in &class.params {
-        scope.declare(scope::ScopeValue::Member(param.var.as_ref(), this_param));
+        scope.declare(scope::ScopeValue::Member(param.var.as_ref(), this_param.var.as_ref()));
     }
 
-    for param in &func.args {
-        scope.declare(scope::ScopeValue::Var(param));
+    for param in &func.params {
+        param.var.tpe.set(Some(convert_to_expr_type(&param.tpe_name, scope)));
+        param.tpe.set(param.var.tpe.get());
+        scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
     }
 
     for expr in &func.exprs {
@@ -125,8 +123,8 @@ fn link_func(
 ) {
     scope.enter();
 
-    for param in &func.args {
-        scope.declare(scope::ScopeValue::Var(param));
+    for param in &func.params {
+        scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
     }
 
     for expr in &func.exprs {
@@ -148,7 +146,6 @@ fn link_expr(
         tree::Expr::Comparison(ref comparison) => link_comparison(comparison, scope),
         tree::Expr::IfElse(ref if_else) => link_if_else(if_else, scope),
         tree::Expr::ClassInstance(ref class_instance) => link_class_instance(class_instance, scope),
-        tree::Expr::LlvmClassInstance(ref class_instance) => link_llvm_class_instance(class_instance, scope),
         tree::Expr::DotInvoke(ref dot_invoke) => link_dot_invoke(dot_invoke, scope),
         tree::Expr::DotMember(ref dot_member) => link_dot_member(dot_member, scope),
         tree::Expr::Num(ref num) => (),
@@ -198,6 +195,8 @@ fn link_dot_invoke(
         },
         _ => panic!("Expecting a class for DotInvoke.expr"),
     }
+
+    dot_invoke.tpe.set(dot_invoke.invoke.tpe.get());
 }
 
 fn link_llvm_invoke(
@@ -209,15 +208,6 @@ fn link_llvm_invoke(
         link_expr(arg, scope);
         scope.leave();
     }
-}
-
-fn link_llvm_class_instance(
-    class_instance: &tree::LlvmClassInstance,
-    scope: &mut scope::Scope,
-) {
-    scope.enter();
-    link_expr(&class_instance.expr, scope);
-    scope.leave();
 }
 
 fn link_class_instance(
@@ -348,19 +338,14 @@ pub fn build_mod(
     }
 
     tree::Mod { units: vec }
-
 }
 
 fn build_mod_unit(
     unit: &syntax::tree::ModUnit,
 ) -> tree::ModUnit {
     match unit {
-        syntax::tree::ModUnit::Func(ref func) => tree::ModUnit::Func {
-            func: Box::new(build_func(func))
-        },
-        syntax::tree::ModUnit::Class(ref class) => tree::ModUnit::Class {
-            class: Box::new(build_class(class)),
-        },
+        syntax::tree::ModUnit::Func(ref func) => tree::ModUnit::Func(Box::new(build_func(func))),
+        syntax::tree::ModUnit::Class(ref class) => tree::ModUnit::Class(Box::new(build_class(class))),
     }
 }
 
@@ -369,7 +354,7 @@ fn build_class(
 ) -> tree::Class {
     let mut param_vec = vec![];
     for param in &class.params {
-        param_vec.push(Box::new(build_class_param(&param)));
+        param_vec.push(Box::new(build_param(&param)));
     }
 
     let mut extend_vec = vec![];
@@ -379,7 +364,7 @@ fn build_class(
 
     let mut method_vec = vec![];
     for method in &class.methods {
-        method_vec.push(build_method(&method));
+        method_vec.push(build_method(&method, class));
     }
 
     tree::Class {
@@ -387,31 +372,37 @@ fn build_class(
         params: param_vec,
         extends: extend_vec,
         methods: method_vec,
+        is_llvm: class.is_llvm,
         llvm_struct_type_ref: Cell::new(None),
     }
 }
 
-fn build_class_param(
-    class_param: &syntax::tree::ClassParam
-) -> tree::ClassParam {
-    tree::ClassParam {
-        var: Box::new(build_var(&class_param.var)),
-        tpe_name: class_param.tpe.to_string(),
+fn build_param(
+    param: &syntax::tree::Param
+) -> tree::Param {
+    tree::Param {
+        var: Box::new(build_var(&param.var)),
+        tpe_name: param.tpe.to_string(),
         tpe: Cell::new(None),
     }
 }
 
 fn build_method(
     method: &syntax::tree::Func,
+    class: &syntax::tree::Class,
 ) -> tree::Func {
-    let mut args = vec![];
-    args.push(tree::Var {
-        llvm_ref: Cell::new(None),
+    let mut params = vec![];
+    params.push(tree::Param {
+        var: Box::new(tree::Var{
+            llvm_ref: Cell::new(None),
+            tpe: Cell::new(None),
+            name: "__self".to_string(),
+        }),
+        tpe_name: class.name.to_string(),
         tpe: Cell::new(None),
-        name: "__self".to_string(),
     });
-    for arg in &method.args {
-        args.push(build_var(arg))
+    for param in &method.params {
+        params.push(build_param(param))
     }
 
     let mut exprs = vec![];
@@ -423,7 +414,7 @@ fn build_method(
         llvm_ref: Cell::new(None),
         parent_class_opt: Cell::new(None),
         name: method.name.to_string(),
-        args,
+        params,
         return_type_name: method.return_type.to_string(),
         return_type: Cell::new(None),
         exprs,
@@ -433,9 +424,9 @@ fn build_method(
 fn build_func(
     func: &syntax::tree::Func,
 ) -> tree::Func {
-    let mut args = vec![];
-    for arg in &func.args {
-       args.push(build_var(arg))
+    let mut params = vec![];
+    for param in &func.params {
+       params.push(build_param(param))
     }
 
     let mut exprs = vec![];
@@ -447,7 +438,7 @@ fn build_func(
         llvm_ref: Cell::new(None),
         parent_class_opt: Cell::new(None),
         name: func.name.to_string(),
-        args,
+        params,
         return_type_name: func.return_type.to_string(),
         return_type: Cell::new(None),
         exprs,
@@ -468,7 +459,6 @@ fn build_expr(
         syntax::tree::Expr::Comparison(ref c) => tree::Expr::Comparison(Box::new(build_comparison(c))),
         syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse(Box::new(build_if_else(if_else))),
         syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance))),
-        syntax::tree::Expr::LlvmClassInstance(ref class_instance) => tree::Expr::LlvmClassInstance(Box::new(build_llvm_class_instance(class_instance))),
         syntax::tree::Expr::DotInvoke(ref dot_invoke) => tree::Expr::DotInvoke(Box::new(build_dot_invoke(dot_invoke))),
         syntax::tree::Expr::DotMember(ref dot_member) => tree::Expr::DotMember(Box::new(build_dot_member(dot_member))),
     }
@@ -501,19 +491,6 @@ fn build_dot_invoke(
         expr: Box::new(build_expr(&dot_invoke.expr)),
         invoke: Box::new(build_invoke(&dot_invoke.invoke)),
         tpe: Cell::new(None),
-    }
-}
-
-fn build_llvm_class_instance(
-    class_instance: &syntax::tree::LlvmClassInstance
-) -> tree::LlvmClassInstance {
-    let class = Box::new(tree::LlvmClass {
-        tpe: NativeTypeEnum::get(&class_instance.name),
-    });
-
-    tree::LlvmClassInstance {
-        expr: Box::new(build_expr(&class_instance.expr)),
-        class,
     }
 }
 
@@ -630,14 +607,10 @@ fn build_llvm_invoke(
         args.push(build_expr(arg));
     }
 
-    let return_type = tree::LlvmClass {
-        tpe: NativeTypeEnum::get(&invoke.return_type),
-    };
-
     tree::LlvmInvoke {
         name: invoke.name.to_string(),
         is_varargs: invoke.is_varargs,
-        return_type,
+        return_type: Cell::new(None),
         args,
     }
 }

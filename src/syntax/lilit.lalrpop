@@ -16,7 +16,7 @@ Comma<T>: Vec<T> = {
 
 pub Exprs = Comma<Expr>;
 pub Vars = Comma<Var>;
-pub ClassParams = Comma<ClassParam>;
+pub Params = Comma<Param>;
 
 pub Mod: Box<Mod> = {
   <u:ModUnit*> => Box::new(Mod { units:u }),
@@ -28,20 +28,23 @@ ModUnit: Box<ModUnit> = {
 };
 
 Class: Box<Class> = {
-  "class" <name:ClassName> "(" <params:ClassParams> ")" <e:ClassExtend?> <methods:Func*> "end" => Box::new(Class {
-    name,
-    params,
-    extends: match e {
-    	None => vec![],
-    	Some(e) => e,
-    },
-    methods,
-  })
+  "class" <name:ClassName> "(" <params:Params> ")" <e:ClassExtend?> <methods:Func*> "end" => {
+    let is_llvm = name.chars().next() == Some('@');
+    Box::new(Class {
+      name,
+      params,
+      extends: match e {
+        None => vec![],
+        Some(e) => e,
+      },
+      methods,
+      is_llvm,
+    })
+  },
 };
 
-ClassParam: Box<ClassParam> = {
-  <var:Var> ":" <tpe:ClassName> => Box::new(ClassParam { var, tpe }),
-  <var:Var> ":" <tpe:LlvmClassName> => Box::new(ClassParam { var, tpe }),
+Param: Box<Param> = {
+  <var:Var> ":" <tpe:ClassName> => Box::new(Param { var, tpe })
 };
 
 ClassExtend: Vec<String> = {
@@ -52,16 +55,12 @@ ClassExtend: Vec<String> = {
   }
 };
 
-LlvmClassName: String = {
-  r"@[A-Z][a-zA-Z0-9_]*" => String::from(<>),
-};
-
 ClassName: String = {
-  r"[A-Z][a-zA-Z0-9_]*" => String::from(<>),
+  r"@?[A-Z][a-zA-Z0-9_]*" => String::from(<>),
 };
 
 Func: Box<Func> = {
-  "def" <name:Name> "(" <args:Vars> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, args, return_type, exprs }),
+  "def" <name:Name> "(" <params:Params> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, params, return_type, exprs }),
 };
 
 Expr: Box<Expr> = {
@@ -80,7 +79,6 @@ HighPrecedentExpr: Box<Expr> = {
   <IfElse>,
   <ComparisonExpr>,
   <ClassInstance>,
-  <LlvmClassInstance>,
   <LlvmInvoke>,
 };
 
@@ -94,10 +92,6 @@ DotInvoke: Box<Expr> = {
 
 ClassInstance: Box<Expr> = {
   <name:ClassName> "(" <params:Exprs> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, params }))),
-};
-
-LlvmClassInstance: Box<Expr> = {
-  <name:LlvmClassName> "(" <expr:Expr> ")" => Box::new(Expr::LlvmClassInstance(Box::new(LlvmClassInstance { name: String::from(&name[1..name.len()]), expr }))),
 };
 
 // TODO(tanin): Comparison should take Exprs. But there is a problem with ambiguity. We should handle it
@@ -132,8 +126,7 @@ Invoke: Box<Invoke> = {
 LlvmInvoke: Box<Expr> = {
   <name_with_return_type:LlvmInvokeName> "(" <args:Exprs> ")" => {
     let mut tokens = name_with_return_type.split(':');
-    let return_type_with_prefix = String::from(tokens.next().unwrap());
-    let return_type = String::from(&return_type_with_prefix[1..return_type_with_prefix.len()]);
+    let return_type = String::from(tokens.next().unwrap());
     let name = String::from(tokens.next().unwrap());
     let is_varargs = name.chars().last() == Some('+');
     let name = if name.chars().last() == Some('+') {

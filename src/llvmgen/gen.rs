@@ -17,6 +17,7 @@ use inkwell::values::PointerValue;
 use inkwell::values::StructValue;
 use inkwell::values::VectorValue;
 
+use std::cell::Cell;
 use semantics::tree;
 use inkwell::types::PointerType;
 use inkwell::types::BasicType;
@@ -29,7 +30,6 @@ pub enum Value {
     Boolean(IntValue),
     String(PointerValue),
     Class(PointerValue, *const tree::Class),
-    LlvmClass(native::gen::NativeEnum),
 }
 
 pub fn convert(value: &Value) -> BasicValueEnum {
@@ -38,7 +38,6 @@ pub fn convert(value: &Value) -> BasicValueEnum {
         Value::Boolean(b) => (*b).into(),
         Value::String(p) => (*p).into(),
         Value::Class(p, c) => (*p).into(),
-        Value::LlvmClass(n) => n.get_ptr().into(),
         Value::Void => panic!("can't convert void"),
     }
 }
@@ -97,13 +96,8 @@ fn gen_mod_unit(
     context: &ModContext,
 ) {
     match unit {
-        tree::ModUnit::Func { ref func } => {
-            gen_func(func, context);
-        },
-        tree::ModUnit::Class { ref class } => {
-            gen_class(class, context);
-        },
-        _ => (),
+        tree::ModUnit::Func(ref func) => gen_func(func, context),
+        tree::ModUnit::Class(ref class) => gen_class(class, context),
     }
 }
 
@@ -138,23 +132,30 @@ fn gen_method(
     class: &tree::Class,
     context: &ModContext,
 ) {
-    // TODO: This should read from the method.return_type
-    let i32_type = context.context.i32_type();
-    let mut params: Vec<BasicTypeEnum> = vec![];
-    for param in &method.args {
-        params.push(match param.tpe.get().unwrap() {
+    let mut param_types: Vec<BasicTypeEnum> = vec![];
+    for param in &method.params {
+        param_types.push(match param.tpe.get().unwrap() {
             tree::ExprType::Number => context.context.i32_type().into(),
             tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
-            tree::ExprType::Boolean => context.context.i32_type().into(),
+            tree::ExprType::Boolean => context.context.bool_type().into(),
             tree::ExprType::Class(class_ptr) => {
                 let class = unsafe { &*class_ptr };
                 class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
             },
-            _ => panic!(),
-        })
+            x => panic!("Unrecognized param: {:?}", x)
+        });
     }
 
-    let fn_type = i32_type.fn_type(&params, false);
+    let fn_type = match method.return_type.get().unwrap() {
+        tree::ExprType::Void => context.context.void_type().fn_type(&param_types, false),
+        tree::ExprType::Number => context.context.i32_type().fn_type(&param_types, false),
+        tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).fn_type(&param_types, false),
+        tree::ExprType::Boolean => context.context.bool_type().fn_type(&param_types, false),
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
+        },
+    };
 
     let func_name = format!("__{}__{}", class.name, method.name);
     let function = context.module.add_function(&func_name, fn_type, None);
@@ -163,7 +164,7 @@ fn gen_method(
     let first_block = context.context.append_basic_block(&function, "first_block");
     context.builder.position_at_end(&first_block);
 
-    for (index, param) in method.args.iter().enumerate() {
+    for (index, param) in method.params.iter().enumerate() {
         let tpe: BasicTypeEnum = match param.tpe.get().unwrap() {
             tree::ExprType::Number => context.context.i32_type().into(),
             tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
@@ -174,11 +175,9 @@ fn gen_method(
             },
             _ => panic!()
         };
-        println!("{:?}", tpe);
         let ptr = context.builder.build_alloca(tpe, "param");
-        println!("Allocated");
         context.builder.build_store(ptr, function.get_nth_param(index as u32).unwrap());
-        param.llvm_ref.set(Some(ptr));
+        param.var.llvm_ref.set(Some(ptr));
     }
 
     let fn_context = FnContext {
@@ -189,10 +188,29 @@ fn gen_method(
         core: context.core,
     };
 
-    for (index, expr) in method.exprs.iter().enumerate() {
-        let ret = gen_expr(expr, &fn_context);
-        if index == (method.exprs.len() - 1) {
-            context.builder.build_return(Some(&convert(&ret)));
+    if class.is_llvm {
+        if class.name == "@I8" {
+            if method.name == "add" {
+                let first = native::int8::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let second = native::int8::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+                let sum = context.builder.build_int_nsw_add(first, second, "@I8.add");
+                let i8_value = native::int8::instantiate_from_value(sum.into(), &class, &fn_context);
+                context.builder.build_return(Some(&convert(&i8_value)));
+            } else if method.name == "to_num" {
+                let first = native::int8::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                context.builder.build_return(Some(&first));
+            } else {
+                panic!("Unrecognized LLVM method: {}.{}", class.name, method.name);
+            }
+        } else {
+            panic!("Unrecognized LLVM class: {}", class.name);
+        }
+    } else {
+        for (index, expr) in method.exprs.iter().enumerate() {
+            let ret = gen_expr(expr, &fn_context);
+            if index == (method.exprs.len() - 1) {
+                context.builder.build_return(Some(&convert(&ret)));
+            }
         }
     }
 }
@@ -201,9 +219,30 @@ fn gen_func(
     func: &tree::Func,
     context: &ModContext,
 ) {
-    // TODO: This should read from the method.return_type
-    let i32_type = context.context.i32_type();
-    let fn_type = i32_type.fn_type(&[], false);
+    let mut param_types: Vec<BasicTypeEnum> = vec![];
+    for param in &func.params {
+       param_types.push(match param.tpe.get().unwrap() {
+           tree::ExprType::Number => context.context.i32_type().into(),
+           tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
+           tree::ExprType::Boolean => context.context.bool_type().into(),
+           tree::ExprType::Class(class_ptr) => {
+               let class = unsafe { &*class_ptr };
+               class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
+           },
+           x => panic!("Unrecognized param: {:?}", x)
+       });
+    }
+
+    let fn_type = match func.return_type.get().unwrap() {
+        tree::ExprType::Void => context.context.void_type().fn_type(&param_types, false),
+        tree::ExprType::Number => context.context.i32_type().fn_type(&param_types, false),
+        tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).fn_type(&param_types, false),
+        tree::ExprType::Boolean => context.context.bool_type().fn_type(&param_types, false),
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
+        },
+    };
 
     let function = context.module.add_function(&func.name, fn_type, None);
     func.llvm_ref.replace(Some(function));
@@ -244,7 +283,6 @@ pub fn gen_expr(
         tree::Expr::Comparison(ref comparison) => gen_comparison(comparison, context),
         tree::Expr::IfElse(ref if_else) => gen_if_else(if_else, context),
         tree::Expr::ClassInstance(ref class_instance) => gen_class_instance(class_instance, context),
-        tree::Expr::LlvmClassInstance(ref class_instance) => native::instantiate(class_instance, context),
     }
 }
 
@@ -275,7 +313,6 @@ fn gen_dot_member(
             }
         },
         tree::ExprType::String => {
-            println!("{:?}", llvm_ret);
             match llvm_ret {
                 BasicValueEnum::PointerValue(p) => Value::String(p),
                 _ => panic!(""),
@@ -290,26 +327,37 @@ fn gen_dot_invoke(
     dot_invoke: &tree::DotInvoke,
     context: &FnContext
 ) -> Value {
-    let expr = gen_expr(&dot_invoke.expr, context);
-    let llvm_expr = convert(&expr);
-
     let func = unsafe { &*dot_invoke.invoke.func_ref.get().unwrap() };
-    let llvm_ret = context.builder.build_call(func.llvm_ref.get().unwrap(), &[llvm_expr], &dot_invoke.invoke.name);
+
+    let mut llvm_params = vec![];
+    llvm_params.push(convert(&gen_expr(&dot_invoke.expr, context)));
+    for param in &dot_invoke.invoke.args {
+        llvm_params.push(convert(&gen_expr(param, context)));
+    }
+
+    let llvm_ret = context.builder.build_call(func.llvm_ref.get().unwrap(), &llvm_params, &dot_invoke.invoke.name);
 
     match func.return_type.get().unwrap() {
+        tree::ExprType::Void => Value::Void,
         tree::ExprType::Number => {
             match llvm_ret.try_as_basic_value().left().unwrap() {
                 BasicValueEnum::IntValue(i) => Value::Number(i),
-                _ => panic!(""),
+                x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
             }
         },
         tree::ExprType::String => {
             match llvm_ret.try_as_basic_value().left().unwrap() {
                 BasicValueEnum::PointerValue(p) => Value::String(p),
-                _ => panic!(""),
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
             }
         },
-        tree::ExprType::Void => Value::Void,
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::PointerValue(p) => Value::Class(p, class),
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+            }
+        },
         _ => panic!(""),
     }
 }
