@@ -43,9 +43,9 @@ pub enum Expr {
     Assignment(Box<Assignment>),
     Var(Box<Var>),
     LiteralString(Box<LiteralString>),
-    Comparison(Box<Comparison>),
     IfElse(Box<IfElse>),
     ClassInstance(Box<ClassInstance>),
+    LlvmClassInstance(Box<LlvmClassInstance>),
     DotInvoke(Box<DotInvoke>),
     DotMember(Box<DotMember>),
 }
@@ -69,14 +69,14 @@ pub struct ClassInstance {
 }
 
 #[derive(Debug)]
-pub struct Comparison {
-    pub left: Box<Var>,
-    pub right: Box<Num>,
+pub struct LlvmClassInstance {
+    pub name: String,
+    pub params: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]
 pub struct IfElse {
-    pub cond: Box<Comparison>,
+    pub cond: Box<Expr>,
     pub true_br: Box<Expr>,
     pub false_br: Box<Expr>,
 }

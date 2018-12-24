@@ -10,6 +10,7 @@ use syntax;
 #[derive(Debug)]
 pub struct Mod {
     pub units: Vec<ModUnit>,
+    pub number_class: Cell<Option<*const Class>>,
 }
 
 #[derive(Debug)]
@@ -50,7 +51,7 @@ pub struct Func {
 #[derive(Debug, Copy, Clone)]
 pub enum ExprType {
     Void,
-    Number,
+    LlvmNumber,
     String,
     Boolean,
     Class(*const Class),
@@ -60,16 +61,16 @@ pub enum ExprType {
 pub enum Expr {
     Invoke(Box<Invoke>),
     LlvmInvoke(Box<LlvmInvoke>),
-    Num(Box<Num>),
     LiteralString(Box<LiteralString>),
     Assignment(Box<Assignment>),
     Boolean(Box<Boolean>),
-    Comparison(Box<Comparison>),
     IfElse(Box<IfElse>),
     ReadVar(Box<ReadVar>),
     ClassInstance(Box<ClassInstance>),
+    LlvmClassInstance(Box<LlvmClassInstance>),
     DotInvoke(Box<DotInvoke>),
     DotMember(Box<DotMember>),
+    LlvmNumber(Box<LlvmNumber>),
 }
 
 impl Expr {
@@ -77,14 +78,14 @@ impl Expr {
         match self {
             Expr::Invoke(invoke) => invoke.tpe.get().unwrap(),
             Expr::LlvmInvoke(invoke) => invoke.return_type.get().unwrap(),
-            Expr::Num(num) => num.tpe,
             Expr::LiteralString(s) => s.tpe,
             Expr::Assignment(a) => a.tpe.get().unwrap(),
             Expr::Boolean(b) => b.tpe,
-            Expr::Comparison(c) => c.tpe,
             Expr::IfElse(i) => i.tpe.get().unwrap(),
             Expr::ReadVar(r) => r.tpe.get().unwrap(),
             Expr::ClassInstance(i) => i.tpe.get().unwrap(),
+            Expr::LlvmClassInstance(i) => i.tpe.get().unwrap(),
+            Expr::LlvmNumber(i) => ExprType::LlvmNumber,
             Expr::DotInvoke(d) => d.tpe.get().unwrap(),
             Expr::DotMember(d) => d.tpe.get().unwrap(),
         }
@@ -121,29 +122,29 @@ pub struct ClassInstance {
 }
 
 #[derive(Debug)]
+pub struct LlvmNumber {
+    pub value: i32,
+}
+
+#[derive(Debug)]
+pub struct LlvmClassInstance {
+    pub name: String,
+    pub params: Vec<Expr>,
+    pub class_ref: Cell<Option<*const Class>>,
+    pub tpe: Cell<Option<ExprType>>,
+}
+
+#[derive(Debug)]
 pub struct IfElse {
-    pub cond: Box<Comparison>,
+    pub cond: Box<Expr>,
     pub true_br: Box<Expr>,
     pub false_br: Box<Expr>,
     pub tpe: Cell<Option<ExprType>>,
 }
 
 #[derive(Debug)]
-pub struct Comparison {
-    pub left: Box<ReadVar>,
-    pub right: Box<Num>,
-    pub tpe: ExprType,
-}
-
-#[derive(Debug)]
 pub struct LiteralString {
     pub content: String,
-    pub tpe: ExprType,
-}
-
-#[derive(Debug)]
-pub struct Num {
-    pub value: i32,
     pub tpe: ExprType,
 }
 

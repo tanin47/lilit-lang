@@ -77,7 +77,6 @@ HighPrecedentExpr: Box<Expr> = {
   <ReadVar>,
   <LiteralString>,
   <IfElse>,
-  <ComparisonExpr>,
   <ClassInstance>,
   <LlvmInvoke>,
 };
@@ -91,20 +90,19 @@ DotInvoke: Box<Expr> = {
 };
 
 ClassInstance: Box<Expr> = {
-  <name:ClassName> "(" <params:Exprs> ")" => Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, params }))),
-};
+  <name:ClassName> "(" <params:Exprs> ")" => {
+    let is_llvm = name.chars().next() == Some('@');
 
-// TODO(tanin): Comparison should take Exprs. But there is a problem with ambiguity. We should handle it
-ComparisonExpr: Box<Expr> = {
-  <Comparison> => Box::new(Expr::Comparison(<>)),
-};
-
-Comparison: Box<Comparison> = {
-  <left:Var> ">" <right:Num> => Box::new(Comparison { left, right }),
+    if is_llvm {
+      Box::new(Expr::LlvmClassInstance(Box::new(LlvmClassInstance { name, params })))
+    } else {
+      Box::new(Expr::ClassInstance(Box::new(ClassInstance { name, params })))
+    }
+  }
 };
 
 IfElse: Box<Expr> = {
-  "if" <cond: Comparison> "{" <true_br: Expr> "}" "else" "{" <false_br: Expr> "}" => Box::new(Expr::IfElse(Box::new(IfElse { cond, true_br, false_br }))),
+  "if" <cond: Expr> "{" <true_br: Expr> "}" "else" "{" <false_br: Expr> "}" => Box::new(Expr::IfElse(Box::new(IfElse { cond, true_br, false_br }))),
 };
 
 LiteralString: Box<Expr> = {

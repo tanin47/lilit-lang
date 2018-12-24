@@ -1,13 +1,17 @@
-class @I8(i: Number)
-  def add(other: @I8): @I8
+class @I32(i: LlvmNumber)
+  def add(other: @I32): @I32
   end
 
   def to_num(): Number
   end
 end
 
+
+class Number(num: @I32)
+end
+
+
 def main(): Number
-  val first = @I8(13)
-  val result = @I8(1).add(first)
-  result.to_num()
+  val a = @I32(118)
+  @I32(12).add(a).to_num()
 end

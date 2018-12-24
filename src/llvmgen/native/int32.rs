@@ -12,16 +12,26 @@ use llvmgen::gen;
 use llvmgen::gen::FnContext;
 use llvmgen::gen::Value;
 use semantics::tree;
+use inkwell::values::IntValue;
 
-pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> BasicValueEnum {
+pub fn get_llvm_value_from_var(var: &tree::Var, context: &FnContext) -> IntValue {
+    let instance_ptr = match context.builder.build_load(var.llvm_ref.get().unwrap(), "load class instance") {
+        BasicValueEnum::PointerValue(p) => p,
+        _ => panic!()
+    };
+
+    get_llvm_value(instance_ptr, context)
+}
+
+pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> IntValue {
     let first_param_pointer = unsafe {
         context.builder.build_in_bounds_gep(
             ptr,
             &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
             "gep for the first param of @I32")
     };
-    match context.builder.build_load(first_param_pointer, "load the first param of @I8") {
-        BasicValueEnum::IntValue(i) => BasicValueEnum::IntValue(i),
+    match context.builder.build_load(first_param_pointer, "load the first param of @I32") {
+        BasicValueEnum::IntValue(i) => i,
         x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
     }
 }
@@ -49,7 +59,7 @@ pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, contex
 
 pub fn instantiate(instance: &tree::ClassInstance, context: &FnContext) -> Value {
     let value = match gen::gen_expr(&instance.params[0], context) {
-        Value::Number(i) => Value::Number(i),
+        Value::LlvmNumber(i) => Value::LlvmNumber(i),
         x => panic!("Expect Value::Number, found {:?}", x),
     };
 

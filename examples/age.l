@@ -1,14 +1,22 @@
 class @String(s: String)
 end
 
+class @Boolean(b: Boolean)
+  def to_bool(): Boolean
+  end
+end
+
 class @I32(num: Number)
+  def is_greater_than(other: @I32): @Boolean
+  end
+
   def to_num(): Number
   end
 end
 
 class Number(num: @I32)
   def is_greater_than(other: Number): Boolean
-    num.is_greater_than(other.num)
+    num.is_greater_than(other.num).to_bool()
   end
 end
 

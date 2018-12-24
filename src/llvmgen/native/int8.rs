@@ -59,7 +59,7 @@ pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, contex
 
 pub fn instantiate(instance: &tree::ClassInstance, context: &FnContext) -> Value {
     let value = match gen::gen_expr(&instance.params[0], context) {
-        Value::Number(i) => Value::Number(i),
+        Value::LlvmNumber(i) => Value::LlvmNumber(i),
         x => panic!("Expect Value::Number, found {:?}", x),
     };
 
