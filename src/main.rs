@@ -57,7 +57,7 @@ fn main() {
 
         let triple = TargetMachine::get_default_triple().to_string();
         let target = Target::from_triple(&triple).unwrap();
-        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::None, RelocMode::Default, CodeModel::Default).unwrap();
 
         let path =  Path::new("./output/main.o");
         println!("Write LLVM IR to main.o");

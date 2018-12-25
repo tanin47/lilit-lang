@@ -4,11 +4,19 @@ use semantics::tree;
 use std::cell::Cell;
 use std::collections::HashMap;
 
+pub struct Context {
+    pub in_llvm_mode: bool,
+}
 
 pub fn analyse(
     m: &syntax::tree::Mod,
 ) -> tree::Mod {
-    let module = build_mod(m);
+    let module = {
+        let context = Context {
+            in_llvm_mode: false
+        };
+        build_mod(m, &context)
+    };
 
     {
         let mut scope = scope::Scope { levels: Vec::new() };
@@ -20,8 +28,8 @@ pub fn analyse(
 fn convert_to_expr_type(return_type_name: &str, scope: &mut scope::Scope) -> tree::ExprType {
     if return_type_name == "Void" {
         tree::ExprType::Void
-    } else if return_type_name == "Boolean" {
-        tree::ExprType::Boolean
+    } else if return_type_name == "LlvmBoolean" {
+        tree::ExprType::LlvmBoolean
     } else if return_type_name == "LlvmNumber" {
         tree::ExprType::LlvmNumber
     } else if return_type_name == "String" {
@@ -43,8 +51,11 @@ fn link_mod(
             },
             tree::ModUnit::Class(ref class) => {
 
-                if class.name == "Number" {
-                    m.number_class.set(Some(class.as_ref()));
+                match class.name.as_ref() {
+                    "Number" => m.number_class.set(Some(class.as_ref())),
+                    "Boolean" => m.boolean_class.set(Some(class.as_ref())),
+                    "@Boolean" => m.at_boolean_class.set(Some(class.as_ref())),
+                    _ => (),
                 }
 
                 scope.declare(scope::ScopeValue::Class(class.as_ref()));
@@ -154,7 +165,7 @@ fn link_expr(
         tree::Expr::DotInvoke(ref dot_invoke) => link_dot_invoke(dot_invoke, scope),
         tree::Expr::DotMember(ref dot_member) => link_dot_member(dot_member, scope),
         tree::Expr::LiteralString(ref literal_string) => (),
-        tree::Expr::Boolean(ref boolean) => (),
+        tree::Expr::LlvmBoolean(ref boolean) => (),
         tree::Expr::LlvmNumber(ref value) => (),
     }
 }
@@ -250,7 +261,12 @@ fn link_if_else(
     link_expr(&if_else.cond, scope);
 
     match if_else.cond.get_type() {
-        tree::ExprType::Boolean => (),
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            if class.name != "Boolean" {
+                panic!("Expect Boolean, found {:?}", class.name)
+            }
+        },
         x => panic!("Expect semantics::tree::ExprType::Boolean, found {:?}", x),
     };
 
@@ -348,34 +364,39 @@ fn link_invoke(
 
 pub fn build_mod(
     m: &syntax::tree::Mod,
+    context: &Context
 ) -> tree::Mod {
     let mut vec = Vec::new();
 
     for unit in &(*m).units {
-        vec.push(build_mod_unit(unit));
+        vec.push(build_mod_unit(unit, context));
     }
 
     tree::Mod {
         units: vec,
-        number_class: Cell::new(None)
+        number_class: Cell::new(None),
+        boolean_class: Cell::new(None),
+        at_boolean_class: Cell::new(None),
     }
 }
 
 fn build_mod_unit(
     unit: &syntax::tree::ModUnit,
+    context: &Context
 ) -> tree::ModUnit {
     match unit {
-        syntax::tree::ModUnit::Func(ref func) => tree::ModUnit::Func(Box::new(build_func(func))),
-        syntax::tree::ModUnit::Class(ref class) => tree::ModUnit::Class(Box::new(build_class(class))),
+        syntax::tree::ModUnit::Func(ref func) => tree::ModUnit::Func(Box::new(build_func(func, context))),
+        syntax::tree::ModUnit::Class(ref class) => tree::ModUnit::Class(Box::new(build_class(class, context))),
     }
 }
 
 fn build_class(
     class: &syntax::tree::Class,
+    context: &Context,
 ) -> tree::Class {
     let mut param_vec = vec![];
     for param in &class.params {
-        param_vec.push(Box::new(build_param(&param)));
+        param_vec.push(Box::new(build_param(&param, context)));
     }
 
     let mut extend_vec = vec![];
@@ -385,7 +406,7 @@ fn build_class(
 
     let mut method_vec = vec![];
     for method in &class.methods {
-        method_vec.push(build_method(&method, class));
+        method_vec.push(build_method(&method, class, context));
     }
 
     tree::Class {
@@ -399,10 +420,11 @@ fn build_class(
 }
 
 fn build_param(
-    param: &syntax::tree::Param
+    param: &syntax::tree::Param,
+    context: &Context,
 ) -> tree::Param {
     tree::Param {
-        var: Box::new(build_var(&param.var)),
+        var: Box::new(build_var(&param.var, context)),
         tpe_name: param.tpe.to_string(),
         tpe: Cell::new(None),
     }
@@ -411,6 +433,7 @@ fn build_param(
 fn build_method(
     method: &syntax::tree::Func,
     class: &syntax::tree::Class,
+    context: &Context,
 ) -> tree::Func {
     let mut params = vec![];
     params.push(tree::Param {
@@ -423,12 +446,12 @@ fn build_method(
         tpe: Cell::new(None),
     });
     for param in &method.params {
-        params.push(build_param(param))
+        params.push(build_param(param, context))
     }
 
     let mut exprs = vec![];
     for expr in &method.exprs {
-        exprs.push(build_expr(expr))
+        exprs.push(build_expr(expr, context))
     }
 
     tree::Func {
@@ -444,15 +467,16 @@ fn build_method(
 
 fn build_func(
     func: &syntax::tree::Func,
+    context: &Context,
 ) -> tree::Func {
     let mut params = vec![];
     for param in &func.params {
-       params.push(build_param(param))
+       params.push(build_param(param, context))
     }
 
     let mut exprs = vec![];
     for expr in &func.exprs {
-        exprs.push(build_expr(expr))
+        exprs.push(build_expr(expr, context))
     }
 
     tree::Func {
@@ -468,35 +492,38 @@ fn build_func(
 
 fn build_expr(
     expr: &syntax::tree::Expr,
+    context: &Context,
 ) -> tree::Expr {
     match *expr {
-        syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke(Box::new(build_invoke(i))),
-        syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke(Box::new(build_llvm_invoke(i))),
-        syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment(Box::new(build_assignment(a))),
-        syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar(Box::new(build_read_var(v))),
-        syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString(Box::new(build_literal_string(s))),
-        syntax::tree::Expr::Boolean(ref b) => tree::Expr::Boolean(Box::new(build_boolean(b))),
-        syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse(Box::new(build_if_else(if_else))),
-        syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance))),
-        syntax::tree::Expr::LlvmClassInstance(ref class_instance) => tree::Expr::LlvmClassInstance(Box::new(build_llvm_class_instance(class_instance))),
-        syntax::tree::Expr::DotInvoke(ref dot_invoke) => tree::Expr::DotInvoke(Box::new(build_dot_invoke(dot_invoke))),
-        syntax::tree::Expr::DotMember(ref dot_member) => tree::Expr::DotMember(Box::new(build_dot_member(dot_member))),
-        syntax::tree::Expr::Num(ref num) => tree::Expr::ClassInstance(Box::new(build_num(num))),
+        syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke(Box::new(build_invoke(i, context))),
+        syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke(Box::new(build_llvm_invoke(i, context))),
+        syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment(Box::new(build_assignment(a, context))),
+        syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar(Box::new(build_read_var(v, context))),
+        syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString(Box::new(build_literal_string(s, context))),
+        syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse(Box::new(build_if_else(if_else, context))),
+        syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance, context))),
+        syntax::tree::Expr::LlvmClassInstance(ref class_instance) => tree::Expr::LlvmClassInstance(Box::new(build_llvm_class_instance(class_instance, context))),
+        syntax::tree::Expr::DotInvoke(ref dot_invoke) => tree::Expr::DotInvoke(Box::new(build_dot_invoke(dot_invoke, context))),
+        syntax::tree::Expr::DotMember(ref dot_member) => tree::Expr::DotMember(Box::new(build_dot_member(dot_member, context))),
+        syntax::tree::Expr::Num(ref num) => build_num(num, context),
+        syntax::tree::Expr::Boolean(ref b) => build_boolean(b, context),
     }
 }
 
 fn build_dot_member(
-    dot_member: &syntax::tree::DotMember
+    dot_member: &syntax::tree::DotMember,
+    context: &Context,
 ) -> tree::DotMember {
     tree::DotMember {
-        expr: Box::new(build_expr(&dot_member.expr)),
-        member: Box::new(build_member(&dot_member.member)),
+        expr: Box::new(build_expr(&dot_member.expr, context)),
+        member: Box::new(build_member(&dot_member.member, context)),
         tpe: Cell::new(None),
     }
 }
 
 fn build_member(
-    member: &syntax::tree::Var
+    member: &syntax::tree::Var,
+    context: &Context,
 ) -> tree::Member {
     tree::Member {
         name: member.name.to_string(),
@@ -506,21 +533,23 @@ fn build_member(
 }
 
 fn build_dot_invoke(
-    dot_invoke: &syntax::tree::DotInvoke
+    dot_invoke: &syntax::tree::DotInvoke,
+    context: &Context,
 ) -> tree::DotInvoke {
     tree::DotInvoke {
-        expr: Box::new(build_expr(&dot_invoke.expr)),
-        invoke: Box::new(build_invoke(&dot_invoke.invoke)),
+        expr: Box::new(build_expr(&dot_invoke.expr, context)),
+        invoke: Box::new(build_invoke(&dot_invoke.invoke, context)),
         tpe: Cell::new(None),
     }
 }
 
 fn build_class_instance(
-    class_instance: &syntax::tree::ClassInstance
+    class_instance: &syntax::tree::ClassInstance,
+    context: &Context,
 ) -> tree::ClassInstance {
     let mut param_vec = vec![];
     for param in &class_instance.params {
-       param_vec.push(Box::new(build_expr(&param)));
+       param_vec.push(Box::new(build_expr(&param, context)));
     }
 
     tree::ClassInstance {
@@ -532,11 +561,15 @@ fn build_class_instance(
 }
 
 fn build_llvm_class_instance(
-    instance: &syntax::tree::LlvmClassInstance
+    instance: &syntax::tree::LlvmClassInstance,
+    context: &Context,
 ) -> tree::LlvmClassInstance {
     let mut params = vec![];
+    let llvm_context = Context {
+        in_llvm_mode: true
+    };
     for param in &instance.params {
-        params.push(build_expr(&param));
+        params.push(build_expr(&param, &llvm_context));
     }
 
     tree::LlvmClassInstance {
@@ -547,28 +580,21 @@ fn build_llvm_class_instance(
     }
 }
 
-fn build_boolean(
-    boolean: &syntax::tree::Boolean
-) -> tree::Boolean {
-    tree::Boolean {
-        value: boolean.value,
-        tpe: tree::ExprType::Boolean,
-    }
-}
-
 fn build_if_else(
-    if_else: &syntax::tree::IfElse
+    if_else: &syntax::tree::IfElse,
+    context: &Context,
 ) -> tree::IfElse {
     tree::IfElse {
-        cond: Box::new(build_expr(&if_else.cond)),
-        true_br: Box::new(build_expr(&if_else.true_br)),
-        false_br: Box::new(build_expr(&if_else.false_br)),
+        cond: Box::new(build_expr(&if_else.cond, context)),
+        true_br: Box::new(build_expr(&if_else.true_br, context)),
+        false_br: Box::new(build_expr(&if_else.false_br, context)),
         tpe: Cell::new(None),
     }
 }
 
 fn build_literal_string(
     literal_string: &syntax::tree::LiteralString,
+    context: &Context,
 ) -> tree::LiteralString {
     tree::LiteralString {
         content: literal_string.content.to_string(),
@@ -578,6 +604,7 @@ fn build_literal_string(
 
 fn build_read_var(
     var: &syntax::tree::Var,
+    context: &Context,
 ) -> tree::ReadVar {
     tree::ReadVar {
         assignment_ref: Cell::new(None),
@@ -589,10 +616,11 @@ fn build_read_var(
 
 fn build_assignment(
     assignment: &syntax::tree::Assignment,
+    context: &Context,
 ) -> tree::Assignment {
-    let expr = Box::new(build_expr(&assignment.expr));
+    let expr = Box::new(build_expr(&assignment.expr, context));
     tree::Assignment {
-        var: Box::new(build_var(&assignment.var)),
+        var: Box::new(build_var(&assignment.var, context)),
         expr,
         tpe: Cell::new(None),
     }
@@ -600,6 +628,7 @@ fn build_assignment(
 
 fn build_var(
     var: &syntax::tree::Var,
+    context: &Context,
 ) -> tree::Var {
     tree::Var {
         llvm_ref: Cell::new(None),
@@ -609,12 +638,13 @@ fn build_var(
 }
 
 fn build_invoke(
-    invoke: &syntax::tree::Invoke
+    invoke: &syntax::tree::Invoke,
+    context: &Context,
 ) -> tree::Invoke {
     let mut args: Vec<tree::Expr> = vec![];
 
     for arg in &invoke.args {
-        args.push(build_expr(arg));
+        args.push(build_expr(arg, context));
     }
 
     tree::Invoke {
@@ -626,12 +656,13 @@ fn build_invoke(
 }
 
 fn build_llvm_invoke(
-    invoke: &syntax::tree::LlvmInvoke
+    invoke: &syntax::tree::LlvmInvoke,
+    context: &Context,
 ) -> tree::LlvmInvoke {
     let mut args: Vec<tree::Expr> = vec![];
 
     for arg in &invoke.args {
-        args.push(build_expr(arg));
+        args.push(build_expr(arg, context));
     }
 
     tree::LlvmInvoke {
@@ -643,20 +674,49 @@ fn build_llvm_invoke(
 }
 
 fn build_num(
-    num: &syntax::tree::Num
-) -> tree::ClassInstance {
-    let llvm_i32 = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
-        name: "@I32".to_string(),
-        params: vec![tree::Expr::LlvmNumber(Box::new(tree::LlvmNumber { value: num.value }))],
-        class_ref: Cell::new(None),
-        tpe: Cell::new(None),
-    })));
+    num: &syntax::tree::Num,
+    context: &Context,
+) -> tree::Expr {
+    let llvm_number = tree::Expr::LlvmNumber(Box::new(tree::LlvmNumber { value: num.value }));
+    if context.in_llvm_mode {
+       llvm_number
+    } else {
+        let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
+            name: "@I32".to_string(),
+            params: vec![llvm_number],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        })));
 
-    tree::ClassInstance {
-        name: "Number".to_string(),
-        params: vec![llvm_i32],
-        class_ref: Cell::new(None),
-        tpe: Cell::new(None),
+        tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
+            name: "Number".to_string(),
+            params: vec![llvm_instance],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        }))
     }
 }
 
+fn build_boolean(
+    boolean: &syntax::tree::Boolean,
+    context: &Context,
+) -> tree::Expr {
+    let llvm_boolean =tree::Expr::LlvmBoolean(Box::new(tree::LlvmBoolean { value: boolean.value }));
+    if context.in_llvm_mode {
+        llvm_boolean
+    } else {
+        let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
+            name: "@Boolean".to_string(),
+            params: vec![llvm_boolean],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        })));
+
+        tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
+            name: "Boolean".to_string(),
+            params: vec![llvm_instance],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        }))
+    }
+}

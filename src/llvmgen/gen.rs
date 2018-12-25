@@ -27,7 +27,7 @@ use llvmgen::native;
 pub enum Value {
     Void,
     LlvmNumber(IntValue),
-    Boolean(IntValue),
+    LlvmBoolean(IntValue),
     String(PointerValue),
     Class(PointerValue, *const tree::Class),
 }
@@ -35,7 +35,7 @@ pub enum Value {
 pub fn convert(value: &Value) -> BasicValueEnum {
     match value {
         Value::LlvmNumber(i) => (*i).into(),
-        Value::Boolean(b) => (*b).into(),
+        Value::LlvmBoolean(b) => (*b).into(),
         Value::String(p) => (*p).into(),
         Value::Class(p, c) => (*p).into(),
         Value::Void => panic!("can't convert void"),
@@ -44,7 +44,9 @@ pub fn convert(value: &Value) -> BasicValueEnum {
 
 pub struct Core<'a> {
     pub string_struct_type: StructType,
-    pub number_class: &'a tree::Class
+    pub number_class: &'a tree::Class,
+    pub boolean_class: &'a tree::Class,
+    pub at_boolean_class: &'a tree::Class
 }
 
 struct ModContext<'a, 'b, 'c, 'd> {
@@ -78,6 +80,8 @@ pub fn generate(
             false
         ),
         number_class: unsafe { &*module.number_class.get().unwrap() },
+        boolean_class: unsafe { &*module.boolean_class.get().unwrap() },
+        at_boolean_class: unsafe { &*module.at_boolean_class.get().unwrap() },
     };
     {
         let context = ModContext {
@@ -137,7 +141,7 @@ fn gen_class_struct(
     for param in &class.params {
         type_enums.push(match param.tpe.get().unwrap() {
             tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
-            tree::ExprType::Boolean => context.context.i32_type().into(),
+            tree::ExprType::LlvmBoolean => context.context.bool_type().into(),
             tree::ExprType::LlvmNumber => context.context.i32_type().into(),
             tree::ExprType::Class(class_ptr) => {
                 let class = unsafe { &*class_ptr };
@@ -167,7 +171,6 @@ fn gen_method(
     for param in &method.params {
         param_types.push(match param.tpe.get().unwrap() {
             tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
-            tree::ExprType::Boolean => context.context.bool_type().into(),
             tree::ExprType::Class(class_ptr) => {
                 let class = unsafe { &*class_ptr };
                 class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
@@ -179,7 +182,6 @@ fn gen_method(
     let fn_type = match method.return_type.get().unwrap() {
         tree::ExprType::Void => context.context.void_type().fn_type(&param_types, false),
         tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).fn_type(&param_types, false),
-        tree::ExprType::Boolean => context.context.bool_type().fn_type(&param_types, false),
         tree::ExprType::Class(class_ptr) => {
             let class = unsafe { &*class_ptr };
             class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
@@ -197,7 +199,6 @@ fn gen_method(
     for (index, param) in method.params.iter().enumerate() {
         let tpe: BasicTypeEnum = match param.tpe.get().unwrap() {
             tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
-            tree::ExprType::Boolean => context.context.i32_type().into(),
             tree::ExprType::Class(class_ptr) => {
                 let class = unsafe { &*class_ptr };
                 class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
@@ -222,11 +223,18 @@ fn gen_method(
             if method.name == "add" {
                 let first = native::int32::get_llvm_value_from_var(&method.params[0].var, &fn_context);
                 let second = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
-                let sum = context.builder.build_int_nsw_add(first, second, "@I8.add");
+                let sum = context.builder.build_int_nsw_add(first, second, "@I32.add");
                 let i8_value = native::int32::instantiate_from_value(sum.into(), &class, &fn_context);
                 context.builder.build_return(Some(&convert(&i8_value)));
+            } else if method.name == "is_greater_than" {
+                let first = native::int32::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let second = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+
+                let result = context.builder.build_int_compare(IntPredicate::SGT, first, second, "@I32.sgt");
+                let boolean_value = native::boolean::instantiate_from_value(result.into(), context.core.at_boolean_class, &fn_context);
+                context.builder.build_return(Some(&convert(&boolean_value)));
             } else if method.name == "to_num" {
-                let number_ptr = context.builder.build_alloca(context.core.number_class.llvm_struct_type_ref.get().unwrap(), "create_number");
+                let number_ptr = context.builder.build_alloca(context.core.number_class.llvm_struct_type_ref.get().unwrap(), "create number");
                 let first_param_pointer = unsafe {
                     context.builder.build_in_bounds_gep(
                         number_ptr,
@@ -240,10 +248,23 @@ fn gen_method(
                 context.builder.build_store(first_param_pointer, i32_ptr);
                 context.builder.build_return(Some(&number_ptr));
             } else {
-                panic!("Unrecognized LLVM method: {}.{}", class.name, method.name);
+                panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
+            }
+        } else if class.name == "@Boolean" {
+            if method.name == "to_boolean" {
+                let boolean_ptr = context.builder.build_alloca(context.core.boolean_class.llvm_struct_type_ref.get().unwrap(), "create Boolean");
+                let first_param_pointer = unsafe { context.builder.build_struct_gep(boolean_ptr, 0, "gep for the first param of Number, which is @Boolean") };
+                let at_boolean_ptr = match context.builder.build_load(method.params[0].var.llvm_ref.get().unwrap(), "load @Boolean") {
+                    BasicValueEnum::PointerValue(p) => p,
+                    _ => panic!()
+                };
+                context.builder.build_store(first_param_pointer, at_boolean_ptr);
+                context.builder.build_return(Some(&boolean_ptr));
+            } else {
+                panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
             }
         } else {
-            panic!("Unrecognized LLVM class: {}", class.name);
+            panic!("Unsupported LLVM class: {}", class.name);
         }
     } else {
         for (index, expr) in method.exprs.iter().enumerate() {
@@ -263,7 +284,6 @@ fn gen_func(
     for param in &func.params {
        param_types.push(match param.tpe.get().unwrap() {
            tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
-           tree::ExprType::Boolean => context.context.bool_type().into(),
            tree::ExprType::Class(class_ptr) => {
                let class = unsafe { &*class_ptr };
                class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
@@ -275,7 +295,6 @@ fn gen_func(
     let fn_type = match func.return_type.get().unwrap() {
         tree::ExprType::Void => context.context.void_type().fn_type(&param_types, false),
         tree::ExprType::String => context.core.string_struct_type.ptr_type(AddressSpace::Generic).fn_type(&param_types, false),
-        tree::ExprType::Boolean => context.context.bool_type().fn_type(&param_types, false),
         tree::ExprType::Class(class_ptr) => {
             let class = unsafe { &*class_ptr };
             class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
@@ -334,11 +353,11 @@ pub fn gen_expr(
         tree::Expr::Assignment(ref assignment) => gen_assignment(assignment, context),
         tree::Expr::ReadVar(ref read_var) => gen_read_var(read_var, context),
         tree::Expr::LiteralString(ref literal_string) => gen_string(literal_string, context),
-        tree::Expr::Boolean(ref boolean) => gen_boolean(boolean, context),
         tree::Expr::IfElse(ref if_else) => gen_if_else(if_else, context),
         tree::Expr::ClassInstance(ref class_instance) => gen_class_instance(class_instance, context),
         tree::Expr::LlvmClassInstance(ref class_instance) => gen_llvm_class_instance(class_instance, context),
         tree::Expr::LlvmNumber(ref number) => gen_llvm_number(number, context),
+        tree::Expr::LlvmBoolean(ref boolean) => gen_llvm_boolean(boolean, context),
     }
 }
 
@@ -353,10 +372,7 @@ fn gen_dot_member(
     };
 
     let ptr = unsafe {
-        context.builder.build_in_bounds_gep(
-            llvm_expr,
-            &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int((dot_member.member.param_index.get().unwrap()) as u64, false)],
-            "gep")
+        context.builder.build_struct_gep(llvm_expr, dot_member.member.param_index.get().unwrap() as u32, "gep")
     };
 
     let llvm_ret = context.builder.build_load(ptr, &format!("load param {}", dot_member.member.name));
@@ -368,7 +384,6 @@ fn gen_dot_member(
                 _ => panic!(""),
             }
         },
-        tree::ExprType::Void => Value::Void,
         tree::ExprType::Class(class_ptr) => {
             let class = unsafe { &*class_ptr };
             match llvm_ret {
@@ -450,23 +465,7 @@ fn gen_llvm_class_instance(
         // Parameter under LLVM needs to be decipher.
         let value = match gen_expr(param, context) {
             Value::LlvmNumber(i) => Value::LlvmNumber(i),
-            Value::Class(ptr, class_ptr) => {
-                let class = unsafe { &*class_ptr };
-                if class.name == "Number" {
-                    let i32_ptr = unsafe { context.builder.build_struct_gep(ptr, 0, "gep for @I32") };
-                    let i32_instance = match context.builder.build_load(i32_ptr, "") {
-                        BasicValueEnum::PointerValue(p) => p,
-                        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
-                    };
-                    let llvm_number_ptr = unsafe { context.builder.build_struct_gep(i32_instance, 0, "gep for llvm number") };
-                    match context.builder.build_load(llvm_number_ptr, "load llvm number") {
-                        BasicValueEnum::IntValue(i) => Value::LlvmNumber(i),
-                        x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
-                    }
-                } else {
-                    panic!("Expect Llvm types, found class {:?}", class.name)
-                }
-            },
+            Value::LlvmBoolean(i) => Value::LlvmBoolean(i),
             x => panic!("Expect Llvm types, found {:?}", x)
         };
 
@@ -487,11 +486,11 @@ fn gen_llvm_number(
     Value::LlvmNumber(context.context.i32_type().const_int(number.value as u64, false))
 }
 
-fn gen_boolean(
-    boolean: &tree::Boolean,
+fn gen_llvm_boolean(
+    boolean: &tree::LlvmBoolean,
     context: &FnContext,
 ) -> Value {
-   Value::Boolean(context.context.bool_type().const_int(boolean.value as u64, false))
+   Value::LlvmBoolean(context.context.bool_type().const_int(boolean.value as u64, false))
 }
 
 fn gen_if_else(
@@ -499,7 +498,19 @@ fn gen_if_else(
     context: &FnContext,
 ) -> Value {
     let comparison = match gen_expr(&if_else.cond, context) {
-        Value::Boolean(i) => i,
+        Value::Class(ptr, class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            let boolean_ptr = unsafe { context.builder.build_struct_gep(ptr, 0, "gep for @Boolean") };
+            let boolean_instance = match context.builder.build_load(boolean_ptr, "load @Boolean") {
+                BasicValueEnum::PointerValue(p) => p,
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+            };
+            let llvm_boolean_ptr = unsafe { context.builder.build_struct_gep(boolean_instance, 0, "gep for llvm boolean") };
+            match context.builder.build_load(llvm_boolean_ptr, "load llvm boolean") {
+                BasicValueEnum::IntValue(i) => i,
+                x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
+            }
+        },
         _ => panic!(""),
     };
     let true_block = context.context.append_basic_block(context.func, "true_block");
@@ -515,8 +526,10 @@ fn gen_if_else(
 
     match (&true_value, &false_value) {
         (Value::Class(_, true_class_ptr), Value::Class(_, false_class_ptr)) => {
+            let class = unsafe { &**true_class_ptr };
+
             context.builder.position_before(&jump_instruction);
-            let ret_pointer = context.builder.build_alloca(context.context.i32_type(), "ret_if_else");
+            let ret_pointer = context.builder.build_alloca(class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic), "ret_if_else");
 
             context.builder.position_at_end(&true_block);
             context.builder.build_store(ret_pointer, convert(&true_value));
@@ -529,7 +542,7 @@ fn gen_if_else(
             context.builder.position_at_end(&end_block);
             match context.builder.build_load(ret_pointer, "load_ret_if_else") {
                 BasicValueEnum::PointerValue(i) => Value::Class(i, *true_class_ptr),
-                _ => panic!("")
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
             }
         },
         (Value::String(_), Value::String(_)) => {
@@ -547,24 +560,6 @@ fn gen_if_else(
             context.builder.position_at_end(&end_block);
             match context.builder.build_load(ret_pointer, "load_ret_if_else") {
                 BasicValueEnum::PointerValue(i) => Value::String(i),
-                _ => panic!("")
-            }
-        },
-        (Value::Boolean(_), Value::Boolean(_)) => {
-            context.builder.position_before(&jump_instruction);
-            let ret_pointer = context.builder.build_alloca(context.context.i32_type(), "ret_if_else");
-
-            context.builder.position_at_end(&true_block);
-            context.builder.build_store(ret_pointer, convert(&true_value));
-            context.builder.build_unconditional_branch(&end_block);
-
-            context.builder.position_at_end(&false_block);
-            context.builder.build_store(ret_pointer, convert(&false_value));
-            context.builder.build_unconditional_branch(&end_block);
-
-            context.builder.position_at_end(&end_block);
-            match context.builder.build_load(ret_pointer, "load_ret_if_else") {
-                BasicValueEnum::IntValue(i) => Value::Boolean(i),
                 _ => panic!("")
             }
         },
@@ -648,16 +643,18 @@ fn gen_read_var(
             _ => panic!()
         };
 
-        let ptr = unsafe {
-            context.builder.build_in_bounds_gep(
-                llvm_class_instance_pointer,
-                &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int((param_index as u64), false)],
-                "gep")
-        };
-
+        let ptr = unsafe { context.builder.build_struct_gep(llvm_class_instance_pointer, param_index as u32, "gep") };
         let llvm_ret = context.builder.build_load(ptr, &format!("load member {}", var.name));
+        println!("{:?}", var.tpe.get().unwrap());
 
         match var.tpe.get().unwrap() {
+            tree::ExprType::Class(class_ptr) => {
+                let class = unsafe { &*class_ptr };
+                match llvm_ret {
+                    BasicValueEnum::PointerValue(p) => Value::Class(p, class),
+                    _ => panic!(""),
+                }
+            },
             tree::ExprType::String => {
                 match llvm_ret {
                     BasicValueEnum::PointerValue(p) => Value::String(p),

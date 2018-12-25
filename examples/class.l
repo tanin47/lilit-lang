@@ -1,4 +1,13 @@
-class Animal(name: String, age: Number)
+class @I32(i: LlvmNumber)
+end
+
+class Number(num: @I32)
+end
+
+class Void()
+end
+
+class Animal(name: String)
   def run(): Number
     @Void:printf+(@String(name))
     14
@@ -6,7 +15,7 @@ class Animal(name: String, age: Number)
 end
 
 def main(): Number
-  val a = Animal("Allie", 10)
+  val a = Animal("Allie")
   @Void:printf+(@String(a.name))
-  a.run()
+  1
 end

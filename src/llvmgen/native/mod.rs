@@ -1,5 +1,6 @@
 pub mod gen;
 
+pub mod boolean;
 pub mod int8;
 pub mod int32;
 pub mod string;
