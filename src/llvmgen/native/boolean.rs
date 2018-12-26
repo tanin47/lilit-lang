@@ -13,6 +13,7 @@ use llvmgen::gen::FnContext;
 use llvmgen::gen::Value;
 use semantics::tree;
 use inkwell::values::IntValue;
+use llvmgen::native;
 
 pub fn get_llvm_value_from_var(var: &tree::Var, context: &FnContext) -> IntValue {
     let instance_ptr = match context.builder.build_load(var.llvm_ref.get().unwrap(), "load class instance") {
@@ -41,7 +42,7 @@ pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, contex
         x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
     };
 
-    let instance_ptr = context.builder.build_alloca(class.llvm_struct_type_ref.get().unwrap(), "@Boolean");
+    let instance_ptr = native::gen_malloc(&class.llvm_struct_type_ref.get().unwrap(), context);
     let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first param of @Boolean") };
     context.builder.build_store(first_param_pointer, value);
     Value::Class(instance_ptr, class)

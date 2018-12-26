@@ -11,8 +11,11 @@ use syntax;
 pub struct Mod {
     pub units: Vec<ModUnit>,
     pub number_class: Cell<Option<*const Class>>,
+    pub llvm_number_class: Cell<Option<*const Class>>,
     pub boolean_class: Cell<Option<*const Class>>,
-    pub at_boolean_class: Cell<Option<*const Class>>,
+    pub llvm_boolean_class: Cell<Option<*const Class>>,
+    pub string_class: Cell<Option<*const Class>>,
+    pub llvm_string_class: Cell<Option<*const Class>>,
 }
 
 #[derive(Debug)]
@@ -54,7 +57,7 @@ pub struct Func {
 pub enum ExprType {
     Void,
     LlvmNumber,
-    String,
+    LlvmString,
     LlvmBoolean,
     Class(*const Class),
 }
@@ -63,7 +66,6 @@ pub enum ExprType {
 pub enum Expr {
     Invoke(Box<Invoke>),
     LlvmInvoke(Box<LlvmInvoke>),
-    LiteralString(Box<LiteralString>),
     Assignment(Box<Assignment>),
     IfElse(Box<IfElse>),
     ReadVar(Box<ReadVar>),
@@ -73,6 +75,7 @@ pub enum Expr {
     DotMember(Box<DotMember>),
     LlvmNumber(Box<LlvmNumber>),
     LlvmBoolean(Box<LlvmBoolean>),
+    LlvmString(Box<LlvmString>),
 }
 
 impl Expr {
@@ -80,7 +83,7 @@ impl Expr {
         match self {
             Expr::Invoke(invoke) => invoke.tpe.get().unwrap(),
             Expr::LlvmInvoke(invoke) => invoke.return_type.get().unwrap(),
-            Expr::LiteralString(s) => s.tpe,
+            Expr::LlvmString(s) => ExprType::LlvmString,
             Expr::Assignment(a) => a.tpe.get().unwrap(),
             Expr::IfElse(i) => i.tpe.get().unwrap(),
             Expr::ReadVar(r) => r.tpe.get().unwrap(),
@@ -145,9 +148,8 @@ pub struct IfElse {
 }
 
 #[derive(Debug)]
-pub struct LiteralString {
-    pub content: String,
-    pub tpe: ExprType,
+pub struct LlvmString {
+    pub value: String,
 }
 
 #[derive(Debug)]
@@ -159,6 +161,7 @@ pub struct LlvmBoolean {
 pub struct LlvmInvoke {
     pub name: String,
     pub is_varargs: bool,
+    pub return_type_name: String,
     pub return_type: Cell<Option<ExprType>>,
     pub args: Vec<Expr>,
 }

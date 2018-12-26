@@ -32,8 +32,8 @@ fn convert_to_expr_type(return_type_name: &str, scope: &mut scope::Scope) -> tre
         tree::ExprType::LlvmBoolean
     } else if return_type_name == "LlvmNumber" {
         tree::ExprType::LlvmNumber
-    } else if return_type_name == "String" {
-        tree::ExprType::String
+    } else if return_type_name == "LlvmString" {
+        tree::ExprType::LlvmString
     } else {
         tree::ExprType::Class(scope.read_class(return_type_name).unwrap())
     }
@@ -53,8 +53,11 @@ fn link_mod(
 
                 match class.name.as_ref() {
                     "Number" => m.number_class.set(Some(class.as_ref())),
+                    "@I32" => m.llvm_number_class.set(Some(class.as_ref())),
                     "Boolean" => m.boolean_class.set(Some(class.as_ref())),
-                    "@Boolean" => m.at_boolean_class.set(Some(class.as_ref())),
+                    "@Boolean" => m.llvm_boolean_class.set(Some(class.as_ref())),
+                    "String" => m.string_class.set(Some(class.as_ref())),
+                    "@String" => m.llvm_string_class.set(Some(class.as_ref())),
                     _ => (),
                 }
 
@@ -164,7 +167,7 @@ fn link_expr(
         tree::Expr::LlvmClassInstance(ref class_instance) => link_llvm_class_instance(class_instance, scope),
         tree::Expr::DotInvoke(ref dot_invoke) => link_dot_invoke(dot_invoke, scope),
         tree::Expr::DotMember(ref dot_member) => link_dot_member(dot_member, scope),
-        tree::Expr::LiteralString(ref literal_string) => (),
+        tree::Expr::LlvmString(ref literal_string) => (),
         tree::Expr::LlvmBoolean(ref boolean) => (),
         tree::Expr::LlvmNumber(ref value) => (),
     }
@@ -224,6 +227,9 @@ fn link_llvm_invoke(
         link_expr(arg, scope);
         scope.leave();
     }
+
+    let class = scope.read_class(&invoke.return_type_name).unwrap();
+    invoke.return_type.set(Some(tree::ExprType::Class(class)));
 }
 
 fn link_class_instance(
@@ -375,8 +381,11 @@ pub fn build_mod(
     tree::Mod {
         units: vec,
         number_class: Cell::new(None),
+        llvm_number_class: Cell::new(None),
         boolean_class: Cell::new(None),
-        at_boolean_class: Cell::new(None),
+        llvm_boolean_class: Cell::new(None),
+        string_class: Cell::new(None),
+        llvm_string_class: Cell::new(None),
     }
 }
 
@@ -499,12 +508,12 @@ fn build_expr(
         syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke(Box::new(build_llvm_invoke(i, context))),
         syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment(Box::new(build_assignment(a, context))),
         syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar(Box::new(build_read_var(v, context))),
-        syntax::tree::Expr::LiteralString(ref s) => tree::Expr::LiteralString(Box::new(build_literal_string(s, context))),
         syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse(Box::new(build_if_else(if_else, context))),
         syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance, context))),
         syntax::tree::Expr::LlvmClassInstance(ref class_instance) => tree::Expr::LlvmClassInstance(Box::new(build_llvm_class_instance(class_instance, context))),
         syntax::tree::Expr::DotInvoke(ref dot_invoke) => tree::Expr::DotInvoke(Box::new(build_dot_invoke(dot_invoke, context))),
         syntax::tree::Expr::DotMember(ref dot_member) => tree::Expr::DotMember(Box::new(build_dot_member(dot_member, context))),
+        syntax::tree::Expr::LiteralString(ref s) => build_literal_string(s, context),
         syntax::tree::Expr::Num(ref num) => build_num(num, context),
         syntax::tree::Expr::Boolean(ref b) => build_boolean(b, context),
     }
@@ -592,16 +601,6 @@ fn build_if_else(
     }
 }
 
-fn build_literal_string(
-    literal_string: &syntax::tree::LiteralString,
-    context: &Context,
-) -> tree::LiteralString {
-    tree::LiteralString {
-        content: literal_string.content.to_string(),
-        tpe: tree::ExprType::String,
-    }
-}
-
 fn build_read_var(
     var: &syntax::tree::Var,
     context: &Context,
@@ -668,8 +667,34 @@ fn build_llvm_invoke(
     tree::LlvmInvoke {
         name: invoke.name.to_string(),
         is_varargs: invoke.is_varargs,
+        return_type_name: invoke.return_type.to_string(),
         return_type: Cell::new(None),
         args,
+    }
+}
+
+fn build_literal_string(
+    literal_string: &syntax::tree::LiteralString,
+    context: &Context,
+) -> tree::Expr {
+    let llvm_string = tree::Expr::LlvmString(Box::new(tree::LlvmString { value: literal_string.content.to_string() }));
+    if context.in_llvm_mode {
+        llvm_string
+    } else {
+        let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
+            name: "@String".to_string(),
+            params: vec![llvm_string],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        })));
+
+        tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
+            name: "String".to_string(),
+            params: vec![llvm_instance],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        }))
+
     }
 }
 
@@ -679,7 +704,7 @@ fn build_num(
 ) -> tree::Expr {
     let llvm_number = tree::Expr::LlvmNumber(Box::new(tree::LlvmNumber { value: num.value }));
     if context.in_llvm_mode {
-       llvm_number
+        llvm_number
     } else {
         let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
             name: "@I32".to_string(),
