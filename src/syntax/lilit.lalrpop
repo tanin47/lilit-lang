@@ -60,11 +60,17 @@ ClassName: String = {
 };
 
 Func: Box<Func> = {
-  "def" <name:Name> "(" <params:Params> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, params, return_type, exprs }),
+  "def" <name:FuncName> "(" <params:Params> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, params, return_type, exprs }),
+};
+
+FuncName: String = {
+  <Name>,
+  <SpaceInvokeOperator>
 };
 
 Expr: Box<Expr> = {
   <Assignment>,
+  <SpaceInvoke>,
   <HighPrecedentExpr>
 };
 
@@ -87,6 +93,21 @@ DotMember: Box<Expr> = {
 
 DotInvoke: Box<Expr> = {
   <expr:HighPrecedentExpr> "." <invoke:Invoke> => Box::new(Expr::DotInvoke(Box::new(DotInvoke { expr, invoke }))),
+};
+
+SpaceInvoke: Box<Expr> = {
+  <expr:HighPrecedentExpr> <operator:SpaceInvokeOperator> <rhs:Expr> => {
+    let invoke = Box::new(Invoke {
+      name: operator,
+      args: vec![rhs],
+    });
+    Box::new(Expr::DotInvoke(Box::new(DotInvoke { expr, invoke })))
+  },
+};
+
+SpaceInvokeOperator: String = {
+  r"=[=><]+" => String::from(<>),
+  r"[<>][=><]*" => String::from(<>),
 };
 
 ClassInstance: Box<Expr> = {

@@ -15,13 +15,11 @@ class @I32(i: LlvmNumber)
   end
 end
 
-
 class Boolean(b: @Boolean)
 end
 
-
 class Number(num: @I32)
-  def is_greater_than(other: Number): Boolean
+  def >(other: Number): Boolean
     num.is_greater_than(other.num).to_boolean()
   end
 
@@ -40,8 +38,9 @@ class @Void()
 end
 
 def main(): Number
+  @Void:printf+(@String("How old are you?: "))
   val age = @I32:strtol(@String:read(), @I32(0), @I32(10)).to_num()
-  if age.is_greater_than(@I32(10).to_num()) {
+  if age > 10 {
     @Void:printf+(@String("That's old"))
   } else {
     @Void:printf+(@String("That's not old"))
