@@ -20,6 +20,9 @@ end
 
 class Number(num: @I32)
   def >(other: Number): Boolean
+    val a = 1
+    val b = 2
+    val c = 3
     num.is_greater_than(other.num).to_boolean()
   end
 

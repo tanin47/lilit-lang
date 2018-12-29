@@ -4,7 +4,13 @@ end
 class Number(num: @I32)
 end
 
-class Void()
+class @Void()
+end
+
+class @String(s: LlvmString)
+end
+
+class String(s: @String)
 end
 
 class Animal(name: String)

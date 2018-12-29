@@ -322,10 +322,16 @@ fn gen_func(
         core: context.core,
     };
 
+    if func.name == "main" {
+        native::gen_gc_init(&fn_context);
+    }
+
     for (index, expr) in func.exprs.iter().enumerate() {
         let ret = gen_expr(expr, &fn_context);
         if index == (func.exprs.len() - 1) {
             let ret = if func.name == "main" {
+                native::gen_gc_collect(&fn_context);
+
                 let (number_ptr, number_class) = match ret {
                     Value::Class(ptr, class) => (ptr, unsafe { &*class }),
                     x => panic!("Expect Number, found {:?}", x),
@@ -346,6 +352,7 @@ fn gen_func(
         }
     }
 
+    // TODO(tanin): Make this work.
 //    if !function.verify(true) {
 //        panic!("{} is invalid.", func.name);
 //    }

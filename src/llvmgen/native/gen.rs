@@ -21,7 +21,9 @@ use inkwell::attributes::Attribute;
 use inkwell::types::ArrayType;
 use inkwell::types::BasicType;
 use inkwell::types::IntType;
+use inkwell::types::PointerType;
 use inkwell::values::IntValue;
+use inkwell::values::PointerMathValue;
 
 fn get_external_func(
     name: &str,
@@ -44,13 +46,14 @@ pub fn gen_malloc_dynamic_array(tpe: &IntType, size: IntValue, context: &FnConte
     let func_type = context.context
         .i8_type().ptr_type(AddressSpace::Generic)
         .fn_type(&[context.context.i64_type().into()], false);
-    let func = get_external_func("malloc", func_type, context);
+    let func = get_external_func("GC_malloc", func_type, context);
     func.add_attribute(0, context.context.create_enum_attribute(Attribute::get_named_enum_kind_id("noalias"), 0));
 
     let p = match context.builder.build_call(func, &[tpe.size_of().const_mul(size).into()], "malloc").try_as_basic_value().left().unwrap() {
         BasicValueEnum::PointerValue(p) => p,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
+    gen_register_finalizer(p, context);
 
     context.builder.build_pointer_cast(p, tpe.ptr_type(AddressSpace::Generic), "cast")
 }
@@ -59,13 +62,14 @@ pub fn gen_malloc_array(array_type: &ArrayType, context: &FnContext) -> PointerV
     let func_type = context.context
         .i8_type().ptr_type(AddressSpace::Generic)
         .fn_type(&[context.context.i64_type().into()], false);
-    let func = get_external_func("malloc", func_type, context);
+    let func = get_external_func("GC_malloc", func_type, context);
     func.add_attribute(0, context.context.create_enum_attribute(Attribute::get_named_enum_kind_id("noalias"), 0));
 
     let p = match context.builder.build_call(func, &[array_type.size_of().unwrap().into()], "malloc").try_as_basic_value().left().unwrap() {
         BasicValueEnum::PointerValue(p) => p,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
+    gen_register_finalizer(p, context);
 
     context.builder.build_pointer_cast(p, array_type.ptr_type(AddressSpace::Generic), "cast")
 }
@@ -74,15 +78,71 @@ pub fn gen_malloc(struct_type: &StructType, context: &FnContext) -> PointerValue
     let func_type = context.context
         .i8_type().ptr_type(AddressSpace::Generic)
         .fn_type(&[context.context.i64_type().into()], false);
-    let func = get_external_func("malloc", func_type, context);
+    let func = get_external_func("GC_malloc", func_type, context);
     func.add_attribute(0, context.context.create_enum_attribute(Attribute::get_named_enum_kind_id("noalias"), 0));
 
     let p = match context.builder.build_call(func, &[struct_type.size_of().unwrap().into()], "malloc").try_as_basic_value().left().unwrap() {
         BasicValueEnum::PointerValue(p) => p,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
+    gen_register_finalizer(p, context);
 
     context.builder.build_pointer_cast(p, struct_type.ptr_type(AddressSpace::Generic), "cast")
+}
+
+pub fn gen_register_finalizer(ptr: PointerValue, context: &FnContext) {
+    let finalizer_func = get_external_func(
+        "finalizer",
+        context.context.void_type().fn_type(
+            &[
+                context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
+                context.context.i8_type().ptr_type(AddressSpace::Generic).into()
+            ],
+            false
+        ),
+        context);
+
+    let param_types = vec![
+        context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
+        finalizer_func.as_global_value().as_pointer_value().get_type().into(),
+        context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
+        finalizer_func.get_type().ptr_type(AddressSpace::Generic).into(),
+        context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into(),
+    ];
+    let func_type = context.context
+        .void_type()
+        .fn_type(&param_types, false);
+    let func = get_external_func("GC_register_finalizer", func_type, context);
+
+    context.builder.build_call(
+        func,
+        &[
+            ptr.into(),
+            finalizer_func.as_global_value().as_pointer_value().into(),
+            context.context.i8_type().ptr_type(AddressSpace::Generic).const_null().into(),
+            finalizer_func.get_type().ptr_type(AddressSpace::Generic).const_null().into(),
+            context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).const_null().into(),
+        ],
+        "register_finalizer"
+    );
+}
+
+pub fn gen_gc_init(context: &FnContext) {
+    let func_type = context.context
+        .void_type()
+        .fn_type(&[], false);
+    let func = get_external_func("GC_init", func_type, context);
+
+    context.builder.build_call(func, &[], "gc_init");
+}
+
+pub fn gen_gc_collect(context: &FnContext) {
+    let func_type = context.context
+        .void_type()
+        .fn_type(&[], false);
+    let func = get_external_func("GC_gcollect", func_type, context);
+
+    context.builder.build_call(func, &[], "gc_gcollect");
 }
 
 pub fn gen_invoke(
