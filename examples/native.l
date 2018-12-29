@@ -42,7 +42,7 @@ end
 
 def main(): Number
   @Void:printf+(@String("How old are you?: "))
-  val age = @I32:strtol(@String:read(), @I32(0), @I32(10)).to_num()
+  val age = @I32:strtol(@String:__lilit__read(), @I32(0), @I32(10)).to_num()
   if age > 10 {
     @Void:printf+(@String("That's old"))
   } else {

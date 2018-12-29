@@ -167,11 +167,11 @@ Var: Box<Var> = {
 };
 
 LlvmInvokeName: String = {
-  r"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\+?" => String::from(<>),
+  r"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\+?" => String::from(<>),
 };
 
 Name: String = {
-  r"[a-z][A-Za-z0-9_]*" => String::from(<>),
+  r"[a-z_][A-Za-z0-9_]*" => String::from(<>),
 };
 
 Boolean: Box<Expr> = {

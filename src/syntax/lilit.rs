@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: 96f36c52231f45559e499d8ee10d1ab43f9f4bc21487a3f3f95cbfe076ec
+// sha256: f91e6bb2a58f578fa99bd247b2241069da2caa2d9766d3d148f47a273e2c9
 use std::str::FromStr;
 use syntax::tree::*;
 #[allow(unused_extern_crates)]
@@ -443,10 +443,10 @@ mod __parse__Exprs {
             r###"r#"\"[^\"]*\""#"###,
             r###"r#"=[=><]+"#"###,
             r###"r#"@?[A-Z][a-zA-Z0-9_]*"#"###,
-            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"#"###,
+            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"#"###,
             r###"r#"[0-9]+"#"###,
             r###"r#"[<>][=><]*"#"###,
-            r###"r#"[a-z][A-Za-z0-9_]*"#"###,
+            r###"r#"[a-z_][A-Za-z0-9_]*"#"###,
         ];
         __ACTION[(__state * 24)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
             if state == 0 {
@@ -2878,7 +2878,7 @@ mod __parse__Exprs {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"# => ActionFn(43);
+        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"# => ActionFn(43);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -3048,7 +3048,7 @@ mod __parse__Exprs {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Name = r#"[a-z][A-Za-z0-9_]*"# => ActionFn(44);
+        // Name = r#"[a-z_][A-Za-z0-9_]*"# => ActionFn(44);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -4097,10 +4097,10 @@ mod __parse__Mod {
             r###"r#"\"[^\"]*\""#"###,
             r###"r#"=[=><]+"#"###,
             r###"r#"@?[A-Z][a-zA-Z0-9_]*"#"###,
-            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"#"###,
+            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"#"###,
             r###"r#"[0-9]+"#"###,
             r###"r#"[<>][=><]*"#"###,
-            r###"r#"[a-z][A-Za-z0-9_]*"#"###,
+            r###"r#"[a-z_][A-Za-z0-9_]*"#"###,
         ];
         __ACTION[(__state * 24)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
             if state == 0 {
@@ -6532,7 +6532,7 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"# => ActionFn(43);
+        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"# => ActionFn(43);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -6702,7 +6702,7 @@ mod __parse__Mod {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Name = r#"[a-z][A-Za-z0-9_]*"# => ActionFn(44);
+        // Name = r#"[a-z_][A-Za-z0-9_]*"# => ActionFn(44);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -7169,10 +7169,10 @@ mod __parse__Params {
             r###"r#"\"[^\"]*\""#"###,
             r###"r#"=[=><]+"#"###,
             r###"r#"@?[A-Z][a-zA-Z0-9_]*"#"###,
-            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"#"###,
+            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"#"###,
             r###"r#"[0-9]+"#"###,
             r###"r#"[<>][=><]*"#"###,
-            r###"r#"[a-z][A-Za-z0-9_]*"#"###,
+            r###"r#"[a-z_][A-Za-z0-9_]*"#"###,
         ];
         __ACTION[(__state * 24)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
             if state == 0 {
@@ -9604,7 +9604,7 @@ mod __parse__Params {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"# => ActionFn(43);
+        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"# => ActionFn(43);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -9774,7 +9774,7 @@ mod __parse__Params {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Name = r#"[a-z][A-Za-z0-9_]*"# => ActionFn(44);
+        // Name = r#"[a-z_][A-Za-z0-9_]*"# => ActionFn(44);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -10217,10 +10217,10 @@ mod __parse__Vars {
             r###"r#"\"[^\"]*\""#"###,
             r###"r#"=[=><]+"#"###,
             r###"r#"@?[A-Z][a-zA-Z0-9_]*"#"###,
-            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"#"###,
+            r###"r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"#"###,
             r###"r#"[0-9]+"#"###,
             r###"r#"[<>][=><]*"#"###,
-            r###"r#"[a-z][A-Za-z0-9_]*"#"###,
+            r###"r#"[a-z_][A-Za-z0-9_]*"#"###,
         ];
         __ACTION[(__state * 24)..].iter().zip(__TERMINAL).filter_map(|(&state, terminal)| {
             if state == 0 {
@@ -12652,7 +12652,7 @@ mod __parse__Vars {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z][A-Za-z0-9_]*\\+?"# => ActionFn(43);
+        // LlvmInvokeName = r#"@[A-Z][A-Za-z0-9_]*:[a-z_][A-Za-z0-9_]*\\+?"# => ActionFn(43);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -12822,7 +12822,7 @@ mod __parse__Vars {
         _: ::std::marker::PhantomData<()>,
     ) -> (usize, (usize,__Symbol<'input>,usize), usize)
     {
-        // Name = r#"[a-z][A-Za-z0-9_]*"# => ActionFn(44);
+        // Name = r#"[a-z_][A-Za-z0-9_]*"# => ActionFn(44);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
@@ -13167,10 +13167,10 @@ mod __intern_token {
                 "^((?u:\")(?u:[\u{0}-!\\#-\u{10ffff}])*(?u:\"))",
                 "^((?u:=)(?u:[<->])+)",
                 "^((?u:@)?(?u:[A-Z])(?u:[0-9A-Z_-_a-z])*)",
-                "^((?u:@)(?u:[A-Z])(?u:[0-9A-Z_-_a-z])*(?u::)(?u:[a-z])(?u:[0-9A-Z_-_a-z])*(?u:\\+)?)",
+                "^((?u:@)(?u:[A-Z])(?u:[0-9A-Z_-_a-z])*(?u::)(?u:[_-_a-z])(?u:[0-9A-Z_-_a-z])*(?u:\\+)?)",
                 "^((?u:[0-9])+)",
                 "^((?u:[<-<>->])(?u:[<->])*)",
-                "^((?u:[a-z])(?u:[0-9A-Z_-_a-z])*)",
+                "^((?u:[_-_a-z])(?u:[0-9A-Z_-_a-z])*)",
                 "^((?u:\\())",
                 "^((?u:\\)))",
                 "^((?u:,))",
@@ -13194,10 +13194,10 @@ mod __intern_token {
                 __regex::Regex::new("^((?u:\")(?u:[\u{0}-!\\#-\u{10ffff}])*(?u:\"))").unwrap(),
                 __regex::Regex::new("^((?u:=)(?u:[<->])+)").unwrap(),
                 __regex::Regex::new("^((?u:@)?(?u:[A-Z])(?u:[0-9A-Z_-_a-z])*)").unwrap(),
-                __regex::Regex::new("^((?u:@)(?u:[A-Z])(?u:[0-9A-Z_-_a-z])*(?u::)(?u:[a-z])(?u:[0-9A-Z_-_a-z])*(?u:\\+)?)").unwrap(),
+                __regex::Regex::new("^((?u:@)(?u:[A-Z])(?u:[0-9A-Z_-_a-z])*(?u::)(?u:[_-_a-z])(?u:[0-9A-Z_-_a-z])*(?u:\\+)?)").unwrap(),
                 __regex::Regex::new("^((?u:[0-9])+)").unwrap(),
                 __regex::Regex::new("^((?u:[<-<>->])(?u:[<->])*)").unwrap(),
-                __regex::Regex::new("^((?u:[a-z])(?u:[0-9A-Z_-_a-z])*)").unwrap(),
+                __regex::Regex::new("^((?u:[_-_a-z])(?u:[0-9A-Z_-_a-z])*)").unwrap(),
                 __regex::Regex::new("^((?u:\\())").unwrap(),
                 __regex::Regex::new("^((?u:\\)))").unwrap(),
                 __regex::Regex::new("^((?u:,))").unwrap(),
