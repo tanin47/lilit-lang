@@ -65,5 +65,5 @@ Build
 
 1. Compile using `cargo run examples/native.l`.
 2. Compile native code: `llc-6.0 -filetype=obj native/lib.ll`.
-2. Link it using ` cc native/lib.o output/main.o ~/projects/bdwgc/.libs/libgc.so -I ~/projects/bdwgc/include/ -no-pie`.
+2. Link it using ` cc native/lib.o output/main.o ~/projects/bdwgc/.libs/libgc.so -I ~/projects/bdwgc/include/ -no-pie -o main`.
 3. Run `./main`.
