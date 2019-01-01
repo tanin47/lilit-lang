@@ -196,7 +196,7 @@ fn gen_method(
 
     let func_name = format!("__{}__{}", class.name, method.name);
     let function = context.module.add_function(&func_name, fn_type, None);
-    method.llvm_ref.replace(Some(function));
+    method.llvm_ref.set(Some(function));
 
     let first_block = context.context.append_basic_block(&function, "first_block");
     context.builder.position_at_end(&first_block);
@@ -309,10 +309,23 @@ fn gen_func(
     };
 
     let function = context.module.add_function(&func.name, fn_type, None);
-    func.llvm_ref.replace(Some(function));
+    func.llvm_ref.set(Some(function));
 
     let first_block = context.context.append_basic_block(&function, "first_block");
     context.builder.position_at_end(&first_block);
+
+    for (index, param) in func.params.iter().enumerate() {
+        let tpe: BasicTypeEnum = match param.tpe.get().unwrap() {
+            tree::ExprType::Class(class_ptr) => {
+                let class = unsafe { &*class_ptr };
+                class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
+            },
+            _ => panic!()
+        };
+        let ptr = context.builder.build_alloca(tpe, "param");
+        context.builder.build_store(ptr, function.get_nth_param(index as u32).unwrap());
+        param.var.llvm_ref.set(Some(ptr));
+    }
 
     let fn_context = FnContext {
         func: &function,
@@ -678,10 +691,22 @@ fn gen_invoke(
     context: &FnContext,
 ) -> Value {
     let func = unsafe { &*invoke.func_ref.get().unwrap() };
-    let llvm_ret = context.builder.build_call(func.llvm_ref.get().unwrap(), &[], &invoke.name);
 
+    let mut llvm_params = vec![];
+    for param in &invoke.args {
+        llvm_params.push(convert(&gen_expr(param, context)));
+    }
+
+    let llvm_ret = context.builder.build_call(func.llvm_ref.get().unwrap(), &llvm_params, &invoke.name);
     match func.return_type.get().unwrap() {
         tree::ExprType::Void => Value::Void,
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::PointerValue(p) => Value::Class(p, class),
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+            }
+        },
         _ => panic!(""),
     }
 }

@@ -146,6 +146,12 @@ fn link_func(
         scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
     }
 
+    for param in &func.params {
+        param.var.tpe.set(Some(convert_to_expr_type(&param.tpe_name, scope)));
+        param.tpe.set(param.var.tpe.get());
+        scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
+    }
+
     for expr in &func.exprs {
         link_expr(expr, scope)
     }

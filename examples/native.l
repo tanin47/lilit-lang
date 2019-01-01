@@ -40,10 +40,13 @@ end
 class @Void()
 end
 
+def ask_for_age(question: String): Number
+  @Void:printf+(question.s)
+  @I32:strtol(@String:__lilit__read(), @I32(0), @I32(10)).to_num()
+end
+
 def main(): Number
-  @Void:printf+(@String("How old are you?: "))
-  val age = @I32:strtol(@String:__lilit__read(), @I32(0), @I32(10)).to_num()
-  if age > 10 {
+  if ask_for_age("How old are you?: ") > 34 {
     @Void:printf+(@String("That's old"))
   } else {
     @Void:printf+(@String("That's not old"))
