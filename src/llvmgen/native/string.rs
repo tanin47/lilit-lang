@@ -19,6 +19,12 @@ fn gen_string_from_cstring(
     cstring: PointerValue,
     context: &FnContext
 ) -> Value {
+
+    let i8_type = context.context.i8_type();
+    let i32_type = context.context.i32_type();
+
+    let string = native::gen_malloc(&context.core.string_struct_type, context);
+
     let strlen = match context.module.get_function("strlen") {
         Some(f) => f,
         None => {
@@ -30,29 +36,25 @@ fn gen_string_from_cstring(
             context.module.add_function("strlen", fn_type, Some(Linkage::External))
         },
     };
-    let ret_strlen = context.builder.build_call(strlen, &[cstring.into()], "strlen");
-    let cstring_size = match ret_strlen.try_as_basic_value().left().unwrap() {
+    let ret_strlen = match context.builder.build_call(strlen, &[cstring.into()], "strlen").try_as_basic_value().left().unwrap() {
         BasicValueEnum::IntValue(i) => i,
         _ => panic!("unable to get string's length")
     };
+    let cstring_size = context.builder.build_int_cast(ret_strlen, context.context.i32_type(), "cstring_size");
+    let size_with_terminator = context.builder.build_int_add(
+        cstring_size, context.context.i32_type().const_int(1, false), "size_with_terminator");
 
-    let i8_type = context.context.i8_type();
-    let i32_type = context.context.i32_type();
-
-    let string = native::gen_malloc(&context.core.string_struct_type, context);
-
-    let size_with_terminator = cstring_size.const_add(context.context.i32_type().const_int(1, false));
     let array = native::gen_malloc_dynamic_array(&i8_type, size_with_terminator, context);
 
-    let memcpy = match context.module.get_function("llvm.memcpy.p0i8.p0i8.i64") {
+    let memcpy = match context.module.get_function("llvm.memcpy.p0i8.p0i8.i32") {
         None => {
             context.module.add_function(
-                "llvm.memcpy.p0i8.p0i8.i64",
-                context.context.i64_type().fn_type(
+                "llvm.memcpy.p0i8.p0i8.i32",
+                context.context.void_type().fn_type(
                     &[
                         i8_type.ptr_type(AddressSpace::Generic).into(),
                         i8_type.ptr_type(AddressSpace::Generic).into(),
-                        context.context.i64_type().into(),
+                        context.context.i32_type().into(),
                         context.context.i32_type().into(),
                         context.context.bool_type().into()
                     ],
@@ -76,10 +78,10 @@ fn gen_string_from_cstring(
         "memcpy"
     );
 
-    let size_pointer = unsafe { context.builder.build_struct_gep(string, 0, "gep") };
-    context.builder.build_store(size_pointer, cstring_size);
+    let size_pointer = unsafe { context.builder.build_struct_gep(string, 0, "gep_string_size") };
+    context.builder.build_store(size_pointer, size_with_terminator);
 
-    let content_pointer = unsafe { context.builder.build_struct_gep(string, 1, "gep") };
+    let content_pointer = unsafe { context.builder.build_struct_gep(string, 1, "gep_string_content") };
     context.builder.build_store(content_pointer, array);
 
     Value::LlvmString(string)

@@ -371,10 +371,9 @@ fn gen_func(
         }
     }
 
-    // TODO(tanin): Make this work.
-//    if !function.verify(true) {
-//        panic!("{} is invalid.", func.name);
-//    }
+    if !function.verify(true) {
+        panic!("{} is invalid.", func.name);
+    }
 }
 
 pub fn gen_expr(
@@ -552,7 +551,17 @@ fn gen_llvm_string(
     context.builder.build_store(size_pointer, size);
 
     let content_pointer = unsafe { context.builder.build_struct_gep(string, 1, "gep") };
-    context.builder.build_store(content_pointer, array);
+    let array_pointer = unsafe {
+        context.builder.build_in_bounds_gep(
+            array,
+            &[
+                context.context.i32_type().const_int(0, false),
+                context.context.i32_type().const_int(0, false)
+            ],
+            "array_pointer",
+        )
+    };
+    context.builder.build_store(content_pointer, array_pointer);
 
     Value::LlvmString(string)
 }

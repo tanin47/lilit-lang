@@ -50,7 +50,9 @@ pub fn gen_malloc_dynamic_array(tpe: &IntType, size: IntValue, context: &FnConte
     let func = get_external_func("GC_malloc", func_type, context);
     func.add_attribute(0, context.context.create_enum_attribute(Attribute::get_named_enum_kind_id("noalias"), 0));
 
-    let p = match context.builder.build_call(func, &[tpe.size_of().const_mul(size).into()], "malloc").try_as_basic_value().left().unwrap() {
+    let cast_size = context.builder.build_int_cast(size, context.context.i64_type(), "casted");
+    let actual_size = context.builder.build_int_mul(tpe.size_of(), cast_size, "actual_size");
+    let p = match context.builder.build_call(func, &[actual_size.into()], "malloc").try_as_basic_value().left().unwrap() {
         BasicValueEnum::PointerValue(p) => p,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
@@ -82,7 +84,8 @@ pub fn gen_malloc(struct_type: &StructType, context: &FnContext) -> PointerValue
     let func = get_external_func("GC_malloc", func_type, context);
     func.add_attribute(0, context.context.create_enum_attribute(Attribute::get_named_enum_kind_id("noalias"), 0));
 
-    let p = match context.builder.build_call(func, &[struct_type.size_of().unwrap().into()], "malloc").try_as_basic_value().left().unwrap() {
+    let cast_size = context.builder.build_int_cast(struct_type.size_of().unwrap(), context.context.i64_type(), "cast_size");
+    let p = match context.builder.build_call(func, &[cast_size.into()], "malloc").try_as_basic_value().left().unwrap() {
         BasicValueEnum::PointerValue(p) => p,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
