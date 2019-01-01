@@ -24,6 +24,7 @@ use inkwell::types::IntType;
 use inkwell::types::PointerType;
 use inkwell::values::IntValue;
 use inkwell::values::PointerMathValue;
+use inkwell::types::AnyTypeEnum;
 
 fn get_external_func(
     name: &str,
@@ -162,8 +163,9 @@ pub fn gen_invoke(
     let llvm_func = get_external_func(
         &invoke.name,
         match get_llvm_type_from_class(&invoke.return_type.get().unwrap(), context) {
-            BasicTypeEnum::IntType(i) => i.fn_type(&param_types, invoke.is_varargs),
-            BasicTypeEnum::PointerType(i) => i.fn_type(&param_types, invoke.is_varargs),
+            AnyTypeEnum::IntType(i) => i.fn_type(&param_types, invoke.is_varargs),
+            AnyTypeEnum::PointerType(i) => i.fn_type(&param_types, invoke.is_varargs),
+            AnyTypeEnum::VoidType(i) => i.fn_type(&param_types, invoke.is_varargs),
             x => panic!("Unsupported function type: {:?}", x)
         },
         context);
@@ -199,22 +201,22 @@ pub fn convert_func_return_value(tpe: &tree::ExprType, value: &CallSiteValue, co
         "@I8" => int8::instantiate_from_value(value.try_as_basic_value().left().unwrap(), class, context),
         "@I32" => int32::instantiate_from_value(value.try_as_basic_value().left().unwrap(), class, context),
         "@String" => string::instantiate_from_value(value.try_as_basic_value().left().unwrap(), class, context),
-        "@Void" => int32::instantiate_from_value(context.context.i32_type().const_int(0, false).into(), context.core.llvm_number_class, context),
+        "@Void" => Value::Void,
         x => panic!("Unrecognized LLVM class: {}", x),
     }
 }
 
-pub fn get_llvm_type_from_class(tpe: &tree::ExprType, context: &FnContext) -> BasicTypeEnum {
+pub fn get_llvm_type_from_class(tpe: &tree::ExprType, context: &FnContext) -> AnyTypeEnum {
     let class = match tpe {
         tree::ExprType::Class(class) => unsafe { &**class },
         x => panic!("Expect a class, found {:?}", x),
     };
 
     match class.name.as_ref() {
-        "@I8" => int8::get_llvm_type(context),
-        "@I32" => int32::get_llvm_type(context),
-        "@String" => string::get_llvm_type(context),
-        "@Void" => context.context.i32_type().into(),
+        "@I8" => int8::get_llvm_type(context).into(),
+        "@I32" => int32::get_llvm_type(context).into(),
+        "@String" => string::get_llvm_type(context).into(),
+        "@Void" => context.context.void_type().into(),
         x => panic!("Unrecognized LLVM class: {}", x),
     }
 }
@@ -226,9 +228,9 @@ pub fn get_llvm_type(value: &Value, context: &FnContext) -> BasicTypeEnum {
     };
 
     match native_class.name.as_ref() {
-        "@I8" => int8::get_llvm_type(context),
-        "@I32" => int32::get_llvm_type(context),
-        "@String" => string::get_llvm_type(context),
+        "@I8" => int8::get_llvm_type(context).into(),
+        "@I32" => int32::get_llvm_type(context).into(),
+        "@String" => string::get_llvm_type(context).into(),
         x => panic!("Unrecognized LLVM class: {}", x),
     }
 }

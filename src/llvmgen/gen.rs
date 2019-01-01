@@ -270,7 +270,10 @@ fn gen_method(
         for (index, expr) in method.exprs.iter().enumerate() {
             let ret = gen_expr(expr, &fn_context);
             if index == (method.exprs.len() - 1) {
-                context.builder.build_return(Some(&convert(&ret)));
+                match method.return_type.get().unwrap() {
+                    tree::ExprType::Void => (),
+                    _ => { context.builder.build_return(Some(&convert(&ret))); },
+                };
             }
         }
     }
@@ -361,7 +364,10 @@ fn gen_func(
                 ret
             };
 
-            context.builder.build_return(Some(&convert(&ret)));
+            match func.return_type.get().unwrap() {
+                tree::ExprType::Void => (),
+                _ => { context.builder.build_return(Some(&convert(&ret))); },
+            };
         }
     }
 

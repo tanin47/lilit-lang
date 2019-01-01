@@ -13,6 +13,7 @@ use llvmgen::gen::FnContext;
 use llvmgen::gen::Value;
 use semantics::tree;
 use llvmgen::native;
+use inkwell::types::PointerType;
 
 fn gen_string_from_cstring(
     cstring: PointerValue,
@@ -98,8 +99,8 @@ pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> BasicValueEnum 
     }
 }
 
-pub fn get_llvm_type(context: &FnContext) -> BasicTypeEnum {
-    context.context.i8_type().ptr_type(AddressSpace::Generic).into()
+pub fn get_llvm_type(context: &FnContext) -> PointerType {
+    context.context.i8_type().ptr_type(AddressSpace::Generic)
 }
 
 pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, context: &FnContext) -> Value {

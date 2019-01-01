@@ -13,6 +13,7 @@ use llvmgen::gen::FnContext;
 use llvmgen::gen::Value;
 use semantics::tree;
 use inkwell::values::IntValue;
+use inkwell::types::IntType;
 
 pub fn get_llvm_value_from_var(var: &tree::Var, context: &FnContext) -> IntValue {
     let instance_ptr = match context.builder.build_load(var.llvm_ref.get().unwrap(), "load class instance") {
@@ -36,8 +37,8 @@ pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> IntValue {
     }
 }
 
-pub fn get_llvm_type(context: &FnContext) -> BasicTypeEnum {
-    context.context.i8_type().into()
+pub fn get_llvm_type(context: &FnContext) -> IntType {
+    context.context.i8_type()
 }
 
 pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, context: &FnContext) -> Value {
