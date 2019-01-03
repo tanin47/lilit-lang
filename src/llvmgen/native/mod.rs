@@ -12,4 +12,5 @@ pub use self::gen::gen_malloc_array;
 pub use self::gen::gen_malloc_dynamic_array;
 pub use self::gen::gen_gc_init;
 pub use self::gen::gen_gc_collect;
+pub use self::gen::get_external_func;
 

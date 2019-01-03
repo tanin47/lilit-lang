@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.15.2"
-// sha256: f91e6bb2a58f578fa99bd247b2241069da2caa2d9766d3d148f47a273e2c9
+// sha256: 2535442e229121054cc37a544649959c8b5623aa81d8559eb0f27d303b8e
 use std::str::FromStr;
 use syntax::tree::*;
 #[allow(unused_extern_crates)]
@@ -13760,9 +13760,8 @@ fn __action37<
 ) -> Box<Expr>
 {
     {
-    let s = String::from(__0);
-    let len = s.len();
-    Box::new(Expr::LiteralString(Box::new(LiteralString { content: String::from(&s[1..len-1]) })))
+    let processed: String = serde_json::from_str(&String::from(__0)).unwrap();
+    Box::new(Expr::LiteralString(Box::new(LiteralString { content: processed })))
   }
 }
 

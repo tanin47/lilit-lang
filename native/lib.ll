@@ -3,12 +3,15 @@ declare i8* @fgets(i8*, i32, %struct._IO_FILE*)
 
 @stdin = external global %struct._IO_FILE*, align 8
 
+declare noalias i8* @GC_malloc(i64)
+
 define i8* @__lilit__read() {
-  %1 = alloca [100 x i8]
-  %2 = getelementptr inbounds [100 x i8], [100 x i8]* %1, i32 0, i32 0
-  %3 = load %struct._IO_FILE*, %struct._IO_FILE** @stdin
-  %4 = call i8* @fgets(i8* %2, i32 100, %struct._IO_FILE* %3)
-  ret i8* %2
+  %string =  call i8* @GC_malloc(i64 mul nuw (i64 ptrtoint (i8* getelementptr (i8, i8* null, i32 1) to i64), i64 100))
+  %casted = bitcast i8* %string to [100 x i8]*
+  %pointer = getelementptr inbounds [100 x i8], [100 x i8]* %casted, i32 0, i32 0
+  %stdin = load %struct._IO_FILE*, %struct._IO_FILE** @stdin
+  %dontcare = call i8* @fgets(i8* %pointer, i32 100, %struct._IO_FILE* %stdin)
+  ret i8* %pointer
 }
 
 @finalizer.str.freed = private unnamed_addr constant [13 x i8] c"GC freed %d\0A\00"

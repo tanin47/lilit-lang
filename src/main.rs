@@ -8,6 +8,7 @@ use std::io::prelude::*;
 use std::collections::HashMap;
 
 extern crate inkwell;
+extern crate serde_json;
 
 use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;

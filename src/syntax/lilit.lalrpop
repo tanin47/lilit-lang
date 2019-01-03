@@ -128,9 +128,8 @@ IfElse: Box<Expr> = {
 
 LiteralString: Box<Expr> = {
   r#""[^"]*""# => {
-    let s = String::from(<>);
-    let len = s.len();
-    Box::new(Expr::LiteralString(Box::new(LiteralString { content: String::from(&s[1..len-1]) })))
+    let processed: String = serde_json::from_str(&String::from(<>)).unwrap();
+    Box::new(Expr::LiteralString(Box::new(LiteralString { content: processed })))
   }
 };
 

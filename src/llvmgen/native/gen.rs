@@ -26,7 +26,7 @@ use inkwell::values::IntValue;
 use inkwell::values::PointerMathValue;
 use inkwell::types::AnyTypeEnum;
 
-fn get_external_func(
+pub fn get_external_func(
     name: &str,
     tpe: FunctionType,
     context: &FnContext,

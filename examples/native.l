@@ -20,9 +20,6 @@ end
 
 class Number(num: @I32)
   def >(other: Number): Boolean
-    val a = 1
-    val b = 2
-    val c = 3
     num.is_greater_than(other.num).to_boolean()
   end
 
@@ -46,10 +43,15 @@ def ask_for_age(question: String): Number
 end
 
 def main(): Number
+  @Void:printf+("What's your name?: ".s)
+  val name = @String:__lilit__read()
+  @Void:printf+("Hello ".s)
+  @Void:printf+(name)
+
   if ask_for_age("How old are you?: ") > 34 {
-    @Void:printf+(@String("That's old"))
+    @Void:printf+(@String("That's old\n"))
   } else {
-    @Void:printf+(@String("That's not old"))
+    @Void:printf+(@String("That's not old\n"))
   }
   1
 end

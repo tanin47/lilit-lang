@@ -23,19 +23,17 @@ fn gen_string_from_cstring(
     let i8_type = context.context.i8_type();
     let i32_type = context.context.i32_type();
 
-    let string = native::gen_malloc(&context.core.string_struct_type, context);
 
-    let strlen = match context.module.get_function("strlen") {
-        Some(f) => f,
-        None => {
-            let fn_type = context.context.i64_type().fn_type(
-                &[
-                    context.context.i8_type().ptr_type(AddressSpace::Generic).into()
-                ],
-                false);
-            context.module.add_function("strlen", fn_type, Some(Linkage::External))
-        },
-    };
+    let strlen = native::get_external_func(
+        "strlen",
+    context.context.i64_type().fn_type(
+            &[
+                context.context.i8_type().ptr_type(AddressSpace::Generic).into()
+            ],
+            false
+        ),
+        context
+    );
     let ret_strlen = match context.builder.build_call(strlen, &[cstring.into()], "strlen").try_as_basic_value().left().unwrap() {
         BasicValueEnum::IntValue(i) => i,
         _ => panic!("unable to get string's length")
@@ -46,25 +44,20 @@ fn gen_string_from_cstring(
 
     let array = native::gen_malloc_dynamic_array(&i8_type, size_with_terminator, context);
 
-    let memcpy = match context.module.get_function("llvm.memcpy.p0i8.p0i8.i32") {
-        None => {
-            context.module.add_function(
-                "llvm.memcpy.p0i8.p0i8.i32",
-                context.context.void_type().fn_type(
-                    &[
-                        i8_type.ptr_type(AddressSpace::Generic).into(),
-                        i8_type.ptr_type(AddressSpace::Generic).into(),
-                        context.context.i32_type().into(),
-                        context.context.i32_type().into(),
-                        context.context.bool_type().into()
-                    ],
-                    false
-                ),
-                Some(Linkage::External)
-            )
-        }
-        Some(f) => f,
-    };
+    let memcpy = native::get_external_func(
+        "llvm.memcpy.p0i8.p0i8.i32",
+        context.context.void_type().fn_type(
+            &[
+                i8_type.ptr_type(AddressSpace::Generic).into(),
+                i8_type.ptr_type(AddressSpace::Generic).into(),
+                context.context.i32_type().into(),
+                context.context.i32_type().into(),
+                context.context.bool_type().into()
+            ],
+            false
+        ),
+        context
+    );
 
     context.builder.build_call(
         memcpy,
@@ -72,12 +65,13 @@ fn gen_string_from_cstring(
             array.into(),
             cstring.into(),
             size_with_terminator.into(),
-            context.context.i32_type().const_int(4, false).into(),
+            context.context.i32_type().const_int(0, false).into(),
             context.context.bool_type().const_zero().into()
         ],
         "memcpy"
     );
 
+    let string = native::gen_malloc(&context.core.string_struct_type, context);
     let size_pointer = unsafe { context.builder.build_struct_gep(string, 0, "gep_string_size") };
     context.builder.build_store(size_pointer, size_with_terminator);
 
@@ -112,7 +106,7 @@ pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, contex
     };
     let string_pointer = match gen_string_from_cstring(ptr, context) {
         Value::LlvmString(p) => p,
-        x => panic!("Expect Value::String, found {:?}", x),
+        x => panic!("Expect Value::LlvmString, found {:?}", x),
     };
 
     let instance_ptr = native::gen_malloc(&class.llvm_struct_type_ref.get().unwrap(), context);

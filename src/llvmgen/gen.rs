@@ -420,7 +420,7 @@ fn gen_dot_member(
                 x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
             }
         },
-        _ => panic!(""),
+        x => panic!("Expect Class, found {:?}", x),
     }
 }
 
@@ -447,7 +447,7 @@ fn gen_dot_invoke(
                 x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
             }
         },
-        _ => panic!(""),
+        x => panic!("Expect Class, found {:?}", x),
     }
 }
 
@@ -692,7 +692,7 @@ fn gen_assignment(
            context.builder.build_alloca(ptr_type, &assignment.var.name)
 
        },
-       _ => panic!("Unknow expr")
+       _ => panic!("Unknown expr")
    } ;
 
 
