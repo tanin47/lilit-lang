@@ -15,22 +15,22 @@ A statically typed language, as codebase grows bigger, is exponentially more mai
 
 ### Beautifully terse
 
-We aim be at the highest level of abstraction and, thus, reduce the amount of detail programmers need to think about. For example, type inference is essential to avoid the verbosity problem in Java (e.g. `Animal animal = new Animal();` can be reduced to `animal = Animal()`).
+We aim be at the highest level of abstraction and, thus, reduce the amount of detail programmers need to think about. 
+
+The first example is type inference, which is essential to avoid the verbosity problem in Java (e.g. `Animal animal = new Animal();` can be reduced to `animal = Animal()`).
+
+The second example is complex type system. A complex type system (think Scala), though taking effort to learn, enables programmers to capture real-world complexity with brevity.
 
 We also aim to provide a rich standard library to refrain programmers from solving trivial problems on their own. For example, in Python, programmers have to implement their own [getting the first element or null](https://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none), while, in Ruby, they can use `.first` in Ruby's standard library.
 
-### Maintainability
-
-We value maintainability. For example, we might not implement the asynchronous programming paradigm because coding explicit yield point (e.g. with Monads) makes codebase less comprehensible. Another example is that we won't allow programmers to manage their own memory to avoid various problems that come with it (e.g. memory corruption).
-
-Thus, Lilit aims to be great for building command-line tools.
+While Lilit is a general-purpose programming language, I think Lilit is gonna be great for building command-line tools.
 
 
 Features
 ---------
 
 * Compile to a target CPU (ideal for deploying a command-line tool)
-* Tree shaking (reducing the size of the binary)
+* Tree shaking (removing unused methods and, thus, reducing the size of the binary)
 * No null; only optional type
 * Complex type system (e.g. strongly generic, multiple inheritance)
 * Metaprogramming
