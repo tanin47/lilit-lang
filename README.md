@@ -11,7 +11,7 @@ Principles
 
 ### Statically typed
 
-We believe that a statically typed language, as codebase grows bigger, is exponentially more maintainable than a dynamically-typed language. I've experienced this pain first hand when working on a large Python codebase at Google.
+A statically typed language, as codebase grows bigger, is exponentially more maintainable than a dynamically-typed language. I've experienced this pain first hand when working on a large Python codebase at Google.
 
 ### Beautifully terse
 
