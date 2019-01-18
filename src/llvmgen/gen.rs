@@ -30,6 +30,7 @@ pub enum Value {
     LlvmNumber(IntValue),
     LlvmBoolean(IntValue),
     LlvmString(PointerValue),
+    LlvmArray(PointerValue, *const tree::Class),
     Class(PointerValue, *const tree::Class),
 }
 
@@ -38,6 +39,7 @@ pub fn convert(value: &Value) -> BasicValueEnum {
         Value::LlvmNumber(i) => (*i).into(),
         Value::LlvmBoolean(b) => (*b).into(),
         Value::LlvmString(p) => (*p).into(),
+        Value::LlvmArray(p, c) => (*p).into(),
         Value::Class(p, c) => (*p).into(),
         Value::Void => panic!("can't convert void"),
     }
@@ -150,6 +152,7 @@ fn gen_class_struct(
             tree::ExprType::LlvmString => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
             tree::ExprType::LlvmBoolean => context.context.bool_type().into(),
             tree::ExprType::LlvmNumber => context.context.i32_type().into(),
+            tree::ExprType::LlvmArray => context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into(),
             tree::ExprType::Class(class_ptr) => {
                 let class = unsafe { &*class_ptr };
                 class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).into()
@@ -260,6 +263,27 @@ fn gen_method(
                 };
                 context.builder.build_store(first_param_pointer, at_boolean_ptr);
                 context.builder.build_return(Some(&boolean_ptr));
+            } else {
+                panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
+            }
+        } else if class.name == "@Array" {
+            if method.name == "get"  {
+                let array_pointer = native::array::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let index = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+
+                let index_pointer = unsafe {
+                    context.builder.build_gep(array_pointer, &[index], "get element pointer for the index")
+                };
+                let loaded = match context.builder.build_load(index_pointer, "loaded") {
+                    BasicValueEnum::PointerValue(p) => p,
+                    x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+                };
+                let casted = context.builder.build_pointer_cast(
+                    loaded,
+                    context.core.string_class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic),
+                    "casted to String"
+                );
+                context.builder.build_return(Some(&casted));
             } else {
                 panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
             }
@@ -393,6 +417,7 @@ pub fn gen_expr(
         tree::Expr::LlvmNumber(ref number) => gen_llvm_number(number, context),
         tree::Expr::LlvmBoolean(ref boolean) => gen_llvm_boolean(boolean, context),
         tree::Expr::LlvmString(ref literal_string) => gen_llvm_string(literal_string, context),
+        tree::Expr::LlvmArray(ref array) => gen_llvm_array(array, context),
     }
 }
 
@@ -489,6 +514,7 @@ fn gen_llvm_class_instance(
             Value::LlvmNumber(i) => Value::LlvmNumber(i),
             Value::LlvmBoolean(i) => Value::LlvmBoolean(i),
             Value::LlvmString(i) => Value::LlvmString(i),
+            Value::LlvmArray(i, c) => Value::LlvmArray(i,c),
             x => panic!("Expect Llvm types, found {:?}", x)
         };
 
@@ -514,6 +540,40 @@ fn gen_llvm_boolean(
     context: &FnContext,
 ) -> Value {
    Value::LlvmBoolean(context.context.bool_type().const_int(boolean.value as u64, false))
+}
+
+fn gen_llvm_array(
+    array: &tree::LlvmArray,
+    context: &FnContext,
+) -> Value {
+    let pointer = native::gen_malloc_array(&context.context.i8_type().ptr_type(AddressSpace::Generic).array_type(array.items.len() as u32), context);
+    for (index, item) in array.items.iter().enumerate() {
+        let p = unsafe {
+            context.builder.build_in_bounds_gep(
+                pointer,
+                &[
+                    context.context.i32_type().const_int(0, false),
+                    context.context.i32_type().const_int(index as u64, false)
+                ],
+                "gep")
+        };
+        let value = match gen_expr(item, context) {
+            Value::Class(p, klass) => p,
+            x => panic!("Expect Value::Class, found {:?}", x),
+        };
+        let casted = context.builder.build_pointer_cast(p, value.get_type().ptr_type(AddressSpace::Generic), "cast");
+        context.builder.build_store(casted, value);
+    }
+    let generic = unsafe {
+        context.builder.build_in_bounds_gep(
+            pointer,
+            &[
+                context.context.i32_type().const_zero(),
+                context.context.i32_type().const_zero(),
+            ],
+            "gep")
+    };
+    Value::LlvmArray(generic, context.core.string_class)
 }
 
 fn gen_llvm_string(

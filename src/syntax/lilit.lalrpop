@@ -85,6 +85,11 @@ HighPrecedentExpr: Box<Expr> = {
   <IfElse>,
   <ClassInstance>,
   <LlvmInvoke>,
+  <Array>,
+};
+
+Array: Box<Expr> = {
+  "[" <items:Exprs> "]" => Box::new(Expr::Array(Box::new(Array { items }))),
 };
 
 DotMember: Box<Expr> = {

@@ -48,6 +48,12 @@ pub enum Expr {
     LlvmClassInstance(Box<LlvmClassInstance>),
     DotInvoke(Box<DotInvoke>),
     DotMember(Box<DotMember>),
+    Array(Box<Array>),
+}
+
+#[derive(Debug)]
+pub struct Array {
+    pub items: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]

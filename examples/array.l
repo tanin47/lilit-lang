@@ -39,32 +39,20 @@ end
 
 
 class @Array(array: LlvmArray)
-  def get(index: Number): Number
+  def get(index: @I32): String
   end
 end
 
 class Array(array: @Array)
-  def get(index: Number): Number
-    array.get(index)
+  def get(index: Number): String
+    array.get(index.num)
   end
 end
 
-def ask_for_age(question: String): Number
-  @Void:printf+(question.s)
-  @I32:strtol(@String:__lilit__read(), @I32(0), @I32(10)).to_num()
-end
-
 def main(): Number
-  val a = [1, 2, 3]
-  @Void:printf+("What's your name?: ".s)
-  val name = @String:__lilit__read()
-  @Void:printf+("Hello ".s)
-  @Void:printf+(name)
-
-  if ask_for_age("How old are you?: ") > 34 {
-    @Void:printf+(@String("That's old\n"))
-  } else {
-    @Void:printf+(@String("That's not old\n"))
-  }
+  val a = ["first", "second", "third"]
+  @Void:printf+(a.get(1).s)
+  @Void:printf+(a.get(2).s)
+  @Void:printf+(a.get(0).s)
   1
 end

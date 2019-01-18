@@ -34,6 +34,8 @@ fn convert_to_expr_type(return_type_name: &str, scope: &mut scope::Scope) -> tre
         tree::ExprType::LlvmNumber
     } else if return_type_name == "LlvmString" {
         tree::ExprType::LlvmString
+    } else if return_type_name == "LlvmArray" {
+        tree::ExprType::LlvmArray
     } else {
         tree::ExprType::Class(scope.read_class(return_type_name).unwrap())
     }
@@ -58,6 +60,8 @@ fn link_mod(
                     "@Boolean" => m.llvm_boolean_class.set(Some(class.as_ref())),
                     "String" => m.string_class.set(Some(class.as_ref())),
                     "@String" => m.llvm_string_class.set(Some(class.as_ref())),
+                    "Array" => m.array_class.set(Some(class.as_ref())),
+                    "@Array" => m.llvm_array_class.set(Some(class.as_ref())),
                     _ => (),
                 }
 
@@ -176,8 +180,20 @@ fn link_expr(
         tree::Expr::LlvmString(ref literal_string) => (),
         tree::Expr::LlvmBoolean(ref boolean) => (),
         tree::Expr::LlvmNumber(ref value) => (),
+        tree::Expr::LlvmArray(ref array) => link_llvm_array(array, scope),
     }
 }
+
+
+fn link_llvm_array(
+    array: &tree::LlvmArray,
+    scope: &mut scope::Scope,
+) {
+    for item in &array.items {
+        link_expr(item, scope);
+    }
+}
+
 
 fn link_dot_member(
     dot_member: &tree::DotMember,
@@ -392,6 +408,8 @@ pub fn build_mod(
         llvm_boolean_class: Cell::new(None),
         string_class: Cell::new(None),
         llvm_string_class: Cell::new(None),
+        array_class: Cell::new(None),
+        llvm_array_class: Cell::new(None),
     }
 }
 
@@ -522,6 +540,7 @@ fn build_expr(
         syntax::tree::Expr::LiteralString(ref s) => build_literal_string(s, context),
         syntax::tree::Expr::Num(ref num) => build_num(num, context),
         syntax::tree::Expr::Boolean(ref b) => build_boolean(b, context),
+        syntax::tree::Expr::Array(ref a) => build_array(a, context),
     }
 }
 
@@ -728,11 +747,41 @@ fn build_num(
     }
 }
 
+fn build_array(
+    array: &syntax::tree::Array,
+    context: &Context,
+) -> tree::Expr {
+    let mut items: Vec<Box<tree::Expr>> = vec![];
+
+    for item in &array.items {
+       items.push(Box::new(build_expr(item, context)))
+    }
+
+    let llvm_array = tree::Expr::LlvmArray(Box::new(tree::LlvmArray { items }));
+    if context.in_llvm_mode {
+        llvm_array
+    } else {
+        let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
+            name: "@Array".to_string(),
+            params: vec![llvm_array],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        })));
+
+        tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
+            name: "Array".to_string(),
+            params: vec![llvm_instance],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        }))
+    }
+}
+
 fn build_boolean(
     boolean: &syntax::tree::Boolean,
     context: &Context,
 ) -> tree::Expr {
-    let llvm_boolean =tree::Expr::LlvmBoolean(Box::new(tree::LlvmBoolean { value: boolean.value }));
+    let llvm_boolean = tree::Expr::LlvmBoolean(Box::new(tree::LlvmBoolean { value: boolean.value }));
     if context.in_llvm_mode {
         llvm_boolean
     } else {

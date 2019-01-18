@@ -10,6 +10,8 @@ use syntax;
 #[derive(Debug)]
 pub struct Mod {
     pub units: Vec<ModUnit>,
+    pub array_class: Cell<Option<*const Class>>,
+    pub llvm_array_class: Cell<Option<*const Class>>,
     pub number_class: Cell<Option<*const Class>>,
     pub llvm_number_class: Cell<Option<*const Class>>,
     pub boolean_class: Cell<Option<*const Class>>,
@@ -59,6 +61,7 @@ pub enum ExprType {
     LlvmNumber,
     LlvmString,
     LlvmBoolean,
+    LlvmArray,
     Class(*const Class),
 }
 
@@ -76,6 +79,7 @@ pub enum Expr {
     LlvmNumber(Box<LlvmNumber>),
     LlvmBoolean(Box<LlvmBoolean>),
     LlvmString(Box<LlvmString>),
+    LlvmArray(Box<LlvmArray>),
 }
 
 impl Expr {
@@ -88,11 +92,12 @@ impl Expr {
             Expr::IfElse(i) => i.tpe.get().unwrap(),
             Expr::ReadVar(r) => r.tpe.get().unwrap(),
             Expr::ClassInstance(i) => i.tpe.get().unwrap(),
+            Expr::DotInvoke(d) => d.tpe.get().unwrap(),
+            Expr::DotMember(d) => d.tpe.get().unwrap(),
             Expr::LlvmClassInstance(i) => i.tpe.get().unwrap(),
             Expr::LlvmNumber(i) => ExprType::LlvmNumber,
             Expr::LlvmBoolean(b) => ExprType::LlvmBoolean,
-            Expr::DotInvoke(d) => d.tpe.get().unwrap(),
-            Expr::DotMember(d) => d.tpe.get().unwrap(),
+            Expr::LlvmArray(a) => ExprType::LlvmArray,
         }
     }
 }
@@ -145,6 +150,11 @@ pub struct IfElse {
     pub true_br: Box<Expr>,
     pub false_br: Box<Expr>,
     pub tpe: Cell<Option<ExprType>>,
+}
+
+#[derive(Debug)]
+pub struct LlvmArray {
+    pub items: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]
