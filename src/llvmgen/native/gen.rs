@@ -212,8 +212,8 @@ pub fn convert_func_return_value(tpe: &tree::ExprType, value: &CallSiteValue, co
 
     match class.name.as_ref() {
         "@I8" => int8::instantiate_from_value(value.try_as_basic_value().left().unwrap(), class, context),
-        "@I32" => int32::instantiate_from_value(value.try_as_basic_value().left().unwrap(), class, context),
-        "@String" => string::instantiate_from_value(value.try_as_basic_value().left().unwrap(), class, context),
+        "@I32" => int32::instantiate_from_value(value.try_as_basic_value().left().unwrap(), context),
+        "@String" => string::instantiate_from_value(value.try_as_basic_value().left().unwrap(), context),
         "@Void" => Value::Void,
         x => panic!("Unrecognized LLVM class: {}", x),
     }

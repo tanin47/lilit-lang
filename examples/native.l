@@ -39,13 +39,13 @@ end
 
 
 class @Array(array: LlvmArray)
-  def get(index: Number): Number
+  def get(index: @I32): Number
   end
 end
 
-class Array(array: @Array)
-  def get(index: Number): Number
-    array.get(index)
+class Array(array: @Array, size: Number)
+  def get(index: @I32): Number
+    array.get(index.num)
   end
 end
 

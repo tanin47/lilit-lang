@@ -24,6 +24,8 @@ use inkwell::types::BasicType;
 use llvmgen::native;
 use inkwell::attributes::Attribute;
 
+use llvmgen::core;
+
 #[derive(Debug)]
 pub enum Value {
     Void,
@@ -235,7 +237,7 @@ fn gen_method(
                 let first = native::int32::get_llvm_value_from_var(&method.params[0].var, &fn_context);
                 let second = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
                 let sum = context.builder.build_int_nsw_add(first, second, "@I32.add");
-                let i8_value = native::int32::instantiate_from_value(sum.into(), &class, &fn_context);
+                let i8_value = native::int32::instantiate_from_value(sum.into(), &fn_context);
                 context.builder.build_return(Some(&convert(&i8_value)));
             } else if method.name == "is_greater_than" {
                 let first = native::int32::get_llvm_value_from_var(&method.params[0].var, &fn_context);
@@ -380,13 +382,12 @@ fn gen_main_func(
             BasicValueEnum::PointerValue(p) => p,
             x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
         };
-        let at_string = native::string::instantiate_from_value(read_arg.into(), context.core.llvm_string_class, &fn_context);
-        let instance_ptr = native::gen_malloc(&context.core.string_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
-        let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param") };
-        context.builder.build_store(first_param_pointer, convert(&at_string));
-
-        let casted = context.builder.build_pointer_cast(write_arg_pointer, instance_ptr.get_type().ptr_type(AddressSpace::Generic), "casted");
-        context.builder.build_store(casted, instance_ptr);
+        let string_pointer = match core::string::instantiate_from_value(read_arg.into(), &fn_context) {
+            Value::Class(p, c) => p,
+            x => panic!("Expect Value::Class, found {:?}", x) ,
+        };
+        let casted = context.builder.build_pointer_cast(write_arg_pointer, string_pointer.get_type().ptr_type(AddressSpace::Generic), "casted");
+        context.builder.build_store(casted, string_pointer);
 
         let next_index = context.builder.build_int_nsw_add(current_index, context.context.i32_type().const_int(1, false), "increment");
         context.builder.build_store(run, next_index);
@@ -396,20 +397,13 @@ fn gen_main_func(
 
     context.builder.position_at_end(&after_loop_block);
 
-    let at_array = native::array::instantiate_from_value(
-        args.into(),
-        context.core.llvm_array_class,
-        &fn_context);
-    let instance_ptr = native::gen_malloc(&context.core.array_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
-    let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param") };
-    context.builder.build_store(first_param_pointer, convert(&at_array));
+    let args = core::array::instantiate_from_value(args.into(), core::number::instantiate_from_value(arg_count.into(), &fn_context), &fn_context);
 
     let llvm_ret = context.builder.build_call(
         main_func.llvm_ref.get().unwrap(),
-        &[instance_ptr.into()],
+        &[convert(&args)],
         &main_func.name);
     let ret = match main_func.return_type.get().unwrap() {
-        tree::ExprType::Void => Value::Void,
         tree::ExprType::Class(class_ptr) => {
             let class = unsafe { &*class_ptr };
             match llvm_ret.try_as_basic_value().left().unwrap() {

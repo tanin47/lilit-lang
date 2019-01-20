@@ -768,9 +768,16 @@ fn build_array(
             tpe: Cell::new(None),
         })));
 
+        let size = Box::new(build_num(
+            &syntax::tree::Num {
+                value: array.items.len() as i32
+            },
+            context
+        ));
+
         tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
             name: "Array".to_string(),
-            params: vec![llvm_instance],
+            params: vec![llvm_instance, size],
             class_ref: Cell::new(None),
             tpe: Cell::new(None),
         }))

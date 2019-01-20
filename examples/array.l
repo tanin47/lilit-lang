@@ -43,7 +43,7 @@ class @Array(array: LlvmArray)
   end
 end
 
-class Array(array: @Array)
+class Array(array: @Array, size: Number)
   def get(index: Number): String
     array.get(index.num)
   end
@@ -57,6 +57,9 @@ def main(args: Array): Number
   @Void:printf+(args.get(2).s)
   @Void:printf+("\n".s)
   @Void:printf+(args.get(3).s)
+  @Void:printf+("\n".s)
+  val a = ["first", "second"]
+  @Void:printf+(a.get(1).s)
   @Void:printf+("\n".s)
   1
 end
