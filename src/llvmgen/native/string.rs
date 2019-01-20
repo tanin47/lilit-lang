@@ -42,7 +42,7 @@ fn gen_string_from_cstring(
     let size_with_terminator = context.builder.build_int_add(
         cstring_size, context.context.i32_type().const_int(1, false), "size_with_terminator");
 
-    let array = native::gen_malloc_dynamic_array(&i8_type, size_with_terminator, context);
+    let array = native::gen_malloc_dynamic_array(&i8_type.into(), size_with_terminator, context);
 
     let memcpy = native::get_external_func(
         "llvm.memcpy.p0i8.p0i8.i32",

@@ -49,10 +49,14 @@ class Array(array: @Array)
   end
 end
 
-def main(): Number
-  val a = ["first", "second", "third"]
-  @Void:printf+(a.get(1).s)
-  @Void:printf+(a.get(2).s)
-  @Void:printf+(a.get(0).s)
+def main(args: Array): Number
+  @Void:printf+(args.get(0).s)
+  @Void:printf+("\n".s)
+  @Void:printf+(args.get(1).s)
+  @Void:printf+("\n".s)
+  @Void:printf+(args.get(2).s)
+  @Void:printf+("\n".s)
+  @Void:printf+(args.get(3).s)
+  @Void:printf+("\n".s)
   1
 end

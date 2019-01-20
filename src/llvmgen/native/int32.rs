@@ -71,7 +71,7 @@ pub fn instantiate(instance: &tree::ClassInstance, context: &FnContext) -> Value
             if class.name == "@I32" {
                 class
             } else {
-                panic!("Expect @String, found {:?}", class)
+                panic!("Expect @I32, found {:?}", class)
             }
         }
         x => panic!("Expect a class, found {:?}", x),

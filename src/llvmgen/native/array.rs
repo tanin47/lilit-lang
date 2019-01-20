@@ -37,3 +37,20 @@ pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> PointerValue {
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     }
 }
+
+pub fn instantiate_from_value(value: BasicValueEnum, class: &tree::Class, context: &FnContext) -> Value {
+    match value {
+        BasicValueEnum::PointerValue(p) => (),
+        x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
+    };
+
+    let instance_ptr = native::gen_malloc(&class.llvm_struct_type_ref.get().unwrap(), context);
+    let first_param_pointer = unsafe {
+        context.builder.build_in_bounds_gep(
+            instance_ptr,
+            &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(0, false)],
+            "first param of @I32")
+    };
+    context.builder.build_store(first_param_pointer, value);
+    Value::Class(instance_ptr, class)
+}

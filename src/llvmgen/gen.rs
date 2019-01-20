@@ -53,6 +53,8 @@ pub struct Core<'a> {
     pub llvm_boolean_class: &'a tree::Class,
     pub string_class: &'a tree::Class,
     pub llvm_string_class: &'a tree::Class,
+    pub array_class: &'a tree::Class,
+    pub llvm_array_class: &'a tree::Class,
 }
 
 struct ModContext<'a, 'b, 'c, 'd> {
@@ -91,6 +93,8 @@ pub fn generate(
         llvm_boolean_class: unsafe { &*module.llvm_boolean_class.get().unwrap() },
         string_class: unsafe { &*module.string_class.get().unwrap() },
         llvm_string_class: unsafe { &*module.llvm_string_class.get().unwrap() },
+        array_class: unsafe { &*module.array_class.get().unwrap() },
+        llvm_array_class: unsafe { &*module.llvm_array_class.get().unwrap() },
     };
     {
         let context = ModContext {
@@ -272,7 +276,7 @@ fn gen_method(
                 let index = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
 
                 let index_pointer = unsafe {
-                    context.builder.build_gep(array_pointer, &[index], "get element pointer for the index")
+                    context.builder.build_in_bounds_gep(array_pointer, &[index], "get element pointer for the index")
                 };
                 let loaded = match context.builder.build_load(index_pointer, "loaded") {
                     BasicValueEnum::PointerValue(p) => p,
@@ -307,10 +311,143 @@ fn gen_method(
     }
 }
 
+fn gen_main_func(
+    main_func: &tree::Func,
+    context: &ModContext,
+) {
+    let main_func_type = context.context.i32_type().fn_type(
+        &[
+            context.context.i32_type().into(),
+            context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into()
+        ],
+        false
+    );
+
+    let function = context.module.add_function("main", main_func_type, None);
+
+    let fn_context = FnContext {
+        func: &function,
+        module: context.module,
+        context: context.context,
+        builder: context.builder,
+        core: context.core,
+    };
+
+    let first_block = context.context.append_basic_block(&function, "first_block");
+    context.builder.position_at_end(&first_block);
+
+    native::gen_gc_init(&fn_context);
+
+    let arg_count = match function.get_nth_param(0) {
+        Some(BasicValueEnum::IntValue(i)) => i,
+        x => panic!("Expect Some(BasicValueEnum::IntValue), found {:?}", x),
+    };
+    let read_args = match function.get_nth_param(1) {
+        Some(BasicValueEnum::PointerValue(p)) => p,
+        x => panic!("Expect Some(BasicValueEnum::PointerValue), found {:?}", x),
+    };
+    let args = native::gen_malloc_dynamic_array(&context.context.i8_type().ptr_type(AddressSpace::Generic).as_basic_type_enum(), arg_count, &fn_context);
+
+    let run = context.builder.build_alloca(context.context.i32_type(), "run");
+    context.builder.build_store(run, context.context.i32_type().const_zero());
+
+    let cond_block = context.context.append_basic_block(&function, "cond_block");
+    let loop_body_block = context.context.append_basic_block(&function, "loop_body_block");
+    let after_loop_block = context.context.append_basic_block(&function, "after_loop_block");
+
+    context.builder.build_unconditional_branch(&cond_block);
+    context.builder.position_at_end(&cond_block);
+    let current_run = match context.builder.build_load(run, "loaded_run") {
+        BasicValueEnum::IntValue(i) => i,
+        x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
+    };
+    let compared = context.builder.build_int_compare(IntPredicate::SLT, current_run, arg_count, "compared");
+    context.builder.build_conditional_branch(compared, &loop_body_block, &after_loop_block);
+
+    context.builder.position_at_end(&loop_body_block);
+    {
+        let current_index = match context.builder.build_load(run, "index") {
+            BasicValueEnum::IntValue(i) => i,
+            x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
+        };
+        let read_arg_pointer = unsafe {
+            context.builder.build_in_bounds_gep(read_args, &[current_index], "read_arg_pointer")
+        };
+        let write_arg_pointer = unsafe {
+            context.builder.build_in_bounds_gep(args, &[current_index], "write_arg_pointer")
+        };
+        let read_arg = match context.builder.build_load(read_arg_pointer, "read_arg") {
+            BasicValueEnum::PointerValue(p) => p,
+            x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+        };
+        let at_string = native::string::instantiate_from_value(read_arg.into(), context.core.llvm_string_class, &fn_context);
+        let instance_ptr = native::gen_malloc(&context.core.string_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
+        let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param") };
+        context.builder.build_store(first_param_pointer, convert(&at_string));
+
+        let casted = context.builder.build_pointer_cast(write_arg_pointer, instance_ptr.get_type().ptr_type(AddressSpace::Generic), "casted");
+        context.builder.build_store(casted, instance_ptr);
+
+        let next_index = context.builder.build_int_nsw_add(current_index, context.context.i32_type().const_int(1, false), "increment");
+        context.builder.build_store(run, next_index);
+
+        context.builder.build_unconditional_branch(&cond_block);
+    }
+
+    context.builder.position_at_end(&after_loop_block);
+
+    let at_array = native::array::instantiate_from_value(
+        args.into(),
+        context.core.llvm_array_class,
+        &fn_context);
+    let instance_ptr = native::gen_malloc(&context.core.array_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
+    let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param") };
+    context.builder.build_store(first_param_pointer, convert(&at_array));
+
+    let llvm_ret = context.builder.build_call(
+        main_func.llvm_ref.get().unwrap(),
+        &[instance_ptr.into()],
+        &main_func.name);
+    let ret = match main_func.return_type.get().unwrap() {
+        tree::ExprType::Void => Value::Void,
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            match llvm_ret.try_as_basic_value().left().unwrap() {
+                BasicValueEnum::PointerValue(p) => Value::Class(p, class),
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+            }
+        },
+        _ => panic!(""),
+    };
+
+    native::gen_gc_collect(&fn_context);
+
+    let (number_ptr, number_class) = match ret {
+        Value::Class(ptr, class) => (ptr, unsafe { &*class }),
+        x => panic!("Expect Number, found {:?}", x),
+    };
+    let i32_ptr = unsafe { context.builder.build_struct_gep(number_ptr, 0, "gep for @I32") };
+    let i32_instance = match context.builder.build_load(i32_ptr, "load @I32") {
+        BasicValueEnum::PointerValue(ptr) => ptr,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    };
+    context.builder.build_return(Some(&native::int32::get_llvm_value(i32_instance, &fn_context)));
+
+    if !function.verify(true) {
+        panic!("Lilit's main is invalid.");
+    }
+}
+
 fn gen_func(
     func: &tree::Func,
     context: &ModContext,
 ) {
+    let real_func_name = if func.name == "main" {
+        "__lilit__main"
+    } else {
+        &func.name
+    };
+
     let mut param_types: Vec<BasicTypeEnum> = vec![];
     for param in &func.params {
        param_types.push(match param.tpe.get().unwrap() {
@@ -322,20 +459,16 @@ fn gen_func(
        });
     }
 
-    let fn_type = if func.name == "main" {
-        context.context.i32_type().fn_type(&param_types, false)
-    } else {
-        match func.return_type.get().unwrap() {
-            tree::ExprType::Void => context.context.void_type().fn_type(&param_types, false),
-            tree::ExprType::Class(class_ptr) => {
-                let class = unsafe { &*class_ptr };
-                class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
-            },
-            x => panic!("Unsupported return type: {:?}", x),
-        }
+    let fn_type = match func.return_type.get().unwrap() {
+        tree::ExprType::Void => context.context.void_type().fn_type(&param_types, false),
+        tree::ExprType::Class(class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
+        },
+        x => panic!("Unsupported return type: {:?}", x),
     };
 
-    let function = context.module.add_function(&func.name, fn_type, None);
+    let function = context.module.add_function(real_func_name, fn_type, None);
     func.llvm_ref.set(Some(function));
 
     let first_block = context.context.append_basic_block(&function, "first_block");
@@ -362,32 +495,9 @@ fn gen_func(
         core: context.core,
     };
 
-    if func.name == "main" {
-        native::gen_gc_init(&fn_context);
-    }
-
     for (index, expr) in func.exprs.iter().enumerate() {
         let ret = gen_expr(expr, &fn_context);
         if index == (func.exprs.len() - 1) {
-            let ret = if func.name == "main" {
-                native::gen_gc_collect(&fn_context);
-
-                let (number_ptr, number_class) = match ret {
-                    Value::Class(ptr, class) => (ptr, unsafe { &*class }),
-                    x => panic!("Expect Number, found {:?}", x),
-                };
-                let i32_ptr = unsafe {
-                    context.builder.build_struct_gep(number_ptr, 0, "gep for @I32")
-                };
-                let i32_instance = match context.builder.build_load(i32_ptr, "load @I32") {
-                    BasicValueEnum::PointerValue(ptr) => ptr,
-                    x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
-                };
-                Value::LlvmNumber(native::int32::get_llvm_value(i32_instance, &fn_context))
-            } else {
-                ret
-            };
-
             match func.return_type.get().unwrap() {
                 tree::ExprType::Void => (),
                 _ => { context.builder.build_return(Some(&convert(&ret))); },
@@ -397,6 +507,10 @@ fn gen_func(
 
     if !function.verify(true) {
         panic!("{} is invalid.", func.name);
+    }
+
+    if func.name == "main" {
+        gen_main_func(func, context);
     }
 }
 
