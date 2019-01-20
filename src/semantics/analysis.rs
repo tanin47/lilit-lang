@@ -171,6 +171,7 @@ fn link_expr(
         tree::Expr::Invoke(ref invoke) => link_invoke(invoke, scope),
         tree::Expr::LlvmInvoke(ref invoke) => link_llvm_invoke(invoke, scope),
         tree::Expr::Assignment(ref assignment) => link_assignment(assignment, scope),
+        tree::Expr::Reassignment(ref reassignment) => link_reassignment(reassignment, scope),
         tree::Expr::ReadVar(ref read_var) => link_readvar(read_var, scope),
         tree::Expr::IfElse(ref if_else) => link_if_else(if_else, scope),
         tree::Expr::ClassInstance(ref class_instance) => link_class_instance(class_instance, scope),
@@ -181,9 +182,20 @@ fn link_expr(
         tree::Expr::LlvmBoolean(ref boolean) => (),
         tree::Expr::LlvmNumber(ref value) => (),
         tree::Expr::LlvmArray(ref array) => link_llvm_array(array, scope),
+        tree::Expr::While(ref whle) => link_while(whle, scope),
     }
 }
 
+fn link_while(
+    whle: &tree::While,
+    scope: &mut scope::Scope
+) {
+    link_expr(&whle.cond, scope);
+
+    for expr in &whle.exprs {
+        link_expr(expr, scope);
+    }
+}
 
 fn link_llvm_array(
     array: &tree::LlvmArray,
@@ -338,6 +350,15 @@ fn link_readvar(
     };
 }
 
+fn link_reassignment(
+    reassignment: &tree::Reassignment,
+    scope: &mut scope::Scope,
+) {
+    link_readvar(&reassignment.var, scope);
+    link_expr(&reassignment.expr, scope);
+
+    reassignment.var.tpe.set(Some(reassignment.expr.get_type()))
+}
 
 fn link_assignment(
     assignment: &tree::Assignment,
@@ -531,6 +552,7 @@ fn build_expr(
         syntax::tree::Expr::Invoke(ref i) => tree::Expr::Invoke(Box::new(build_invoke(i, context))),
         syntax::tree::Expr::LlvmInvoke(ref i) => tree::Expr::LlvmInvoke(Box::new(build_llvm_invoke(i, context))),
         syntax::tree::Expr::Assignment(ref a) => tree::Expr::Assignment(Box::new(build_assignment(a, context))),
+        syntax::tree::Expr::Reassignment(ref a) => tree::Expr::Reassignment(Box::new(build_reassignment(a, context))),
         syntax::tree::Expr::Var(ref v) => tree::Expr::ReadVar(Box::new(build_read_var(v, context))),
         syntax::tree::Expr::IfElse(ref if_else) => tree::Expr::IfElse(Box::new(build_if_else(if_else, context))),
         syntax::tree::Expr::ClassInstance(ref class_instance) => tree::Expr::ClassInstance(Box::new(build_class_instance(class_instance, context))),
@@ -541,6 +563,24 @@ fn build_expr(
         syntax::tree::Expr::Num(ref num) => build_num(num, context),
         syntax::tree::Expr::Boolean(ref b) => build_boolean(b, context),
         syntax::tree::Expr::Array(ref a) => build_array(a, context),
+        syntax::tree::Expr::While(ref a) => tree::Expr::While(Box::new(build_while(a, context))),
+    }
+}
+
+fn build_while(
+    whle: &syntax::tree::While,
+    context: &Context
+) -> tree::While {
+    let mut exprs: Vec<Box<tree::Expr>> = vec![];
+
+    for expr in &whle.exprs {
+       exprs.push(Box::new(build_expr(expr, context)));
+    }
+
+    tree::While {
+        cond: Box::new(build_expr(&whle.cond, context)),
+        exprs,
+        tpe: Cell::new(Some(tree::ExprType::Void))
     }
 }
 
@@ -635,6 +675,18 @@ fn build_read_var(
         name: var.name.to_string(),
         tpe: Cell::new(None),
         member_param_index: Cell::new(None),
+    }
+}
+
+fn build_reassignment(
+    reassignment: &syntax::tree::Reassignment,
+    context: &Context,
+) -> tree::Reassignment {
+    let expr = Box::new(build_expr(&reassignment.expr, context));
+    tree::Reassignment {
+        var: Box::new(build_read_var(&reassignment.var, context)),
+        expr,
+        tpe: Cell::new(None),
     }
 }
 

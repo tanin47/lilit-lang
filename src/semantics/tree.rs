@@ -70,6 +70,7 @@ pub enum Expr {
     Invoke(Box<Invoke>),
     LlvmInvoke(Box<LlvmInvoke>),
     Assignment(Box<Assignment>),
+    Reassignment(Box<Reassignment>),
     IfElse(Box<IfElse>),
     ReadVar(Box<ReadVar>),
     ClassInstance(Box<ClassInstance>),
@@ -80,6 +81,7 @@ pub enum Expr {
     LlvmBoolean(Box<LlvmBoolean>),
     LlvmString(Box<LlvmString>),
     LlvmArray(Box<LlvmArray>),
+    While(Box<While>),
 }
 
 impl Expr {
@@ -89,6 +91,7 @@ impl Expr {
             Expr::LlvmInvoke(invoke) => invoke.return_type.get().unwrap(),
             Expr::LlvmString(s) => ExprType::LlvmString,
             Expr::Assignment(a) => a.tpe.get().unwrap(),
+            Expr::Reassignment(a) => a.tpe.get().unwrap(),
             Expr::IfElse(i) => i.tpe.get().unwrap(),
             Expr::ReadVar(r) => r.tpe.get().unwrap(),
             Expr::ClassInstance(i) => i.tpe.get().unwrap(),
@@ -98,6 +101,7 @@ impl Expr {
             Expr::LlvmNumber(i) => ExprType::LlvmNumber,
             Expr::LlvmBoolean(b) => ExprType::LlvmBoolean,
             Expr::LlvmArray(a) => ExprType::LlvmArray,
+            Expr::While(a) => a.tpe.get().unwrap(),
         }
     }
 }
@@ -145,6 +149,13 @@ pub struct LlvmClassInstance {
 }
 
 #[derive(Debug)]
+pub struct While {
+    pub cond: Box<Expr>,
+    pub exprs: Vec<Box<Expr>>,
+    pub tpe: Cell<Option<ExprType>>,
+}
+
+#[derive(Debug)]
 pub struct IfElse {
     pub cond: Box<Expr>,
     pub true_br: Box<Expr>,
@@ -181,6 +192,13 @@ pub struct Invoke {
     pub func_ref: Cell<Option<*const Func>>,
     pub name: String,
     pub args: Vec<Expr>,
+    pub tpe: Cell<Option<ExprType>>,
+}
+
+#[derive(Debug)]
+pub struct Reassignment {
+    pub var: Box<ReadVar>,
+    pub expr: Box<Expr>,
     pub tpe: Cell<Option<ExprType>>,
 }
 

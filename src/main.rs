@@ -40,8 +40,6 @@ fn main() {
 
     println!("{:?}\n", tree);
 
-    // The first pass makes a hashtable for function and class.
-
     if let Ok(ref _ok_tree) = tree {
         let mut root = Box::new(semantics::analyse(_ok_tree));
         println!("{:?}\n", root);

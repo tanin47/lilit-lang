@@ -50,14 +50,12 @@ class Array(array: @Array, size: Number)
 end
 
 def main(args: Array): Number
-  @Void:printf+(args.get(0).s)
-  @Void:printf+("\n".s)
-  @Void:printf+(args.get(1).s)
-  @Void:printf+("\n".s)
-  @Void:printf+(args.get(2).s)
-  @Void:printf+("\n".s)
-  @Void:printf+(args.get(3).s)
-  @Void:printf+("\n".s)
+  val i = 0
+  while args.size > i
+    @Void:printf+(args.get(i).s)
+    @Void:printf+("\n".s)
+    i = i.add(1)
+  end
   val a = ["first", "second"]
   @Void:printf+(a.get(1).s)
   @Void:printf+("\n".s)

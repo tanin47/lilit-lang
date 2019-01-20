@@ -41,6 +41,7 @@ pub enum Expr {
     Boolean(Box<Boolean>),
     Num(Box<Num>),
     Assignment(Box<Assignment>),
+    Reassignment(Box<Reassignment>),
     Var(Box<Var>),
     LiteralString(Box<LiteralString>),
     IfElse(Box<IfElse>),
@@ -49,6 +50,13 @@ pub enum Expr {
     DotInvoke(Box<DotInvoke>),
     DotMember(Box<DotMember>),
     Array(Box<Array>),
+    While(Box<While>),
+}
+
+#[derive(Debug)]
+pub struct While {
+    pub cond: Box<Expr>,
+    pub exprs: Vec<Box<Expr>>,
 }
 
 #[derive(Debug)]
@@ -90,6 +98,12 @@ pub struct IfElse {
 #[derive(Debug)]
 pub struct LiteralString {
     pub content: String,
+}
+
+#[derive(Debug)]
+pub struct Reassignment {
+    pub var: Box<Var>,
+    pub expr: Box<Expr>,
 }
 
 #[derive(Debug)]

@@ -518,6 +518,7 @@ pub fn gen_expr(
         tree::Expr::DotMember(ref member) => gen_dot_member(member, context),
         tree::Expr::LlvmInvoke(ref invoke) => native::gen_invoke(invoke, context),
         tree::Expr::Assignment(ref assignment) => gen_assignment(assignment, context),
+        tree::Expr::Reassignment(ref reassignment) => gen_reassignment(reassignment, context),
         tree::Expr::ReadVar(ref read_var) => gen_read_var(read_var, context),
         tree::Expr::IfElse(ref if_else) => gen_if_else(if_else, context),
         tree::Expr::ClassInstance(ref class_instance) => gen_class_instance(class_instance, context),
@@ -526,6 +527,7 @@ pub fn gen_expr(
         tree::Expr::LlvmBoolean(ref boolean) => gen_llvm_boolean(boolean, context),
         tree::Expr::LlvmString(ref literal_string) => gen_llvm_string(literal_string, context),
         tree::Expr::LlvmArray(ref array) => gen_llvm_array(array, context),
+        tree::Expr::While(ref whle) => gen_while(whle, context),
     }
 }
 
@@ -734,6 +736,44 @@ fn gen_llvm_string(
     Value::LlvmString(string)
 }
 
+fn gen_while(
+    whle: &tree::While,
+    context: &FnContext,
+) -> Value {
+    let cond_block = context.context.append_basic_block(context.func, "cond_block");
+    let loop_body_block = context.context.append_basic_block(context.func, "loop_body_block");
+    let after_loop_block = context.context.append_basic_block(context.func, "after_loop_block");
+
+    context.builder.build_unconditional_branch(&cond_block);
+    context.builder.position_at_end(&cond_block);
+    let comparison = match gen_expr(&whle.cond, context) {
+        Value::Class(ptr, class_ptr) => {
+            let class = unsafe { &*class_ptr };
+            let boolean_ptr = unsafe { context.builder.build_struct_gep(ptr, 0, "gep for @Boolean") };
+            let boolean_instance = match context.builder.build_load(boolean_ptr, "load @Boolean") {
+                BasicValueEnum::PointerValue(p) => p,
+                x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+            };
+            let llvm_boolean_ptr = unsafe { context.builder.build_struct_gep(boolean_instance, 0, "gep for llvm boolean") };
+            match context.builder.build_load(llvm_boolean_ptr, "load llvm boolean") {
+                BasicValueEnum::IntValue(i) => i,
+                x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
+            }
+        },
+        _ => panic!(""),
+    };
+    context.builder.build_conditional_branch(comparison, &loop_body_block, &after_loop_block);
+
+    context.builder.position_at_end(&loop_body_block);
+    for expr in &whle.exprs {
+       gen_expr(expr, context);
+    }
+    context.builder.build_unconditional_branch(&cond_block);
+
+    context.builder.position_at_end(&after_loop_block);
+    Value::Void
+}
+
 fn gen_if_else(
     if_else: &tree::IfElse,
     context: &FnContext,
@@ -845,6 +885,16 @@ fn gen_read_var(
             _ => panic!(),
         }
     }
+}
+
+fn gen_reassignment(
+    reassignment: &tree::Reassignment,
+    context: &FnContext,
+) -> Value {
+    let expr = gen_expr(&reassignment.expr, context);
+    let var = unsafe { &*reassignment.var.assignment_ref.get().unwrap() };
+    context.builder.build_store(var.llvm_ref.get().unwrap(), convert(&expr));
+    Value::Void
 }
 
 fn gen_assignment(

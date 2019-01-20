@@ -70,6 +70,7 @@ FuncName: String = {
 
 Expr: Box<Expr> = {
   <Assignment>,
+  <Reassignment>,
   <SpaceInvoke>,
   <HighPrecedentExpr>
 };
@@ -86,7 +87,12 @@ HighPrecedentExpr: Box<Expr> = {
   <ClassInstance>,
   <LlvmInvoke>,
   <Array>,
+  <While>,
 };
+
+While: Box<Expr> = {
+  "while" <cond:Expr> <exprs:Expr*> "end" => Box::new(Expr::While(Box::new(While { cond, exprs }))),
+}
 
 Array: Box<Expr> = {
   "[" <items:Exprs> "]" => Box::new(Expr::Array(Box::new(Array { items }))),
@@ -139,7 +145,11 @@ LiteralString: Box<Expr> = {
 };
 
 Assignment: Box<Expr> = {
-  "val" <var:Var> "="  <expr:Expr> => Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
+  "val" <var:Var> "=" <expr:Expr> => Box::new(Expr::Assignment(Box::new(Assignment { var, expr })))
+};
+
+Reassignment: Box<Expr> = {
+  <var:Var> "=" <expr:Expr> => Box::new(Expr::Reassignment(Box::new(Reassignment { var, expr })))
 };
 
 Invoke: Box<Invoke> = {
