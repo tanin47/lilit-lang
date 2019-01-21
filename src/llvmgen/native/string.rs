@@ -9,50 +9,49 @@ use inkwell::values::FunctionValue;
 use inkwell::values::PointerValue;
 
 use llvmgen::gen;
+use llvmgen::core;
 use llvmgen::gen::FnContext;
 use llvmgen::gen::Value;
 use semantics::tree;
 use llvmgen::native;
 use inkwell::types::PointerType;
+use inkwell::values::IntValue;
+
+pub fn get_str_len(raw_string_ptr: PointerValue, context: &FnContext) -> Value {
+    core::number::instantiate_from_value(get_str_len_as_int_value(raw_string_ptr, context).into(), context)
+}
+
+pub fn get_str_len_as_int_value(raw_string_ptr: PointerValue, context: &FnContext) -> IntValue {
+    let strlen = native::get_external_func(
+        "strlen",
+        context.context.i64_type().fn_type(
+            &[context.context.i8_type().ptr_type(AddressSpace::Generic).into()],
+            false
+        ),
+        context
+    );
+    let ret_strlen = match context.builder.build_call(strlen, &[raw_string_ptr.into()], "strlen").try_as_basic_value().left().unwrap() {
+        BasicValueEnum::IntValue(i) => i,
+        _ => panic!("unable to get string's length")
+    };
+    context.builder.build_int_cast(ret_strlen, context.context.i32_type(), "string_size")
+}
 
 fn gen_string_from_cstring(
     cstring: PointerValue,
     context: &FnContext
 ) -> Value {
+    let size = get_str_len_as_int_value(cstring, context);
+    let size_with_terminator = context.builder.build_int_nsw_add(size, context.context.i32_type().const_int(1, false), "size_with_terminator");
 
-    let i8_type = context.context.i8_type();
-    let i32_type = context.context.i32_type();
+    let array = native::gen_malloc_dynamic_array(&context.context.i8_type().into(), size_with_terminator, context);
 
-
-    let strlen = native::get_external_func(
-        "strlen",
-    context.context.i64_type().fn_type(
+    let strcpy = native::get_external_func(
+        "strcpy",
+        context.context.i8_type().ptr_type(AddressSpace::Generic).fn_type(
             &[
-                context.context.i8_type().ptr_type(AddressSpace::Generic).into()
-            ],
-            false
-        ),
-        context
-    );
-    let ret_strlen = match context.builder.build_call(strlen, &[cstring.into()], "strlen").try_as_basic_value().left().unwrap() {
-        BasicValueEnum::IntValue(i) => i,
-        _ => panic!("unable to get string's length")
-    };
-    let cstring_size = context.builder.build_int_cast(ret_strlen, context.context.i32_type(), "cstring_size");
-    let size_with_terminator = context.builder.build_int_add(
-        cstring_size, context.context.i32_type().const_int(1, false), "size_with_terminator");
-
-    let array = native::gen_malloc_dynamic_array(&i8_type.into(), size_with_terminator, context);
-
-    let memcpy = native::get_external_func(
-        "llvm.memcpy.p0i8.p0i8.i32",
-        context.context.void_type().fn_type(
-            &[
-                i8_type.ptr_type(AddressSpace::Generic).into(),
-                i8_type.ptr_type(AddressSpace::Generic).into(),
-                context.context.i32_type().into(),
-                context.context.i32_type().into(),
-                context.context.bool_type().into()
+                context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
+                context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
             ],
             false
         ),
@@ -60,35 +59,19 @@ fn gen_string_from_cstring(
     );
 
     context.builder.build_call(
-        memcpy,
+        strcpy,
         &[
             array.into(),
             cstring.into(),
-            size_with_terminator.into(),
-            context.context.i32_type().const_int(0, false).into(),
-            context.context.bool_type().const_zero().into()
         ],
-        "memcpy"
+        "strcpy"
     );
 
-    let string = native::gen_malloc(&context.core.string_struct_type, context);
-    let size_pointer = unsafe { context.builder.build_struct_gep(string, 0, "gep_string_size") };
-    context.builder.build_store(size_pointer, size_with_terminator);
-
-    let content_pointer = unsafe { context.builder.build_struct_gep(string, 1, "gep_string_content") };
-    context.builder.build_store(content_pointer, array);
-
-    Value::LlvmString(string)
+    Value::LlvmString(array)
 }
 
-
 pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> BasicValueEnum {
-    let first_param_pointer = unsafe { context.builder.build_struct_gep(ptr, 0, "gep_first_param") };
-    let first_param = match context.builder.build_load(first_param_pointer, "load_first_param") {
-        BasicValueEnum::PointerValue(p) => p,
-        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
-    };
-    let string_content_pointer = unsafe { context.builder.build_struct_gep(first_param, 1, "gep_content") };
+    let string_content_pointer = unsafe { context.builder.build_struct_gep(ptr, 0, "gep_string") };
     match context.builder.build_load(string_content_pointer, "load_content") {
         BasicValueEnum::PointerValue(p) => BasicValueEnum::PointerValue(p),
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),

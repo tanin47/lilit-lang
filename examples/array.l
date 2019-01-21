@@ -3,7 +3,6 @@ class @Boolean(b: LlvmBoolean)
   end
 end
 
-
 class @I32(i: LlvmNumber)
   def add(other: @I32): @I32
   end
@@ -31,12 +30,11 @@ end
 class @String(s: LlvmString)
 end
 
-class String(s: @String)
+class String(s: @String, size: Number)
 end
 
 class @Void()
 end
-
 
 class @Array(array: LlvmArray)
   def get(index: @I32): String

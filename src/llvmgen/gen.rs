@@ -48,7 +48,6 @@ pub fn convert(value: &Value) -> BasicValueEnum {
 }
 
 pub struct Core<'a> {
-    pub string_struct_type: StructType,
     pub number_class: &'a tree::Class,
     pub llvm_number_class: &'a tree::Class,
     pub boolean_class: &'a tree::Class,
@@ -82,13 +81,6 @@ pub fn generate(
     let llvm_module = context.create_module("main");
 
     let core = Core {
-        string_struct_type: StructType::struct_type(
-            &[
-                context.i32_type().into(),
-                context.i8_type().ptr_type(AddressSpace::Generic).into()
-            ],
-            false
-        ),
         number_class: unsafe { &*module.number_class.get().unwrap() },
         llvm_number_class: unsafe { &*module.llvm_number_class.get().unwrap() },
         boolean_class: unsafe { &*module.boolean_class.get().unwrap() },
@@ -155,7 +147,7 @@ fn gen_class_struct(
     let mut type_enums: Vec<BasicTypeEnum> = vec![];
     for param in &class.params {
         type_enums.push(match param.tpe.get().unwrap() {
-            tree::ExprType::LlvmString => context.core.string_struct_type.ptr_type(AddressSpace::Generic).into(),
+            tree::ExprType::LlvmString => context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
             tree::ExprType::LlvmBoolean => context.context.bool_type().into(),
             tree::ExprType::LlvmNumber => context.context.i32_type().into(),
             tree::ExprType::LlvmArray => context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into(),
@@ -693,15 +685,13 @@ fn gen_llvm_string(
     let i8_type = context.context.i8_type();
     let i32_type = context.context.i32_type();
 
-    let string = native::gen_malloc(&context.core.string_struct_type, context);
-
     let array_type = i8_type.array_type((literal_string.value.len() + 1) as u32);
-    let array = native::gen_malloc_array(&array_type, context);
+    let string = native::gen_malloc_array(&array_type, context);
 
     for (index, c) in literal_string.value.chars().enumerate() {
         let p = unsafe {
             context.builder.build_in_bounds_gep(
-                array,
+                string,
                 &[i32_type.const_int(0, false), i32_type.const_int(index as u64, false)],
                 "gep")
         };
@@ -710,30 +700,14 @@ fn gen_llvm_string(
     // Store string terminating symbol
     let last = unsafe {
         context.builder.build_in_bounds_gep(
-            array,
+            string,
             &[i32_type.const_int(0, false), i32_type.const_int(literal_string.value.len() as u64, false)],
             "gep")
     };
     context.builder.build_store(last, i8_type.const_int(0, false));
 
-    let size = i32_type.const_int((literal_string.value.len() + 1) as u64, false);
-    let size_pointer = unsafe { context.builder.build_struct_gep(string, 0, "gep") };
-    context.builder.build_store(size_pointer, size);
-
-    let content_pointer = unsafe { context.builder.build_struct_gep(string, 1, "gep") };
-    let array_pointer = unsafe {
-        context.builder.build_in_bounds_gep(
-            array,
-            &[
-                context.context.i32_type().const_int(0, false),
-                context.context.i32_type().const_int(0, false)
-            ],
-            "array_pointer",
-        )
-    };
-    context.builder.build_store(content_pointer, array_pointer);
-
-    Value::LlvmString(string)
+    let casted = context.builder.build_pointer_cast(string, context.context.i8_type().ptr_type(AddressSpace::Generic), "casted");
+    Value::LlvmString(casted)
 }
 
 fn gen_while(

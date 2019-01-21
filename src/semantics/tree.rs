@@ -24,7 +24,6 @@ pub struct Mod {
 pub enum ModUnit {
     Func(Box<Func>),
     Class(Box<Class>),
-
 }
 
 #[derive(Debug)]

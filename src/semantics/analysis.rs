@@ -765,9 +765,16 @@ fn build_literal_string(
             tpe: Cell::new(None),
         })));
 
+        let size = Box::new(build_num(
+            &syntax::tree::Num {
+                value: literal_string.content.len() as i32
+            },
+            context
+        ));
+
         tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
             name: "String".to_string(),
-            params: vec![llvm_instance],
+            params: vec![llvm_instance, size],
             class_ref: Cell::new(None),
             tpe: Cell::new(None),
         }))
