@@ -106,7 +106,7 @@ pub fn gen_malloc(struct_type: &StructType, context: &FnContext) -> PointerValue
 
 pub fn gen_register_finalizer(ptr: PointerValue, context: &FnContext) {
     let finalizer_func = get_external_func(
-        "finalizer",
+        "GC_finalizer",
         context.context.void_type().fn_type(
             &[
                 context.context.i8_type().ptr_type(AddressSpace::Generic).into(),

@@ -3,7 +3,6 @@ class @Boolean(b: LlvmBoolean)
   end
 end
 
-
 class @I32(i: LlvmNumber)
   def add(other: @I32): @I32
   end
@@ -31,35 +30,39 @@ end
 class @String(s: LlvmString)
 end
 
-class String(s: @String)
+class String(s: @String, size: Number)
 end
 
 class @Void()
 end
 
-
 class @Array(array: LlvmArray)
-  def get(index: @I32): Number
+  def get(index: @I32): String
   end
 end
 
 class Array(array: @Array, size: Number)
-  def get(index: @I32): Number
+  def get(index: Number): String
     array.get(index.num)
   end
 end
 
 def ask_for_age(question: String): Number
   @Void:printf+(question.s)
-  @I32:strtol(@String:__lilit__read(), @I32(0), @I32(10)).to_num()
+  @I32:strtol(@String:lilit__read(), @I32(0), @I32(10)).to_num()
 end
 
-def main(): Number
+def main(args: Array): Number
+  val content = @String:lilit__read_file("LICENSE".s)
+  @Void:printf+(content)
+
   val a = [1, 2, 3]
+
   @Void:printf+("What's your name?: ".s)
-  val name = @String:__lilit__read()
+  val name = @String:lilit__read()
   @Void:printf+("Hello ".s)
   @Void:printf+(name)
+  @Void:printf+("\n".s)
 
   if ask_for_age("How old are you?: ") > 34 {
     @Void:printf+(@String("That's old\n"))
