@@ -18,6 +18,8 @@ pub struct Mod {
     pub llvm_boolean_class: Cell<Option<*const Class>>,
     pub string_class: Cell<Option<*const Class>>,
     pub llvm_string_class: Cell<Option<*const Class>>,
+    pub char_class: Cell<Option<*const Class>>,
+    pub llvm_char_class: Cell<Option<*const Class>>,
 }
 
 #[derive(Debug)]
@@ -48,6 +50,7 @@ pub struct Func {
     pub llvm_ref: Cell<Option<FunctionValue>>,
     pub parent_class_opt: Cell<Option<* const Class>>,
     pub name: String,
+    pub is_static: bool,
     pub params: Vec<Param>,
     pub return_type_name: String,
     pub return_type: Cell<Option<ExprType>>,
@@ -61,7 +64,9 @@ pub enum ExprType {
     LlvmString,
     LlvmBoolean,
     LlvmArray,
+    LlvmChar,
     Class(*const Class),
+    StaticClass(*const Class),
 }
 
 #[derive(Debug)]
@@ -79,8 +84,10 @@ pub enum Expr {
     LlvmNumber(Box<LlvmNumber>),
     LlvmBoolean(Box<LlvmBoolean>),
     LlvmString(Box<LlvmString>),
+    LlvmChar(Box<LlvmChar>),
     LlvmArray(Box<LlvmArray>),
     While(Box<While>),
+    StaticClassInstance(Box<StaticClassInstance>),
 }
 
 impl Expr {
@@ -100,9 +107,18 @@ impl Expr {
             Expr::LlvmNumber(i) => ExprType::LlvmNumber,
             Expr::LlvmBoolean(b) => ExprType::LlvmBoolean,
             Expr::LlvmArray(a) => ExprType::LlvmArray,
+            Expr::LlvmChar(c) => ExprType::LlvmChar,
             Expr::While(a) => a.tpe.get().unwrap(),
+            Expr::StaticClassInstance(a) => a.tpe.get().unwrap(),
         }
     }
+}
+
+#[derive(Debug)]
+pub struct StaticClassInstance {
+    pub name: String,
+    pub class_ref: Cell<Option<*const Class>>,
+    pub tpe: Cell<Option<ExprType>>
 }
 
 #[derive(Debug)]
@@ -170,6 +186,11 @@ pub struct LlvmArray {
 #[derive(Debug)]
 pub struct LlvmString {
     pub value: String,
+}
+
+#[derive(Debug)]
+pub struct LlvmChar {
+    pub value: char,
 }
 
 #[derive(Debug)]

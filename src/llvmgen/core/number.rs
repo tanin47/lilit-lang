@@ -15,3 +15,16 @@ pub fn instantiate_from_value(value: BasicValueEnum, context: &FnContext) -> Val
     context.builder.build_store(first_param_pointer, i32_ptr);
     Value::Class(instance_ptr, context.core.number_class)
 }
+
+pub fn get_int32(value: BasicValueEnum, context: &FnContext) -> Value {
+    let instance_ptr = match value {
+        BasicValueEnum::PointerValue(p) => p,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    };
+
+    let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param") };
+    match context.builder.build_load(first_param_pointer, "loaded") {
+        BasicValueEnum::PointerValue(p) => Value::Class(p, context.core.llvm_number_class),
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    }
+}

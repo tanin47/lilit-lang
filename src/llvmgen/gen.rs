@@ -30,6 +30,7 @@ use llvmgen::core;
 pub enum Value {
     Void,
     LlvmNumber(IntValue),
+    LlvmChar(IntValue),
     LlvmBoolean(IntValue),
     LlvmString(PointerValue),
     LlvmArray(PointerValue, *const tree::Class),
@@ -39,6 +40,7 @@ pub enum Value {
 pub fn convert(value: &Value) -> BasicValueEnum {
     match value {
         Value::LlvmNumber(i) => (*i).into(),
+        Value::LlvmChar(i) => (*i).into(),
         Value::LlvmBoolean(b) => (*b).into(),
         Value::LlvmString(p) => (*p).into(),
         Value::LlvmArray(p, c) => (*p).into(),
@@ -56,6 +58,8 @@ pub struct Core<'a> {
     pub llvm_string_class: &'a tree::Class,
     pub array_class: &'a tree::Class,
     pub llvm_array_class: &'a tree::Class,
+    pub char_class: &'a tree::Class,
+    pub llvm_char_class: &'a tree::Class,
 }
 
 struct ModContext<'a, 'b, 'c, 'd> {
@@ -89,6 +93,8 @@ pub fn generate(
         llvm_string_class: unsafe { &*module.llvm_string_class.get().unwrap() },
         array_class: unsafe { &*module.array_class.get().unwrap() },
         llvm_array_class: unsafe { &*module.llvm_array_class.get().unwrap() },
+        char_class: unsafe { &*module.char_class.get().unwrap() },
+        llvm_char_class: unsafe { &*module.llvm_char_class.get().unwrap() },
     };
     {
         let context = ModContext {
@@ -148,6 +154,7 @@ fn gen_class_struct(
     for param in &class.params {
         type_enums.push(match param.tpe.get().unwrap() {
             tree::ExprType::LlvmString => context.context.i8_type().ptr_type(AddressSpace::Generic).into(),
+            tree::ExprType::LlvmChar => context.context.i8_type().into(),
             tree::ExprType::LlvmBoolean => context.context.bool_type().into(),
             tree::ExprType::LlvmNumber => context.context.i32_type().into(),
             tree::ExprType::LlvmArray => context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into(),
@@ -251,6 +258,16 @@ fn gen_method(
             } else {
                 panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
             }
+        } else if class.name == "@String" {
+            if method.name == "from" {
+                let llvm_string = core::string::get_llvm_string(
+                    context.builder.build_load(method.params[0].var.llvm_ref.get().unwrap(), "loaded_var"),
+                    &fn_context);
+
+                context.builder.build_return(Some(&convert(&native::string::instantiate_from_value(convert(&llvm_string), &fn_context))));
+            } else {
+                panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
+            }
         } else if class.name == "@Boolean" {
             if method.name == "to_boolean" {
                 let boolean_ptr = native::gen_malloc(&context.core.boolean_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
@@ -278,8 +295,8 @@ fn gen_method(
                 };
                 let casted = context.builder.build_pointer_cast(
                     loaded,
-                    context.core.string_class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic),
-                    "casted to String"
+                    context.core.char_class.llvm_struct_type_ref.get().unwrap().ptr_type(AddressSpace::Generic),
+                    "casted_to_char"
                 );
                 context.builder.build_return(Some(&casted));
             } else {
@@ -417,9 +434,10 @@ fn gen_main_func(
         BasicValueEnum::PointerValue(ptr) => ptr,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
-    context.builder.build_return(Some(&native::int32::get_llvm_value(i32_instance, &fn_context)));
+    context.builder.build_return(Some(&native::int32::get_llvm_value(i32_instance.into(), &fn_context)));
 
     if !function.verify(true) {
+        function.print_to_stderr();
         panic!("Lilit's main is invalid.");
     }
 }
@@ -492,6 +510,7 @@ fn gen_func(
     }
 
     if !function.verify(true) {
+        function.print_to_stderr();
         panic!("{} is invalid.", func.name);
     }
 
@@ -519,7 +538,9 @@ pub fn gen_expr(
         tree::Expr::LlvmBoolean(ref boolean) => gen_llvm_boolean(boolean, context),
         tree::Expr::LlvmString(ref literal_string) => gen_llvm_string(literal_string, context),
         tree::Expr::LlvmArray(ref array) => gen_llvm_array(array, context),
+        tree::Expr::LlvmChar(ref c) => gen_llvm_char(c, context),
         tree::Expr::While(ref whle) => gen_while(whle, context),
+        tree::Expr::StaticClassInstance(ref s) => panic!("We should never gen StaticClassInstance. Because there's nothing to do here."),
     }
 }
 
@@ -558,7 +579,11 @@ fn gen_dot_invoke(
     let func = unsafe { &*dot_invoke.invoke.func_ref.get().unwrap() };
 
     let mut llvm_params = vec![];
-    llvm_params.push(convert(&gen_expr(&dot_invoke.expr, context)));
+
+    if !func.is_static {
+        llvm_params.push(convert(&gen_expr(&dot_invoke.expr, context)));
+    }
+
     for param in &dot_invoke.invoke.args {
         llvm_params.push(convert(&gen_expr(param, context)));
     }
@@ -590,10 +615,7 @@ fn gen_class_instance(
         let value = gen_expr(param, context);
 
         let ptr = unsafe {
-            context.builder.build_in_bounds_gep(
-                instance,
-                &[context.context.i32_type().const_int(0, false), context.context.i32_type().const_int(index as u64, false)],
-                "gep")
+            context.builder.build_struct_gep(instance, index as u32, "gep")
         };
 
         context.builder.build_store(ptr, convert(&value));
@@ -616,6 +638,7 @@ fn gen_llvm_class_instance(
             Value::LlvmNumber(i) => Value::LlvmNumber(i),
             Value::LlvmBoolean(i) => Value::LlvmBoolean(i),
             Value::LlvmString(i) => Value::LlvmString(i),
+            Value::LlvmChar(i) => Value::LlvmChar(i),
             Value::LlvmArray(i, c) => Value::LlvmArray(i,c),
             x => panic!("Expect Llvm types, found {:?}", x)
         };
@@ -635,6 +658,13 @@ fn gen_llvm_number(
     context: &FnContext,
 ) -> Value {
     Value::LlvmNumber(context.context.i32_type().const_int(number.value as u64, false))
+}
+
+fn gen_llvm_char(
+    c: &tree::LlvmChar,
+    context: &FnContext,
+) -> Value {
+    Value::LlvmChar(context.context.i8_type().const_int(c.value as u64, false))
 }
 
 fn gen_llvm_boolean(
@@ -675,7 +705,7 @@ fn gen_llvm_array(
             ],
             "gep")
     };
-    Value::LlvmArray(generic, context.core.string_class)
+    Value::LlvmArray(generic, context.core.char_class)
 }
 
 fn gen_llvm_string(

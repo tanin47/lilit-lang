@@ -60,7 +60,8 @@ ClassName: String = {
 };
 
 Func: Box<Func> = {
-  "def" <name:FuncName> "(" <params:Params> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, params, return_type, exprs }),
+  "static" "def" <name:FuncName> "(" <params:Params> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, is_static: true, params, return_type, exprs }),
+  "def" <name:FuncName> "(" <params:Params> ")" ":" <return_type: ClassName> <exprs:Expr*> "end" => Box::new(Func { name, is_static: false, params, return_type, exprs }),
 };
 
 FuncName: String = {
@@ -85,14 +86,19 @@ HighPrecedentExpr: Box<Expr> = {
   <LiteralString>,
   <IfElse>,
   <ClassInstance>,
+  <StaticClassInstance>,
   <LlvmInvoke>,
   <Array>,
   <While>,
 };
 
+StaticClassInstance: Box<Expr> = {
+  <name: ClassName> => Box::new(Expr::StaticClassInstance(Box::new(StaticClassInstance { name }))),
+};
+
 While: Box<Expr> = {
   "while" <cond:Expr> <exprs:Expr*> "end" => Box::new(Expr::While(Box::new(While { cond, exprs }))),
-}
+};
 
 Array: Box<Expr> = {
   "[" <items:Exprs> "]" => Box::new(Expr::Array(Box::new(Array { items }))),
@@ -134,7 +140,7 @@ ClassInstance: Box<Expr> = {
 };
 
 IfElse: Box<Expr> = {
-  "if" <cond: Expr> "{" <true_br: Expr> "}" "else" "{" <false_br: Expr> "}" => Box::new(Expr::IfElse(Box::new(IfElse { cond, true_br, false_br }))),
+  "if" <cond: Expr> <true_br: Expr> "else" <false_br: Expr> "end" => Box::new(Expr::IfElse(Box::new(IfElse { cond, true_br, false_br }))),
 };
 
 LiteralString: Box<Expr> = {

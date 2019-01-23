@@ -22,38 +22,33 @@ pub fn get_llvm_value_from_var(var: &tree::Var, context: &FnContext) -> PointerV
         _ => panic!()
     };
 
-    get_llvm_value(instance_ptr, context)
+    get_llvm_value(instance_ptr.into(), context)
 }
 
-pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> PointerValue {
-    let first_param_pointer = unsafe {
-        context.builder.build_in_bounds_gep(
-            ptr,
-            &[context.context.i32_type().const_zero(), context.context.i32_type().const_zero()],
-            "gep for the first param of @Array")
+pub fn get_llvm_value(value: BasicValueEnum, context: &FnContext) -> PointerValue {
+    let ptr= match value {
+        BasicValueEnum::PointerValue(i) => i,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
-    match context.builder.build_load(first_param_pointer, "load the first param of @Array") {
+    let first_param_pointer = unsafe { context.builder.build_struct_gep(ptr, 0, "first_param_of_@Array") };
+    match context.builder.build_load(first_param_pointer, "load_first_param_of_@Array") {
         BasicValueEnum::PointerValue(i) => i,
         x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     }
 }
 
 pub fn instantiate_from_value(value: BasicValueEnum, context: &FnContext) -> Value {
-    match value {
-        BasicValueEnum::PointerValue(p) => (),
-        x => panic!("Expect BasicValueEnum::IntValue, found {:?}", x),
+    let ptr = match value {
+        BasicValueEnum::PointerValue(p) => p,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
     };
 
     let instance_ptr = native::gen_malloc(&context.core.llvm_array_class.llvm_struct_type_ref.get().unwrap(), context);
-    let first_param_pointer = unsafe {
-        context.builder.build_in_bounds_gep(
-            instance_ptr,
-            &[
-                context.context.i32_type().const_int(0, false),
-                context.context.i32_type().const_int(0, false)
-            ],
-            "first param of @I32")
-    };
-    context.builder.build_store(first_param_pointer, value);
+    let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param_of_@Array") };
+
+    // Array uses a generic pointer.
+    let casted = context.builder.build_pointer_cast(ptr, context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic), "casted");
+
+    context.builder.build_store(first_param_pointer, casted);
     Value::Class(instance_ptr, context.core.llvm_array_class)
 }

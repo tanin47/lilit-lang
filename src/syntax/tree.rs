@@ -29,6 +29,7 @@ pub struct Param {
 #[derive(Debug)]
 pub struct Func {
     pub name: String,
+    pub is_static: bool,
     pub params: Vec<Box<Param>>,
     pub return_type: String,
     pub exprs: Vec<Box<Expr>>,
@@ -40,6 +41,7 @@ pub enum Expr {
     LlvmInvoke(Box<LlvmInvoke>),
     Boolean(Box<Boolean>),
     Num(Box<Num>),
+    Char(Box<Char>),
     Assignment(Box<Assignment>),
     Reassignment(Box<Reassignment>),
     Var(Box<Var>),
@@ -51,6 +53,12 @@ pub enum Expr {
     DotMember(Box<DotMember>),
     Array(Box<Array>),
     While(Box<While>),
+    StaticClassInstance(Box<StaticClassInstance>),
+}
+
+#[derive(Debug)]
+pub struct StaticClassInstance {
+    pub name: String,
 }
 
 #[derive(Debug)]
@@ -134,6 +142,11 @@ pub struct LlvmInvoke {
 #[derive(Debug)]
 pub struct Num {
     pub value: i32,
+}
+
+#[derive(Debug)]
+pub struct Char {
+    pub value: char,
 }
 
 #[derive(Debug)]

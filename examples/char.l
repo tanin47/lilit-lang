@@ -27,47 +27,38 @@ class Number(num: @I32)
   end
 end
 
-class @String(s: LlvmString)
+class @Char(c: LlvmChar)
 end
 
-class String(s: @String, size: Number)
+class Char(c: @Char)
+end
+
+class @String(s: LlvmString)
+  static def from(s: String): @String
+
+  end
+end
+
+class String(chars: Array)
 end
 
 class @Void()
 end
 
 class @Array(array: LlvmArray)
-  def get(index: @I32): String
+  def get(index: @I32): Char
   end
 end
 
 class Array(array: @Array, size: Number)
-  def get(index: Number): String
+  def get(index: Number): Char
     array.get(index.num)
   end
 end
 
-def ask_for_age(question: String): Number
-  @Void:printf+(question.s)
-  @I32:strtol(@String:lilit__read(), @I32(0), @I32(10)).to_num()
-end
-
 def main(args: Array): Number
-  val content = @String:lilit__read_file("LICENSE".s)
-  @Void:printf+(content)
-
-  val a = [1, 2, 3]
-
-  @Void:printf+("What's your name?: ".s)
-  val name = @String:lilit__read()
-  @Void:printf+("Hello ".s)
-  @Void:printf+(name)
-  @Void:printf+("\n".s)
-
-  if ask_for_age("How old are you?: ") > 34
-    @Void:printf+(@String("That's old\n"))
-  else
-    @Void:printf+(@String("That's not old\n"))
-  end
+  val s = "test string"
+  @Void:printf+(@String.from(s))
+  @Void:printf+(@String.from("\n"))
   1
 end

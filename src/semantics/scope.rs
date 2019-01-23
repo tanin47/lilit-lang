@@ -10,6 +10,7 @@ pub enum ScopeValue {
 	Member(*const tree::Var, *const tree::Var),
 	Func(*const tree::Func),
 	Method(*const tree::Func),
+	StaticMethod(*const tree::Func),
 	Class(*const tree::Class),
 }
 
@@ -30,6 +31,10 @@ impl Scope {
 		format!("__{}__{}", class_name, method_name)
 	}
 
+	pub fn make_static_method_key(class_name: &str, method_name: &str) -> String {
+		format!("__static__{}__{}", class_name, method_name)
+	}
+
 	pub fn declare(&mut self, value: ScopeValue) {
 		let key = match value {
 			ScopeValue::Var(var_ptr) => (unsafe { &*var_ptr }).name.to_string(),
@@ -42,6 +47,13 @@ impl Scope {
 				let klass = unsafe { &*func.parent_class_opt.get().unwrap() };
 
                 Scope::make_method_key(&klass.name, func_name)
+			},
+			ScopeValue::StaticMethod(ref func_ptr) => {
+				let func = unsafe { &**func_ptr };
+				let func_name = &func.name;
+				let klass = unsafe { &*func.parent_class_opt.get().unwrap() };
+
+				Scope::make_static_method_key(&klass.name, func_name)
 			},
 		};
 		let last_index = self.levels.len() - 1;
@@ -71,6 +83,13 @@ impl Scope {
 	pub fn read_method(&self, class_name: &str, method_name: &str) -> Option<&tree::Func> {
 		match self.read(&Scope::make_method_key(class_name, method_name)) {
 			Some(&ScopeValue::Method(func)) => Some(unsafe { &*func }),
+			_ => None
+		}
+	}
+
+	pub fn read_static_method(&self, class_name: &str, method_name: &str) -> Option<&tree::Func> {
+		match self.read(&Scope::make_static_method_key(class_name, method_name)) {
+			Some(&ScopeValue::StaticMethod(func)) => Some(unsafe { &*func }),
 			_ => None
 		}
 	}

@@ -22,10 +22,14 @@ pub fn get_llvm_value_from_var(var: &tree::Var, context: &FnContext) -> IntValue
         _ => panic!()
     };
 
-    get_llvm_value(instance_ptr, context)
+    get_llvm_value(instance_ptr.into(), context)
 }
 
-pub fn get_llvm_value(ptr: PointerValue, context: &FnContext) -> IntValue {
+pub fn get_llvm_value(value: BasicValueEnum, context: &FnContext) -> IntValue {
+    let ptr = match value {
+        BasicValueEnum::PointerValue(p) => p,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    };
     let first_param_pointer = unsafe {
         context.builder.build_in_bounds_gep(
             ptr,

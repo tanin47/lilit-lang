@@ -23,3 +23,29 @@ pub fn instantiate_from_value(value: BasicValueEnum, size: Value, context: &FnCo
     context.builder.build_store(second_param_pointer, size_ptr);
     Value::Class(instance_ptr, context.core.array_class)
 }
+
+pub fn get_native(value: BasicValueEnum, context: &FnContext) -> Value {
+    let instance_ptr = match value {
+        BasicValueEnum::PointerValue(p) => p,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    };
+
+    let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param_of_array") };
+    match context.builder.build_load(first_param_pointer, "load_native") {
+        BasicValueEnum::PointerValue(p) => Value::Class(p, context.core.llvm_array_class),
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    }
+}
+
+pub fn get_size(value: BasicValueEnum, context: &FnContext) -> Value {
+    let instance_ptr = match value {
+        BasicValueEnum::PointerValue(p) => p,
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    };
+
+    let second_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 1, "second_param_of_array") };
+    match context.builder.build_load(second_param_pointer, "load_size") {
+        BasicValueEnum::PointerValue(p) => Value::Class(p, context.core.number_class),
+        x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
+    }
+}

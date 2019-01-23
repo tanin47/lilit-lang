@@ -36,6 +36,8 @@ fn convert_to_expr_type(return_type_name: &str, scope: &mut scope::Scope) -> tre
         tree::ExprType::LlvmString
     } else if return_type_name == "LlvmArray" {
         tree::ExprType::LlvmArray
+    } else if return_type_name == "LlvmChar" {
+        tree::ExprType::LlvmChar
     } else {
         tree::ExprType::Class(scope.read_class(return_type_name).unwrap())
     }
@@ -62,13 +64,20 @@ fn link_mod(
                     "@String" => m.llvm_string_class.set(Some(class.as_ref())),
                     "Array" => m.array_class.set(Some(class.as_ref())),
                     "@Array" => m.llvm_array_class.set(Some(class.as_ref())),
+                    "Char" => m.char_class.set(Some(class.as_ref())),
+                    "@Char" => m.llvm_char_class.set(Some(class.as_ref())),
                     _ => (),
                 }
 
                 scope.declare(scope::ScopeValue::Class(class.as_ref()));
                 for method in &class.methods {
                     method.parent_class_opt.set(Some(class.as_ref()));
-                    scope.declare(scope::ScopeValue::Method(method));
+
+                    if method.is_static {
+                        scope.declare(scope::ScopeValue::StaticMethod(method));
+                    } else {
+                        scope.declare(scope::ScopeValue::Method(method));
+                    }
                 }
             },
         }
@@ -110,8 +119,31 @@ fn link_class(
         param.tpe.set(Some(convert_to_expr_type(&param.tpe_name, scope)));
     }
     for method in &class.methods {
-        link_method(method, class, scope);
+        if method.is_static {
+            link_static_method(method, class, scope);
+        } else {
+            link_method(method, class, scope);
+        }
     }
+    scope.leave();
+}
+
+fn link_static_method(
+    func: &tree::Func,
+    class: &tree::Class,
+    scope: &mut scope::Scope,
+) {
+    scope.enter();
+    for param in &func.params {
+        param.var.tpe.set(Some(convert_to_expr_type(&param.tpe_name, scope)));
+        param.tpe.set(param.var.tpe.get());
+        scope.declare(scope::ScopeValue::Var(param.var.as_ref()));
+    }
+
+    for expr in &func.exprs {
+        link_expr(expr, scope)
+    }
+
     scope.leave();
 }
 
@@ -181,8 +213,10 @@ fn link_expr(
         tree::Expr::LlvmString(ref literal_string) => (),
         tree::Expr::LlvmBoolean(ref boolean) => (),
         tree::Expr::LlvmNumber(ref value) => (),
+        tree::Expr::LlvmChar(ref c) => (),
         tree::Expr::LlvmArray(ref array) => link_llvm_array(array, scope),
         tree::Expr::While(ref whle) => link_while(whle, scope),
+        tree::Expr::StaticClassInstance(ref s) => link_static_class_instance(s, scope),
     }
 }
 
@@ -246,6 +280,9 @@ fn link_dot_invoke(
         tree::ExprType::Class(ref class) => {
             link_method_invoke(&dot_invoke.invoke, unsafe { &**class }, scope);
         },
+        tree::ExprType::StaticClass(ref class) => {
+            link_static_method_invoke(&dot_invoke.invoke, unsafe { &**class }, scope);
+        },
         _ => panic!("Expecting a class for DotInvoke.expr"),
     }
 
@@ -264,6 +301,15 @@ fn link_llvm_invoke(
 
     let class = scope.read_class(&invoke.return_type_name).unwrap();
     invoke.return_type.set(Some(tree::ExprType::Class(class)));
+}
+
+fn link_static_class_instance(
+    instance: &tree::StaticClassInstance,
+    scope: &mut scope::Scope,
+) {
+    let class = scope.read_class(&instance.name).unwrap();
+    instance.class_ref.set(Some(class));
+    instance.tpe.set(Some(tree::ExprType::StaticClass(class)));
 }
 
 fn link_class_instance(
@@ -370,6 +416,27 @@ fn link_assignment(
     assignment.var.tpe.set(Some(assignment.expr.get_type()))
 }
 
+fn link_static_method_invoke(
+    invoke: &tree::Invoke,
+    class: &tree::Class,
+    scope: &mut scope::Scope,
+) {
+    {
+        let f = match scope.read_static_method(&class.name, &invoke.name) {
+            Some(func) => func,
+            None => panic!("Unable to find the method {}.{}", class.name, invoke.name),
+        };
+        invoke.func_ref.set(Some(f as *const tree::Func));
+        invoke.tpe.set(f.return_type.get());
+    }
+
+    for arg in &invoke.args {
+        scope.enter();
+        link_expr(arg, scope);
+        scope.leave();
+    }
+}
+
 fn link_method_invoke(
     invoke: &tree::Invoke,
     class: &tree::Class,
@@ -431,6 +498,8 @@ pub fn build_mod(
         llvm_string_class: Cell::new(None),
         array_class: Cell::new(None),
         llvm_array_class: Cell::new(None),
+        char_class: Cell::new(None),
+        llvm_char_class: Cell::new(None),
     }
 }
 
@@ -490,15 +559,18 @@ fn build_method(
     context: &Context,
 ) -> tree::Func {
     let mut params = vec![];
-    params.push(tree::Param {
-        var: Box::new(tree::Var{
-            llvm_ref: Cell::new(None),
+
+    if !method.is_static {
+        params.push(tree::Param {
+            var: Box::new(tree::Var {
+                llvm_ref: Cell::new(None),
+                tpe: Cell::new(None),
+                name: "__self".to_string(),
+            }),
+            tpe_name: class.name.to_string(),
             tpe: Cell::new(None),
-            name: "__self".to_string(),
-        }),
-        tpe_name: class.name.to_string(),
-        tpe: Cell::new(None),
-    });
+        });
+    }
     for param in &method.params {
         params.push(build_param(param, context))
     }
@@ -512,6 +584,7 @@ fn build_method(
         llvm_ref: Cell::new(None),
         parent_class_opt: Cell::new(None),
         name: method.name.to_string(),
+        is_static: method.is_static,
         params,
         return_type_name: method.return_type.to_string(),
         return_type: Cell::new(None),
@@ -537,6 +610,7 @@ fn build_func(
         llvm_ref: Cell::new(None),
         parent_class_opt: Cell::new(None),
         name: func.name.to_string(),
+        is_static: false,
         params,
         return_type_name: func.return_type.to_string(),
         return_type: Cell::new(None),
@@ -563,7 +637,20 @@ fn build_expr(
         syntax::tree::Expr::Num(ref num) => build_num(num, context),
         syntax::tree::Expr::Boolean(ref b) => build_boolean(b, context),
         syntax::tree::Expr::Array(ref a) => build_array(a, context),
+        syntax::tree::Expr::Char(ref c) => build_char(c, context),
         syntax::tree::Expr::While(ref a) => tree::Expr::While(Box::new(build_while(a, context))),
+        syntax::tree::Expr::StaticClassInstance(ref s) => tree::Expr::StaticClassInstance(Box::new(build_static_class_instance(s, context))),
+    }
+}
+
+fn build_static_class_instance(
+    instance: &syntax::tree::StaticClassInstance,
+    context: &Context
+) -> tree::StaticClassInstance {
+    tree::StaticClassInstance {
+        name: instance.name.to_string(),
+        class_ref: Cell::new(None),
+        tpe: Cell::new(None)
     }
 }
 
@@ -758,27 +845,67 @@ fn build_literal_string(
     if context.in_llvm_mode {
         llvm_string
     } else {
-        let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
-            name: "@String".to_string(),
-            params: vec![llvm_string],
-            class_ref: Cell::new(None),
-            tpe: Cell::new(None),
-        })));
+        let mut items: Vec<Box<syntax::tree::Expr>> = vec![];
+        for c in literal_string.content.chars() {
+            items.push(Box::new(syntax::tree::Expr::ClassInstance(Box::new(
+                syntax::tree::ClassInstance {
+                    name: "Char".to_string(),
+                    params: vec![
+                        Box::new(syntax::tree::Expr::LlvmClassInstance(Box::new(
+                            syntax::tree::LlvmClassInstance {
+                                name: "@Char".to_string(),
+                                params: vec![
+                                    Box::new(syntax::tree::Expr::Char(Box::new(
+                                        syntax::tree::Char {
+                                            value: c
+                                        }
+                                    )))
+                                ]
+                            }
+                        )))
+                    ]
+                }
+            ))));
+        }
 
-        let size = Box::new(build_num(
-            &syntax::tree::Num {
-                value: literal_string.content.len() as i32
+        let array = Box::new(build_array(
+            &syntax::tree::Array {
+                items
             },
             context
         ));
 
         tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
             name: "String".to_string(),
-            params: vec![llvm_instance, size],
+            params: vec![array],
             class_ref: Cell::new(None),
             tpe: Cell::new(None),
         }))
 
+    }
+}
+
+fn build_char(
+    char: &syntax::tree::Char,
+    context: &Context,
+) -> tree::Expr {
+    let llvm_char = tree::Expr::LlvmChar(Box::new(tree::LlvmChar { value: char.value }));
+    if context.in_llvm_mode {
+        llvm_char
+    } else {
+        let llvm_instance = Box::new(tree::Expr::LlvmClassInstance(Box::new(tree::LlvmClassInstance {
+            name: "@Char".to_string(),
+            params: vec![llvm_char],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        })));
+
+        tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
+            name: "Char".to_string(),
+            params: vec![llvm_instance],
+            class_ref: Cell::new(None),
+            tpe: Cell::new(None),
+        }))
     }
 }
 

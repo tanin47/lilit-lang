@@ -256,7 +256,7 @@ pub fn get_llvm_value(value: &Value, context: &FnContext) -> BasicValueEnum {
 
     match native_class.name.as_ref() {
         "@I8" => int8::get_llvm_value(ptr, context).into(),
-        "@I32" => int32::get_llvm_value(ptr, context).into(),
+        "@I32" => int32::get_llvm_value(ptr.into(), context).into(),
         "@String" => string::get_llvm_value(ptr, context),
         x => panic!("Unrecognized LLVM class: {}", x),
     }
