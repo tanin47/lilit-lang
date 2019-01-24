@@ -238,6 +238,12 @@ fn gen_method(
                 let sum = context.builder.build_int_nsw_add(first, second, "@I32.add");
                 let i8_value = native::int32::instantiate_from_value(sum.into(), &fn_context);
                 context.builder.build_return(Some(&convert(&i8_value)));
+            } else if method.name == "subtract" {
+                let first = native::int32::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let second = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+                let sum = context.builder.build_int_nsw_sub(first, second, "@I32.subtract");
+                let i8_value = native::int32::instantiate_from_value(sum.into(), &fn_context);
+                context.builder.build_return(Some(&convert(&i8_value)));
             } else if method.name == "is_greater_than" {
                 let first = native::int32::get_llvm_value_from_var(&method.params[0].var, &fn_context);
                 let second = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
@@ -282,7 +288,7 @@ fn gen_method(
                 panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
             }
         } else if class.name == "@Array" {
-            if method.name == "get"  {
+            if method.name == "get" {
                 let array_pointer = native::array::get_llvm_value_from_var(&method.params[0].var, &fn_context);
                 let index = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
 
@@ -299,6 +305,60 @@ fn gen_method(
                     "casted_to_char"
                 );
                 context.builder.build_return(Some(&casted));
+            } else if method.name == "sub" {
+                let array_pointer = native::array::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let start = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+                let end = native::int32::get_llvm_value_from_var(&method.params[2].var, &fn_context);
+
+                let start_array_pointer = unsafe {
+                    context.builder.build_in_bounds_gep(array_pointer, &[start], "start_array")
+                };
+
+                let count = context.builder.build_int_nsw_sub(
+                        context.builder.build_int_nsw_add(end, context.context.i32_type().const_int(1, false), "add"),
+                        start,
+                        "sub");
+                let byte_size = context.builder.build_int_nsw_mul(
+                    count,
+                    context.builder.build_int_cast(
+                        context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).size_of(),
+                        count.get_type(),
+                        "casted"
+                    ),
+                    "mul"
+                );
+                let sub_array_pointer = native::gen_malloc_dynamic_array(
+                    &context.context.i8_type().ptr_type(AddressSpace::Generic).as_basic_type_enum(),
+                    count,
+                    &fn_context);
+                let memcpy = native::get_external_func(
+                    "llvm.memcpy.p0p0i8.p0p0i8.i32",
+                    context.context.void_type().fn_type(
+                        &[
+                            context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into(),
+                            context.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into(),
+                            context.context.i32_type().into(),
+                            context.context.i32_type().into(),
+                            context.context.bool_type().into()
+                        ],
+                        false
+                    ),
+                    &fn_context
+                );
+                context.builder.build_call(
+                    memcpy,
+                    &[
+                        sub_array_pointer.into(),
+                        start_array_pointer.into(),
+                        byte_size.into(),
+                        context.context.i32_type().const_int(0, false).into(),
+                        context.context.bool_type().const_zero().into()
+                    ],
+                    "memcpy"
+                );
+
+//                context.builder.build_return(Some(&convert(&native::array::instantiate_from_value(array_pointer.into(), &fn_context))));
+                context.builder.build_return(Some(&convert(&native::array::instantiate_from_value(sub_array_pointer.into(), &fn_context))));
             } else {
                 panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
             }
