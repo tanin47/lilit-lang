@@ -43,7 +43,7 @@ pub fn get_external_func(
     }
 }
 
-pub fn gen_malloc_dynamic_array(item_tpe: &BasicTypeEnum, count: IntValue, context: &FnContext) -> PointerValue {
+pub fn gen_malloc_dynamic_array(item_tpe: &BasicTypeEnum, capacity: IntValue, context: &FnContext) -> PointerValue {
     let func_type = context.context
         .i8_type().ptr_type(AddressSpace::Generic)
         .fn_type(&[context.context.i64_type().into()], false);
@@ -55,7 +55,7 @@ pub fn gen_malloc_dynamic_array(item_tpe: &BasicTypeEnum, count: IntValue, conte
         BasicTypeEnum::PointerType(p) => p.size_of(),
         x => panic!("Unsupported dynamic array item type: {:?}", x),
     };
-    let cast_size = context.builder.build_int_cast(count, context.context.i64_type(), "casted");
+    let cast_size = context.builder.build_int_cast(capacity, context.context.i64_type(), "casted");
     let actual_size = context.builder.build_int_mul(size_per_item, cast_size, "actual_size");
     let p = match context.builder.build_call(func, &[actual_size.into()], "malloc").try_as_basic_value().left().unwrap() {
         BasicValueEnum::PointerValue(p) => p,

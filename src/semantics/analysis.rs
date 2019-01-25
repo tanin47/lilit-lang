@@ -937,13 +937,14 @@ fn build_array(
     array: &syntax::tree::Array,
     context: &Context,
 ) -> tree::Expr {
+    let capacity = 100;
     let mut items: Vec<Box<tree::Expr>> = vec![];
 
     for item in &array.items {
        items.push(Box::new(build_expr(item, context)))
     }
 
-    let llvm_array = tree::Expr::LlvmArray(Box::new(tree::LlvmArray { items }));
+    let llvm_array = tree::Expr::LlvmArray(Box::new(tree::LlvmArray { items, capacity }));
     if context.in_llvm_mode {
         llvm_array
     } else {
@@ -960,10 +961,16 @@ fn build_array(
             },
             context
         ));
+        let capacity_expr = Box::new(build_num(
+            &syntax::tree::Num {
+                value: capacity as i32
+            },
+            context
+        ));
 
         tree::Expr::ClassInstance(Box::new(tree::ClassInstance {
             name: "Array".to_string(),
-            params: vec![llvm_instance, size],
+            params: vec![llvm_instance, size, capacity_expr],
             class_ref: Cell::new(None),
             tpe: Cell::new(None),
         }))

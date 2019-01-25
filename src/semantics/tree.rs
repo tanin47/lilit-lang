@@ -181,6 +181,7 @@ pub struct IfElse {
 #[derive(Debug)]
 pub struct LlvmArray {
     pub items: Vec<Box<Expr>>,
+    pub capacity: u32,
 }
 
 #[derive(Debug)]

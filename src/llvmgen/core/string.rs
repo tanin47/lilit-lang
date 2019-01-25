@@ -76,10 +76,10 @@ pub fn get_llvm_string(instance: BasicValueEnum, context: &FnContext) -> Value {
         let llvm_string_index_pointer = unsafe { context.builder.build_in_bounds_gep(llvm_string, &[index], "get_index") };
         let char_index_pointer = unsafe { context.builder.build_in_bounds_gep(llvm_array, &[index], "get_index") };
 
-        let c = native::char::get_llvm_char(
+        let c = native::char::get_llvm_value(
             convert(&core::char::get_at_char(context.builder.build_load(char_index_pointer, "load_Char"), context)),
             context);
-        context.builder.build_store(llvm_string_index_pointer, convert(&c));
+        context.builder.build_store(llvm_string_index_pointer, c);
 
         let next_index = context.builder.build_int_nsw_add(index, context.context.i32_type().const_int(1, false), "increment");
         context.builder.build_store(index_pointer, next_index);
@@ -147,7 +147,14 @@ pub fn instantiate_from_value(value: BasicValueEnum, context: &FnContext) -> Val
     let instance_ptr = native::gen_malloc(&context.core.string_class.llvm_struct_type_ref.get().unwrap(), context);
 
     let first_param_pointer = unsafe { context.builder.build_struct_gep(instance_ptr, 0, "first_param_of_string") };
-    context.builder.build_store(first_param_pointer, convert(&core::array::instantiate_from_value(array.into(), core::number::instantiate_from_value(size.into(), context), context)));
+    let array_instance = core::array::instantiate_from_value(
+        array.into(),
+        core::number::instantiate_from_value(size.into(), context),
+        core::number::instantiate_from_value(size.into(), context),
+        context);
+    context.builder.build_store(
+        first_param_pointer,
+        convert(&array_instance));
 
     Value::Class(instance_ptr, context.core.string_class)
 }

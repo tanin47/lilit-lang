@@ -249,7 +249,7 @@ fn gen_method(
                 let second = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
 
                 let result = context.builder.build_int_compare(IntPredicate::SGT, first, second, "@I32.sgt");
-                let boolean_value = native::boolean::instantiate_from_value(result.into(), context.core.llvm_boolean_class, &fn_context);
+                let boolean_value = native::boolean::instantiate_from_value(result.into(), &fn_context);
                 context.builder.build_return(Some(&convert(&boolean_value)));
             } else if method.name == "to_num" {
                 let number_ptr = native::gen_malloc(&context.core.number_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
@@ -274,6 +274,17 @@ fn gen_method(
             } else {
                 panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
             }
+        } else if class.name == "@Char" {
+            if method.name == "is_equal" {
+                let first = native::char::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let second = native::char::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+
+                let result = context.builder.build_int_compare(IntPredicate::EQ, first, second, "compare");
+
+                context.builder.build_return(Some(&convert(&native::boolean::instantiate_from_value(result.into(), &fn_context))));
+            } else {
+                panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
+            }
         } else if class.name == "@Boolean" {
             if method.name == "to_boolean" {
                 let boolean_ptr = native::gen_malloc(&context.core.boolean_class.llvm_struct_type_ref.get().unwrap(), &fn_context);
@@ -292,9 +303,7 @@ fn gen_method(
                 let array_pointer = native::array::get_llvm_value_from_var(&method.params[0].var, &fn_context);
                 let index = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
 
-                let index_pointer = unsafe {
-                    context.builder.build_in_bounds_gep(array_pointer, &[index], "get element pointer for the index")
-                };
+                let index_pointer = unsafe { context.builder.build_in_bounds_gep(array_pointer, &[index], "get element pointer for the index") };
                 let loaded = match context.builder.build_load(index_pointer, "loaded") {
                     BasicValueEnum::PointerValue(p) => p,
                     x => panic!("Expect BasicValueEnum::PointerValue, found {:?}", x),
@@ -305,6 +314,21 @@ fn gen_method(
                     "casted_to_char"
                 );
                 context.builder.build_return(Some(&casted));
+            } else if method.name == "add" {
+                let array_pointer = native::array::get_llvm_value_from_var(&method.params[0].var, &fn_context);
+                let index = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
+                let item_ptr = match context.builder.build_load(method.params[2].var.llvm_ref.get().unwrap(), "load_item_ptr") {
+                    BasicValueEnum::PointerValue(p) => p,
+                    _ => panic!()
+                };
+
+                let index_pointer = context.builder.build_pointer_cast(
+                    unsafe { context.builder.build_in_bounds_gep(array_pointer, &[index], "gep_for_index") },
+                    item_ptr.get_type().ptr_type(AddressSpace::Generic),
+                    "casted");
+                context.builder.build_store(index_pointer, item_ptr);
+                context.builder.build_return(None);
+
             } else if method.name == "sub" {
                 let array_pointer = native::array::get_llvm_value_from_var(&method.params[0].var, &fn_context);
                 let start = native::int32::get_llvm_value_from_var(&method.params[1].var, &fn_context);
@@ -357,7 +381,6 @@ fn gen_method(
                     "memcpy"
                 );
 
-//                context.builder.build_return(Some(&convert(&native::array::instantiate_from_value(array_pointer.into(), &fn_context))));
                 context.builder.build_return(Some(&convert(&native::array::instantiate_from_value(sub_array_pointer.into(), &fn_context))));
             } else {
                 panic!("Unsupported LLVM method: {}.{}", class.name, method.name);
@@ -370,14 +393,15 @@ fn gen_method(
             let ret = gen_expr(expr, &fn_context);
             if index == (method.exprs.len() - 1) {
                 match method.return_type.get().unwrap() {
-                    tree::ExprType::Void => (),
-                    _ => { context.builder.build_return(Some(&convert(&ret))); },
+                    tree::ExprType::Void => context.builder.build_return(None),
+                    _ => context.builder.build_return(Some(&convert(&ret))),
                 };
             }
         }
     }
 
     if !function.verify(true) {
+        function.print_to_stderr();
         panic!("{}.{} is invalid.", class.name, method.name);
     }
 }
@@ -413,11 +437,15 @@ fn gen_main_func(
         Some(BasicValueEnum::IntValue(i)) => i,
         x => panic!("Expect Some(BasicValueEnum::IntValue), found {:?}", x),
     };
+    let capacity = context.context.i32_type().const_int(100, false);
     let read_args = match function.get_nth_param(1) {
         Some(BasicValueEnum::PointerValue(p)) => p,
         x => panic!("Expect Some(BasicValueEnum::PointerValue), found {:?}", x),
     };
-    let args = native::gen_malloc_dynamic_array(&context.context.i8_type().ptr_type(AddressSpace::Generic).as_basic_type_enum(), arg_count, &fn_context);
+    let args = native::gen_malloc_dynamic_array(
+        &context.context.i8_type().ptr_type(AddressSpace::Generic).as_basic_type_enum(),
+        capacity,
+        &fn_context);
 
     let run = context.builder.build_alloca(context.context.i32_type(), "run");
     context.builder.build_store(run, context.context.i32_type().const_zero());
@@ -466,7 +494,12 @@ fn gen_main_func(
 
     context.builder.position_at_end(&after_loop_block);
 
-    let args = core::array::instantiate_from_value(args.into(), core::number::instantiate_from_value(arg_count.into(), &fn_context), &fn_context);
+    let args = core::array::instantiate_from_value(
+        args.into(),
+        core::number::instantiate_from_value(arg_count.into(), &fn_context),
+        core::number::instantiate_from_value(capacity.into(), &fn_context),
+        &fn_context
+    );
 
     let llvm_ret = context.builder.build_call(
         main_func.llvm_ref.get().unwrap(),
@@ -738,7 +771,9 @@ fn gen_llvm_array(
     array: &tree::LlvmArray,
     context: &FnContext,
 ) -> Value {
-    let pointer = native::gen_malloc_array(&context.context.i8_type().ptr_type(AddressSpace::Generic).array_type(array.items.len() as u32), context);
+    let pointer = native::gen_malloc_array(
+        &context.context.i8_type().ptr_type(AddressSpace::Generic).array_type(array.capacity),
+        context);
     for (index, item) in array.items.iter().enumerate() {
         let p = unsafe {
             context.builder.build_in_bounds_gep(
@@ -956,8 +991,19 @@ fn gen_reassignment(
     context: &FnContext,
 ) -> Value {
     let expr = gen_expr(&reassignment.expr, context);
-    let var = unsafe { &*reassignment.var.assignment_ref.get().unwrap() };
-    context.builder.build_store(var.llvm_ref.get().unwrap(), convert(&expr));
+    let assignment = unsafe { &*reassignment.var.assignment_ref.get().unwrap() };
+
+    let var_ptr = if let Some(param_index) = reassignment.var.member_param_index.get() {
+        let llvm_class_instance_pointer = match context.builder.build_load(assignment.llvm_ref.get().unwrap(), "load class instance") {
+            BasicValueEnum::PointerValue(p) => p,
+            _ => panic!(),
+        };
+        unsafe { context.builder.build_struct_gep(llvm_class_instance_pointer, param_index as u32, "gep") }
+    } else {
+        assignment.llvm_ref.get().unwrap()
+    };
+
+    context.builder.build_store(var_ptr, convert(&expr));
     Value::Void
 }
 
