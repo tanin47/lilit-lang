@@ -1,0 +1,30 @@
+class Native__Void
+end
+
+class Void
+end
+
+class Native__Int
+end
+
+class Int(underlying: Native__Int)
+end
+
+class Native__String
+end
+
+class String(underlying: Native__String)
+end
+
+def native__printf(text: Native__String): Native__Void
+end
+
+def println(text: String): Void
+  native__printf(text.underlying)
+end
+
+def main: Int
+  println("Hello world!")
+  123
+end
+

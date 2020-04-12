@@ -50,5 +50,5 @@ int GC_finalizer_count = 0;
 
 void GC_finalizer(char* a, char* b) {
   GC_finalizer_count++;
-//  printf("GC freed count: %d\n", GC_finalizer_count);
+  printf("GC freed count: %d\n", GC_finalizer_count);
 }

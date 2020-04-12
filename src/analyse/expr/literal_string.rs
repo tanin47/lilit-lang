@@ -1,0 +1,78 @@
+use parse::tree::{LiteralString, NewInstance, Expr, NativeString};
+use analyse::scope::Scope;
+use std::cell::Cell;
+
+pub fn apply<'def>(
+    string: &LiteralString<'def>,
+    scope: &mut Scope<'def>,
+) {
+    string.instance.replace(Some(NewInstance {
+        name_opt: None,
+        args: vec![
+            Expr::NewInstance(Box::new(NewInstance {
+                name_opt: None,
+                args: vec![
+                    Expr::NativeString(Box::new(NativeString { value: string.span.fragment[1..(string.span.fragment.len()-1)].to_string() }))
+                ],
+                def_opt: Cell::new(Some(scope.find_class("Native__String").unwrap().parse))
+            })),
+        ],
+        def_opt: Cell::new(Some(scope.find_class("String").unwrap().parse))
+    }));
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ops::Deref;
+
+    use index::build;
+    use parse;
+    use test_common::span2;
+    use analyse::apply;
+    use std::cell::{Cell, RefCell};
+    use parse::tree::{LiteralString, Expr, NewInstance, NativeString};
+
+    #[test]
+    fn test_simple() {
+        let content = r#"
+class Void
+end
+
+class Native__String
+end
+
+class String(underlying: Native__String)
+end
+
+def main: Void
+  "test"
+end
+        "#;
+        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let root = build(&[file.deref()]);
+
+        apply(&[file.deref()], &root);
+
+        assert_eq!(
+            unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap(),
+            &Expr::String(Box::new(LiteralString {
+                span: span2(11, 3, "\"test\"", file.deref()),
+                instance: RefCell::new(Some(
+                    NewInstance {
+                        name_opt: None,
+                        args: vec![
+                            Expr::NewInstance(Box::new(NewInstance {
+                                name_opt: None,
+                                args: vec![
+                                    Expr::NativeString(Box::new(NativeString { value: "test".to_string() }))
+                                ],
+                                def_opt: Cell::new(Some(root.find_class("Native__String").unwrap().parse))
+                            })),
+                        ],
+                        def_opt: Cell::new(Some(root.find_class("String").unwrap().parse))
+                    }
+                ))
+            }))
+        )
+    }
+}

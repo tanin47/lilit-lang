@@ -1,69 +1,51 @@
-#![allow(warnings)]
 
-use std::cell::RefCell;
+extern crate lilit;
+extern crate inkwell;
+
+use lilit::{analyse, emit, index, parse};
 use std::env;
 use std::fs::File;
-use std::path::Path;
-use std::io::prelude::*;
-use std::collections::HashMap;
-
-extern crate inkwell;
-extern crate serde_json;
-
-use inkwell::OptimizationLevel;
-use inkwell::builder::Builder;
-use inkwell::context::Context;
-use inkwell::execution_engine::ExecutionEngine;
-use inkwell::module::Module;
-use inkwell::values::{FunctionValue, BasicValue, IntValue};
-use inkwell::basic_block::BasicBlock;
+use std::io::Read;
+use std::ops::Deref;
 use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
+use inkwell::OptimizationLevel;
+use std::path::Path;
 
-mod syntax;
-mod semantics;
-mod llvmgen;
 
 fn main() {
-    println!("Lilit 0.0.1\n");
+    println!("Lilit 0.1.0\n");
     let args: Vec<String> = env::args().collect();
     let mut file = File::open(&args[1]).expect("file not found");
 
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)
+    let mut content = String::new();
+    file.read_to_string(&mut content)
         .expect("something went wrong reading the file");
 
-    let tree = syntax::ModParser::new().parse(&contents);
+    compile(&content, &args[1]);
+}
+
+fn compile(content: &str, path: &str) {
+    let file = parse::apply(content.trim(), path).unwrap();
 
     println!("---- Code ----");
-    println!("{}\n", contents);
+    println!("{}\n", content);
 
+    let root = index::build(&[file.deref()]);
 
-    println!("{:?}\n", tree);
+    analyse::apply(&[file.deref()], &root);
 
-    if let Ok(ref _ok_tree) = tree {
-        let mut root = Box::new(semantics::analyse(_ok_tree));
-        println!("{:?}\n", root);
+    let module = emit::apply(&[file.deref()]);
 
-        Target::initialize_native(&InitializationConfig::default()).unwrap();
+    Target::initialize_native(&InitializationConfig::default()).unwrap();
 
-        let context = Context::create();
-        let builder = context.create_builder();
+    let triple = TargetMachine::get_default_triple().to_string();
+    let target = Target::from_triple(&triple).unwrap();
+    let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::None, RelocMode::Default, CodeModel::Default).unwrap();
 
-        println!("Start generating LLVM IR...");
-        let module = llvmgen::generate(&root, &context, &builder);
-        println!("Finished");
-        module.print_to_stderr();
+    let output_path = Path::new("./output/main.o");
+    println!("Write LLVM IR to {}", output_path.display());
 
-        let triple = TargetMachine::get_default_triple().to_string();
-        let target = Target::from_triple(&triple).unwrap();
-        let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::None, RelocMode::Default, CodeModel::Default).unwrap();
-
-        let path =  Path::new("./output/main.o");
-        println!("Write LLVM IR to main.o");
-        let result = target_machine.write_to_file(&module, FileType::Object, &path);
-         // This is an object file. In order to run it as a binary,
-         // we need to link it using `cc output.o -o output`.
-         // Now you can run `./output`.
-    }
+    target_machine.write_to_file(&module, FileType::Object, &output_path).unwrap();
+    println!("Please run `cc ./output/main.o -o main` and `./main`");
 }
 
