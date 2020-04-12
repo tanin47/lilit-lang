@@ -21,11 +21,11 @@ fn main() {
     file.read_to_string(&mut content)
         .expect("something went wrong reading the file");
 
-    compile(&content, &args[1]);
+    compile(content.trim(), &args[1]);
 }
 
 fn compile(content: &str, path: &str) {
-    let file = parse::apply(content.trim(), path).unwrap();
+    let file = parse::apply(content, path).unwrap();
 
     println!("---- Code ----");
     println!("{}\n", content);
@@ -43,9 +43,8 @@ fn compile(content: &str, path: &str) {
     let target_machine = target.create_target_machine(&triple, "generic", "", OptimizationLevel::None, RelocMode::Default, CodeModel::Default).unwrap();
 
     let output_path = Path::new("./output/main.o");
-    println!("Write LLVM IR to {}", output_path.display());
 
+    println!("Write LLVM object to {}", output_path.display());
     target_machine.write_to_file(&module, FileType::Object, &output_path).unwrap();
-    println!("Please run `cc ./output/main.o -o main` and `./main`");
 }
 

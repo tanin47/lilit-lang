@@ -33,7 +33,6 @@ impl ExprEmitter for Emitter<'_> {
             Expr::Identifier(i) => self.apply_identifier(i),
             Expr::MemberAccess(i) => self.apply_member_access(i),
             Expr::Invoke(i) => self.apply_invoke(i),
-            other => panic!("Unrecognized expr: {:#?}", other),
         }
     }
 }

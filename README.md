@@ -1,10 +1,17 @@
 Lilit
 =======
 
-Lilit is a typed and terse programming language that compiles to a single executable.
+Lilit is a high-level general-purpose programming language.
 
-While Lilit is a general-purpose programming language, Lilit aims to be ideal for building low-performant command-line tools.
+```
+def main(args: Array[String]): Void
+  println("Hello Lilit!")
+end
+```
 
+It aims to be ideal for building low-performant command-line tools.
+
+Please follow our progress [here](./PROGRESS.md).
 
 Principles
 -----------
@@ -15,7 +22,7 @@ A statically typed language, as codebase grows bigger, is more maintainable than
 
 ### Terse
 
-We aim be at the highest level of abstraction and, thus, reduce the amount of detail programmers need to code.
+We aim be at the highest level of abstraction and reduce the amount of detail programmers need to think and code.
 
 Some features that Lilit offers:
 
@@ -26,43 +33,75 @@ Some features that Lilit offers:
 Features
 ---------
 
-* Compile to a target CPU (ideal for deploying a command-line tool)
-* No null; only optional type
-* Complex type system (e.g. strongly generic, multiple inheritance)
-* Tree shaking (removing unused methods and, thus, reducing the size of the binary)
-* Limited metaprogramming
+* Compile to a single executable binary
+* Automatic garbage collection
+* Complex type system (e.g. generic, multiple inheritance, no null)
+* Limited metaprogramming (e.g. type-safe monkey patching)
 
 
-Write your first Lilit
-------------------------
-
-```
-val name = "world"
-print s"Hello $name"
-
-if name == "world"
-  print "This is not a person"
-end
-
-val car = Some("Subaru")
-
-car.isDefined
-
-class Test extends Base, Animal
-  def init
-
-  end
-end
-```
-
-
-Build
+Run
 ------
 
-1. Compile using `cargo run examples/native.lilit`.
-2. Compile native code: `llc-6.0 -filetype=obj native/lib.ll`.
-3. Link it using ` cc native/lib.o output/main.o ~/projects/bdwgc/.libs/libgc.so -I ~/projects/bdwgc/include/ -no-pie -o main`.
-4. Run `./main`.
+Try `./run.sh`
+
+Example:
+
+```
+$ cargo run examples/printf.lilit
+    Finished dev [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target/debug/lilit examples/printf.lilit`
+Lilit 0.1.0
+
+---- Code ----
+class Native__Void
+  // No implementation.
+end
+
+class Native__Int
+  // No implementation. This class represents i64 in LLVM.
+end
+
+class Native__String
+  // No implementation. This class represents i8* in LLVM.
+end
+
+def native__printf(text: Native__String): Native__Void
+  // No implementation. The body is automatically built to invoke printf(..).
+end
+
+class Void
+end
+
+class Int(underlying: Native__Int)
+end
+
+class String(underlying: Native__String)
+end
+
+def println(text: String): Void
+  native__printf(text.underlying)
+end
+
+def main: Int
+  println("Hello world!")
+  123
+end
+
+Write LLVM object to ./output/main.o
+
+$ clang -S -emit-llvm /home/tanin/projects/bdwgc/.libs/libgc.so -I /home/tanin/projects/bdwgc/include/ -o native/lib.ll native/lib.c
+clang: warning: /home/tanin/projects/bdwgc/.libs/libgc.so: 'linker' input unused [-Wunused-command-line-argument]
+
+$ llc-6.0 -filetype=obj native/lib.ll
+
+$ cc native/lib.o output/main.o /home/tanin/projects/bdwgc/.libs/libgc.so -I /home/tanin/projects/bdwgc/include/ -o main -no-pie
+
+$ ./main
+Hello world!
+
+$ echo $?
+123
+```
 
 Technical detail
 -----------------

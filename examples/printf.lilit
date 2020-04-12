@@ -1,0 +1,34 @@
+class Native__Void
+  // No implementation.
+end
+
+class Native__Int
+  // No implementation. This class represents i64 in LLVM.
+end
+
+class Native__String
+  // No implementation. This class represents i8* in LLVM.
+end
+
+def native__printf(text: Native__String): Native__Void
+  // No implementation. The body is automatically built to invoke printf(..).
+end
+
+class Void
+end
+
+class Int(underlying: Native__Int)
+end
+
+class String(underlying: Native__String)
+end
+
+def println(text: String): Void
+  native__printf(text.underlying)
+end
+
+def main: Int
+  println("Hello world!")
+  123
+end
+
