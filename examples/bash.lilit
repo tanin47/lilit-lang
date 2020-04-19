@@ -1,9 +1,6 @@
 class Native__Void
 end
 
-class Native__PointerInt
-end
-
 class Native__Int
 end
 
@@ -22,16 +19,16 @@ end
 def native__vprintf(text: Native__String, args...: Native__Any): Native__Void
 end
 
-class NativeStruct__Process(pid: Native__Int, in: Native__Int, out: Native__Int, err: Native__Int)
+class Native__Struct__Process(pid: Native__Int, in: Native__Int, out: Native__Int, err: Native__Int)
 end
 
-def native__lilit_exec(cmd: Native__String): Struct__Process
+def native__lilit_exec(cmd: Native__String): Native__Struct__Process
 end
 
-def native__write(in: Native__Int, c: Native__Char): Native__Void
+def native__lilit_write(in: Native__Int, c: Native__Char): Native__Void
 end
 
-def native__read(out: Native__Int): Native__Char
+def native__lilit_read(out: Native__Int): Native__Char
 end
 
 def native__lilit_wait(pid: Native__Int): Native__Int
@@ -49,16 +46,15 @@ end
 class Char(underlying: Native__Char)
 end
 
-class Any
-end
-
 class ReadPipe(pipe: Native__Int)
   def read(): Char
+    Char(native__lilit_read(pipe))
   end
 end
 
 class WritePipe(pipe: Native__Int)
-  def write(c: Char): Char
+  def write(c: Char): Void
+    native__lilit_write(pipe, c)
   end
 end
 
@@ -68,29 +64,40 @@ class Process(pid: Int, in: WritePipe, out: ReadPipe, err: ReadPipe)
   end
 
   def read(): Char
-    Char(native__read(out))
+    out.read()
   end
 
   def write(c: Char): Void
-    native__write(in, c)
+    in.write(c)
   end
 end
 
 class Exec(cmd: String)
   def start(): Process
-    val process = native__lilit_exec(cmd.underlying)
+    process = native__lilit_exec(cmd.underlying)
     Process(process.pid, WritePipe(process.in), ReadPipe(process.out), ReadPipe(process.err))
   end
 end
 
-def main: Int
-  native__printf("before".underlying)
-  val proc = Exec("ls").start()
-  proc.write('c')
-  proc.read()
-  proc.write('b')
-  native__printf("Exit %d", proc.wait().underlying)
-  native__printf("after".underlying)
+def main(): Int
+  native__vprintf("Start\n".underlying)
+  process = native__lilit_exec("ls".underlying)
+  native__lilit_write(process.in, 'c'.underlying)
+  native__vprintf("Read from %d\n".underlying, process.out)
+  native__vprintf("Read %c\n".underlying, native__lilit_read(process.out))
+  native__lilit_write(process.in, 'b'.underlying)
+  native__vprintf("Done\n".underlying)
   0
 end
+
+//def main(): Int
+//  native__vprintf("before".underlying)
+//  proc = Exec("ls").start()
+//  proc.write('c')
+//  proc.read()
+//  proc.write('b')
+//  native__vprintf("Exit %d".underlying, proc.wait().underlying)
+//  native__vprintf("after".underlying)
+//  0
+//end
 

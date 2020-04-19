@@ -22,8 +22,8 @@ fn parse_tail<'def, 'r>(
     if let Ok((input, _)) = symbol('.')(input) {
         let (input, name) = identifier::parse_span(input)?;
 
-        return if let Ok((input, invoke)) = invoke::parse_tail(name, input) {
-            Ok((
+        let (input, expr) = if let Ok((input, invoke)) = invoke::parse_tail(name, input) {
+            (
                 input,
                 Expr::Invoke(Box::new(
                     Invoke {
@@ -33,17 +33,19 @@ fn parse_tail<'def, 'r>(
                         def_opt: Cell::new(None),
                     }
                 ))
-            ))
+            )
         } else {
-            Ok((
+            (
                 input,
                 Expr::MemberAccess(Box::new(MemberAccess {
                     parent: left,
                     name,
                     def_opt: Cell::new(None)
                 }))
-            ))
-        }
+            )
+        };
+
+        return parse_tail(expr, input);
     }
 
     Ok((input, left))
