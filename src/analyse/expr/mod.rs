@@ -1,6 +1,7 @@
 use parse::tree::Expr;
 use analyse::scope::Scope;
 
+pub mod assignment;
 pub mod identifier;
 pub mod int;
 pub mod invoke;
@@ -21,6 +22,7 @@ pub fn apply<'def>(
         Expr::Identifier(e) => identifier::apply(e, scope),
         Expr::MemberAccess(e) => member_access::apply(e, scope),
         Expr::NewInstance(e) => new_instance::apply(e, scope),
+        Expr::Assignment(e) => assignment::apply(e, scope),
         other => panic!("Unsupported expr {:#?}", other),
     }
 }

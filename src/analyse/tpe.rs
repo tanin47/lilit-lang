@@ -16,7 +16,7 @@ pub trait GetType<'def> {
 impl <'def> GetType<'def> for Expr<'def> {
     fn get_type(&self, scope: &Scope<'def>) -> &Class<'def> {
         match self {
-            Expr::Identifier(i) => unsafe { &*(&*i.def_opt.get().unwrap()).tpe.def_opt.get().unwrap() },
+            Expr::Identifier(i) => unsafe { &*i.def_opt.get().unwrap().get_type() },
             Expr::MemberAccess(i) => unsafe { &*(&*i.def_opt.get().unwrap()).tpe.def_opt.get().unwrap() },
             Expr::NewInstance(i) => unsafe { &*i.def_opt.get().unwrap() },
             Expr::Int(i) => unsafe { &*scope.find_class("Int").unwrap().parse },
@@ -26,6 +26,7 @@ impl <'def> GetType<'def> for Expr<'def> {
             Expr::NativeString(i) => unsafe { &*scope.find_class("Native__String").unwrap().parse },
             Expr::NativeChar(i) => unsafe { &*scope.find_class("Native__Char").unwrap().parse },
             Expr::Invoke(i) => unsafe { &*(&*i.def_opt.get().unwrap()).return_type.def_opt.get().unwrap() },
+            Expr::Assignment(i) => unsafe { &*i.tpe.get().unwrap() },
         }
     }
 }

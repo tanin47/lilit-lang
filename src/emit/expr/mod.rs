@@ -10,7 +10,9 @@ use emit::expr::native_string::NativeStringEmitter;
 use emit::expr::invoke::InvokeEmitter;
 use emit::expr::literal_char::LiteralCharEmitter;
 use emit::expr::native_char::NativeCharEmitter;
+use emit::expr::assignment::AssignmentEmitter;
 
+pub mod assignment;
 pub mod identifier;
 pub mod int;
 pub mod invoke;
@@ -29,6 +31,7 @@ pub trait ExprEmitter {
 impl ExprEmitter for Emitter<'_> {
     fn apply_expr<'def>(&self, expr: &Expr<'def>) -> Value<'def> {
         match expr {
+            Expr::Assignment(i) => self.apply_assignment(i),
             Expr::Char(i) => self.apply_literal_char(i),
             Expr::Identifier(i) => self.apply_identifier(i),
             Expr::Int(i) => self.apply_int(i),

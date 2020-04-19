@@ -1,6 +1,9 @@
 use tokenize::span::Span;
 use tokenize::token::Token;
 use {tokenize, LilitFile};
+use parse::tree::{NewInstance, Expr, NativeInt};
+use std::cell::Cell;
+use index;
 
 pub fn span(line: usize, col: usize, fragment: &str) -> Span {
     span2(line, col, fragment, std::ptr::null())
@@ -24,6 +27,22 @@ pub fn generate_tokens(fragment: &str) -> Vec<Token> {
     tokenize::apply(fragment.trim(), std::ptr::null())
         .ok()
         .unwrap()
+}
+
+pub fn make_int_instance<'def>(value: i64, root: &index::tree::Root<'def>) -> NewInstance<'def> {
+    NewInstance {
+        name_opt: None,
+        args: vec![
+            Expr::NewInstance(Box::new(NewInstance {
+                name_opt: None,
+                args: vec![
+                    Expr::NativeInt(Box::new(NativeInt { value }))
+                ],
+                def_opt: Cell::new(Some(root.find_class("Native__Int").unwrap().parse))
+            })),
+        ],
+        def_opt: Cell::new(Some(root.find_class("Int").unwrap().parse))
+    }
 }
 
 // pub fn primitive(line: usize, col: usize, name: &str) -> Type {

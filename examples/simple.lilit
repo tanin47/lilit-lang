@@ -1,0 +1,10 @@
+class Native__Int
+end
+
+class Int(underlying: Native__Int)
+end
+
+def main(): Int
+  a = 23
+  a
+end

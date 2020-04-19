@@ -67,6 +67,7 @@ pub struct Type<'a> {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expr<'a> {
+    Assignment(Box<Assignment<'a>>),
     Char(Box<Char<'a>>),
     Identifier(Box<Identifier<'a>>),
     Int(Box<Int<'a>>),
@@ -80,9 +81,32 @@ pub enum Expr<'a> {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct Assignment<'a> {
+    pub name: Span<'a>,
+    pub expr: Box<Expr<'a>>,
+    pub tpe: Cell<Option<*const Class<'a>>>,
+    pub llvm: Cell<Option<PointerValue>>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Identifier<'a> {
     pub name: Span<'a>,
-    pub def_opt: Cell<Option<* const Param<'a>>>
+    pub def_opt: Cell<Option<IdentifierSource<'a>>>
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum IdentifierSource<'a> {
+    Assignment(*const Assignment<'a>),
+    Param(*const Param<'a>),
+}
+
+impl <'a> IdentifierSource<'a> {
+    pub fn get_type(&self) -> * const Class<'a> {
+        match self {
+            IdentifierSource::Assignment(a) => unsafe { &*(&**a) .tpe.get().unwrap() },
+            IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.def_opt.get().unwrap() }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
