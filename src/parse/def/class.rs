@@ -25,7 +25,8 @@ pub fn parse_tail<'def, 'r>(
         name,
         params: params.unwrap_or(vec![]),
         methods,
-        llvm: Cell::new(None)
+        llvm: Cell::new(None),
+        llvm_native: Cell::new(None),
     }))
 }
 

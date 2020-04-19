@@ -5,11 +5,37 @@ target triple = "x86_64-pc-linux-gnu"
 
 %struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i64, i32, [20 x i8] }
 %struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
+%struct.Test = type { i32, i8* }
 
+@.str = private unnamed_addr constant [4 x i8] c"abc\00", align 1
 @stdin = external global %struct._IO_FILE*, align 8
-@.str = private unnamed_addr constant [2 x i8] c"r\00", align 1
+@.str.1 = private unnamed_addr constant [2 x i8] c"r\00", align 1
 @GC_finalizer_count = global i32 0, align 4
-@.str.1 = private unnamed_addr constant [20 x i8] c"GC freed count: %d\0A\00", align 1
+@.str.2 = private unnamed_addr constant [20 x i8] c"GC freed count: %d\0A\00", align 1
+
+; Function Attrs: noinline nounwind optnone uwtable
+define %struct.Test* @test_call() #0 {
+  %1 = alloca %struct.Test*, align 8
+  %2 = alloca i8*, align 8
+  %3 = call noalias i8* @GC_malloc(i64 16) #5
+  %4 = bitcast i8* %3 to %struct.Test*
+  store %struct.Test* %4, %struct.Test** %1, align 8
+  %5 = call noalias i8* @GC_malloc(i64 4) #5
+  store i8* %5, i8** %2, align 8
+  store i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8** %2, align 8
+  %6 = load %struct.Test*, %struct.Test** %1, align 8
+  %7 = getelementptr inbounds %struct.Test, %struct.Test* %6, i32 0, i32 0
+  store i32 34, i32* %7, align 8
+  %8 = load i8*, i8** %2, align 8
+  %9 = load %struct.Test*, %struct.Test** %1, align 8
+  %10 = getelementptr inbounds %struct.Test, %struct.Test* %9, i32 0, i32 1
+  store i8* %8, i8** %10, align 8
+  %11 = load %struct.Test*, %struct.Test** %1, align 8
+  ret %struct.Test* %11
+}
+
+; Function Attrs: allocsize(0)
+declare noalias i8* @GC_malloc(i64) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define i8* @lilit__read() #0 {
@@ -108,9 +134,6 @@ define i8* @lilit__read() #0 {
   ret i8* %64
 }
 
-; Function Attrs: allocsize(0)
-declare noalias i8* @GC_malloc(i64) #1
-
 declare i8* @fgets(i8*, i32, %struct._IO_FILE*) #2
 
 ; Function Attrs: nounwind readonly
@@ -131,7 +154,7 @@ define i8* @lilit__read_file(i8*) #0 {
   %9 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
   %10 = load i8*, i8** %2, align 8
-  %11 = call %struct._IO_FILE* @fopen(i8* %10, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str, i32 0, i32 0))
+  %11 = call %struct._IO_FILE* @fopen(i8* %10, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.1, i32 0, i32 0))
   store %struct._IO_FILE* %11, %struct._IO_FILE** %3, align 8
   store i32 11, i32* %4, align 4
   %12 = load i32, i32* %4, align 4
@@ -196,7 +219,7 @@ define void @GC_finalizer(i8*, i8*) #0 {
   %6 = add nsw i32 %5, 1
   store i32 %6, i32* @GC_finalizer_count, align 4
   %7 = load i32, i32* @GC_finalizer_count, align 4
-  %8 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([20 x i8], [20 x i8]* @.str.1, i32 0, i32 0), i32 %7)
+  %8 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([20 x i8], [20 x i8]* @.str.2, i32 0, i32 0), i32 %7)
   ret void
 }
 

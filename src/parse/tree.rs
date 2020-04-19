@@ -20,7 +20,8 @@ pub struct Class<'a> {
     pub name: Span<'a>,
     pub params: Vec<Param<'a>>,
     pub methods: Vec<Method<'a>>,
-    pub llvm: Cell<Option<StructType>>
+    pub llvm: Cell<Option<StructType>>,
+    pub llvm_native: Cell<Option<StructType>>
 }
 
 #[derive(Debug, PartialEq, Clone)]

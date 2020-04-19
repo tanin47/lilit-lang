@@ -83,19 +83,13 @@ impl InvokeEmitter for Emitter<'_> {
             &method.name.fragment);
 
         let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
-        let value = match return_type_class.name.fragment {
-            "Native__Int" => Value::Int(unwrap!(BasicValueEnum::IntValue, llvm_ret.try_as_basic_value().left().unwrap())),
-            "Native__Char" => Value::Char(unwrap!(BasicValueEnum::IntValue, llvm_ret.try_as_basic_value().left().unwrap())),
-            "Native__String" => Value::String(unwrap!(BasicValueEnum::PointerValue, llvm_ret.try_as_basic_value().left().unwrap())),
-            "Native__Void" => Value::Void,
-            other => panic!("Unsupported {}", other),
-        };
+        let value = self.to_value(llvm_ret.try_as_basic_value().left().unwrap(), return_type_class);
 
         // Lift value to a class
         if Value::Void == value {
             Value::Void
         } else {
-            Value::Class(self.convert(&value, return_type_class), return_type_class)
+            Value::Class(self.wrap_with_class(&value, return_type_class), return_type_class)
         }
     }
 }

@@ -1,4 +1,4 @@
-use inkwell::types::{StructType, FunctionType, ArrayType};
+use inkwell::types::{StructType, FunctionType, ArrayType, BasicTypeEnum};
 use inkwell::values::{PointerValue, FunctionValue, BasicValueEnum};
 use emit::{Emitter, Value};
 use inkwell::AddressSpace;
@@ -11,11 +11,13 @@ pub trait Helper {
     fn malloc_array(&self, array_type: &ArrayType) -> PointerValue;
     fn malloc(&self, struct_type: &StructType) -> PointerValue;
     fn get_external_func(&self, name: &str, tpe: FunctionType) -> FunctionValue;
-    fn convert<'def>(&self, value: &Value<'def>, expected_class: &Class<'def>) -> PointerValue;
+    fn wrap_with_class<'def>(&self, value: &Value<'def>, expected_class: &Class<'def>) -> PointerValue;
+    fn to_value<'def>(&self, value: BasicValueEnum, class: &Class<'def>) -> Value<'def>;
     fn gc_init(&self);
     fn gc_collect(&self);
     fn gc_register_finalizer(&self, ptr: PointerValue);
     fn read_ptr<'def>(&self, alloca_ptr: PointerValue, class: &Class<'def>) -> Value<'def>;
+    fn get_type_for_native(&self, class: &Class) -> BasicTypeEnum;
 }
 
 impl Helper for Emitter<'_> {
@@ -63,7 +65,7 @@ impl Helper for Emitter<'_> {
         }
     }
 
-    fn convert<'def>(&self, value: &Value<'def>, expected_class: &Class<'def>) -> PointerValue {
+    fn wrap_with_class<'def>(&self, value: &Value<'def>, expected_class: &Class<'def>) -> PointerValue {
         match value {
             Value::Char(i) => {
                 assert_eq!("Native__Char", expected_class.name.fragment);
@@ -93,7 +95,28 @@ impl Helper for Emitter<'_> {
                     self.builder.build_struct_gep(instance, 0 as u32, format!("Gep for the native param of the class {}", expected_class.name.fragment).as_ref())
                 };
                 self.builder.build_store(param_ptr, BasicValueEnum::PointerValue(*i));
-               instance
+                instance
+            },
+            Value::Struct(struct_ptr, class) => {
+                let struct_ptr = *struct_ptr;
+                let class = unsafe { &**class };
+                assert_eq!(expected_class.name.fragment, class.name.fragment);
+
+                let instance = self.malloc(&class.llvm.get().unwrap());
+
+                for (index, param) in class.params.iter().enumerate() {
+                    let struct_field_ptr = unsafe {
+                        self.builder.build_struct_gep(struct_ptr, index as u32, format!("Gep for the native param {} of the class {}", index, expected_class.name.fragment).as_ref())
+                    };
+                    let struct_field_value = self.builder.build_load(struct_field_ptr, &format!("Load struct field {}", index));
+                    let param_ptr = unsafe {
+                        self.builder.build_struct_gep(instance, index as u32, format!("Gep for the param {} of the class {}", index, expected_class.name.fragment).as_ref())
+                    };
+                    let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
+                    println!("{:#?}", param_ptr);
+                    self.builder.build_store(param_ptr, self.wrap_with_class(&self.to_value(struct_field_value, param_class), param_class));
+                }
+                instance
             },
             Value::Class(ptr, class) => {
                 let class = unsafe { &**class };
@@ -101,6 +124,17 @@ impl Helper for Emitter<'_> {
                 *ptr
             },
             Value::Void => panic!(),
+        }
+    }
+
+    fn to_value<'def>(&self, value: BasicValueEnum, class: &Class<'def>) -> Value<'def> {
+        match class.name.fragment {
+            "Native__Int" => Value::Int(unwrap!(BasicValueEnum::IntValue, value)),
+            "Native__Char" => Value::Char(unwrap!(BasicValueEnum::IntValue, value)),
+            "Native__String" => Value::String(unwrap!(BasicValueEnum::PointerValue, value)),
+            "Native__Void" => Value::Void,
+            other if other.starts_with("Native__Struct__") => Value::Struct(unwrap!(BasicValueEnum::PointerValue, value), class),
+            other => panic!("Unsupported {}", other),
         }
     }
 
@@ -166,5 +200,14 @@ impl Helper for Emitter<'_> {
         );
 
         Value::Class(unwrap!(BasicValueEnum::PointerValue, value), class)
+    }
+
+    fn get_type_for_native(&self, class: &Class) -> BasicTypeEnum {
+        match class.name.fragment {
+            "Native__Int" => self.context.i64_type().into(),
+            "Native__String" => self.context.i8_type().ptr_type(AddressSpace::Generic).into(),
+            "Native__Char" => self.context.i8_type().into(),
+            other => panic!("Unrecognized {}", other),
+        }
     }
 }

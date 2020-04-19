@@ -2,6 +2,20 @@
 #include <string.h>
 #include <gc.h>
 
+struct Test {
+  int a;
+  char *b;
+};
+
+struct Test* test_call() {
+  struct Test* t = GC_malloc(sizeof(struct Test));
+  char *s = GC_malloc(sizeof(char)*4);
+  s = "abc";
+  t->a = 34;
+  t->b = s;
+  return t;
+}
+
 char* lilit__read() {
   int block_size = 3;
   int size = block_size;

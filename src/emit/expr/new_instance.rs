@@ -21,9 +21,10 @@ impl NewInstanceEmitter for Emitter<'_> {
     }
 
     fn alloc_new_instance<'def>(&self, class: &Class<'def>, args: Vec<Value<'def>>) -> PointerValue {
-        let instance = self.malloc(&class.llvm.get().unwrap());
+        let instance;
 
-        if class.name.fragment == "Native__Int" || class.name.fragment == "Native__String" || class.name.fragment == "Native__Char" {
+        if let Some(llvm_native) = class.llvm_native.get() {
+            instance = self.malloc(&llvm_native);
             let native_value_ptr = unsafe {
                 self.builder.build_struct_gep(instance, 0, format!("Gep for the native value of the class {}", class.name.fragment).as_ref())
             };
@@ -38,6 +39,7 @@ impl NewInstanceEmitter for Emitter<'_> {
                 }
             );
         } else {
+            instance = self.malloc(&class.llvm.get().unwrap());
             for (index, (param, arg)) in class.params.iter().zip(args.iter()).enumerate() {
                 let expected_value_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
 
@@ -45,7 +47,7 @@ impl NewInstanceEmitter for Emitter<'_> {
                     self.builder.build_struct_gep(instance, index as u32, format!("Gep for the field #{} of the class {}", index, class.name.fragment).as_ref())
                 };
 
-                self.builder.build_store(param_ptr, self.convert(&arg, expected_value_class));
+                self.builder.build_store(param_ptr, self.wrap_with_class(&arg, expected_value_class));
             }
         }
 

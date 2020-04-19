@@ -1,0 +1,32 @@
+class Void
+end
+
+class Native__Int
+end
+
+class Native__String
+end
+
+class Native__Any
+end
+
+class Int(underlying: Native__Int)
+end
+
+class String(underlying: Native__String)
+end
+
+class Native__Struct__Test(a: Native__Int, b: Native__String)
+end
+
+def native__test_call(): Native__Struct__Test
+end
+
+def native__vprintf(text: Native__String, args...: Native__Any): Native__Int
+end
+
+def main(): Int
+  t = native__test_call()
+  native__vprintf("Hello %d %s".underlying, t.a, t.b)
+  3
+end

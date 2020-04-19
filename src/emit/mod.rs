@@ -26,6 +26,7 @@ pub enum Value<'def> {
     Char(IntValue),
     Int(IntValue),
     String(PointerValue),
+    Struct(PointerValue, *const Class<'def>),
     Class(PointerValue, *const Class<'def>),
 }
 

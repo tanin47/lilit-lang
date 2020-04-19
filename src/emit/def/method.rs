@@ -52,18 +52,15 @@ impl EmitterMethod for Emitter<'_> {
             param.llvm.set(Some(alloca_ptr));
         }
 
-        let mut last_ret: Option<Value> = None;
         for (index, expr) in method.exprs.iter().enumerate() {
             let ret = self.apply_expr(expr);
             if index == (method.exprs.len() - 1) {
-                last_ret = Some(ret);
+                match return_type_class.name.fragment {
+                    "Void" => self.builder.build_return(None),
+                    _ => self.builder.build_return(Some(&self.wrap_with_class(&ret, return_type_class)))
+                };
             }
         }
-
-        match return_type_class.name.fragment {
-            "Void" => self.builder.build_return(None),
-            _ => self.builder.build_return(Some(&self.convert(&last_ret.unwrap(), return_type_class)))
-        };
 
         if !llvm_method.verify(true) {
             llvm_method.print_to_stderr();
@@ -81,20 +78,17 @@ impl EmitterMethod for Emitter<'_> {
             if param.is_varargs { continue; }
 
             let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
-            param_types.push(match param_class.name.fragment {
-                "Native__Int" => self.context.i64_type().into(),
-                "Native__String" => self.context.i8_type().ptr_type(AddressSpace::Generic).into(),
-                "Native__Char" => BasicTypeEnum::IntType(self.context.i8_type()),
-                other => panic!("Unrecognized {}", other),
-            });
+            param_types.push(self.get_type_for_native(param_class));
         }
 
         let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let is_varargs = method.params.last().map(|p|p.is_varargs).unwrap_or(false);
         let llvm_fn_type = match return_type_class.name.fragment {
-            "Native__Void" => self.context.void_type().fn_type(&param_types, method.params.last().unwrap().is_varargs),
-            "Native__Int" => self.context.i64_type().fn_type(&param_types, method.params.last().unwrap().is_varargs),
-            "Native__Char" => self.context.i8_type().fn_type(&param_types, method.params.last().unwrap().is_varargs),
-            "Native__String" => self.context.i8_type().ptr_type(AddressSpace::Generic).fn_type(&param_types, method.params.last().unwrap().is_varargs),
+            "Native__Void" => self.context.void_type().fn_type(&param_types, is_varargs),
+            "Native__Int" => self.context.i64_type().fn_type(&param_types, is_varargs),
+            "Native__Char" => self.context.i8_type().fn_type(&param_types, is_varargs),
+            "Native__String" => self.context.i8_type().ptr_type(AddressSpace::Generic).fn_type(&param_types, is_varargs),
+            other if other.starts_with("Native__Struct") => return_type_class.llvm_native.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, is_varargs),
             other => panic!("Unsupported {}", other)
         };
 
@@ -144,6 +138,7 @@ impl EmitterMethod for Emitter<'_> {
                 "Native__Void" => self.context.void_type().fn_type(&native_params, false),
                 "Native__Int" => self.context.i64_type().fn_type(&native_params, false),
                 "Native__Char" => self.context.i8_type().fn_type(&native_params, false),
+                other if other.starts_with("Native__Struct") => return_type_class.llvm_native.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&native_params, false),
                 other => panic!("Unrecognized {}", other),
             }
         );
@@ -187,6 +182,7 @@ impl EmitterMethod for Emitter<'_> {
             &[],
             &method.name.fragment);
 
+        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
         let ret_ptr = unwrap!(BasicValueEnum::PointerValue, llvm_ret.try_as_basic_value().left().unwrap());
         let first_arg_ptr = unsafe { self.builder.build_struct_gep(ret_ptr, 0, "Gep for the first param of Int") };
         let native_int = unwrap!(BasicValueEnum::PointerValue, self.builder.build_load(first_arg_ptr, "Load the first param of Int"));
