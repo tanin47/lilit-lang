@@ -8,6 +8,6 @@ pub trait IntEmitter {
 
 impl IntEmitter for Emitter<'_> {
     fn apply_int<'def>(&self, int: &Int<'def>) -> Value<'def> {
-        self.apply_new_instance(int.instance.borrow().as_ref().unwrap())
+        self.apply_new_instance(int.instance.as_ref().unwrap())
     }
 }

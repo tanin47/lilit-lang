@@ -27,7 +27,7 @@ fn parse_assignment<'def, 'r>(
         Expr::Assignment(Box::from(Assignment {
             name,
             expr: Box::new(expr),
-            tpe: Cell::new(None),
+            tpe: None,
             llvm: Cell::new(None),
         }))
     ))

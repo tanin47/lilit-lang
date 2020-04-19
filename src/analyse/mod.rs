@@ -107,8 +107,8 @@ end
                         name: span2(4, 5, "test", file.deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: Some(span2(4, 13, "Number", file.deref())), class_def: Cell::new(Some(root.find_class("Number"))) },
-                        parent_class: Cell::new(None),
+                        return_type: Type { span: Some(span2(4, 13, "Number", file.deref())), class_def: Some(root.find_class("Number")) },
+                        parent_class: None,
                         llvm: Cell::new(None)
                     }),
                     CompilationUnitItem::Method(Method {
@@ -119,11 +119,11 @@ end
                                 invoker_opt: None,
                                 name: span2(8, 3, "test", file.deref()),
                                 args: vec![],
-                                method_def: Cell::new(Some(root.find_method("test")))
+                                method_def: Some(root.find_method("test")),
                             }))
                         ],
-                        return_type: Type { span: Some(span2(7, 13, "Number", file.deref())), class_def: Cell::new(Some(root.find_class("Number"))) },
-                        parent_class: Cell::new(None),
+                        return_type: Type { span: Some(span2(7, 13, "Number", file.deref())), class_def: Some(root.find_class("Number")) },
+                        parent_class: None,
                         llvm: Cell::new(None)
                     }),
                 ]

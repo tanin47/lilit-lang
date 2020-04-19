@@ -12,7 +12,7 @@ pub trait AssignmentEmitter {
 
 impl AssignmentEmitter for Emitter<'_> {
     fn apply_assignment<'def>(&self, assignment: &Assignment<'def>) -> Value<'def> {
-        let class = unsafe { &*assignment.tpe.get().unwrap() };
+        let class = unsafe { &*assignment.tpe.unwrap() };
         let ptr = self.builder.build_alloca(class.llvm.get().unwrap().ptr_type(AddressSpace::Generic), "alloca assignment");
 
         assignment.llvm.set(Some(ptr));

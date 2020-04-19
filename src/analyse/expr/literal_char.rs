@@ -4,10 +4,10 @@ use std::cell::Cell;
 use tokenize::span::CharAt;
 
 pub fn apply<'def>(
-    char: &Char<'def>,
+    char: &mut Char<'def>,
     scope: &mut Scope<'def>,
 ) {
-    char.instance.replace(Some(NewInstance {
+    char.instance = Some(Box::new(NewInstance {
         name_opt: None,
         args: vec![
             Expr::NewInstance(Box::new(NewInstance {
@@ -15,10 +15,10 @@ pub fn apply<'def>(
                 args: vec![
                     Expr::NativeChar(Box::new(NativeChar { value: char.span.fragment.char_at(1) }))
                 ],
-                class_def: Cell::new(Some(scope.find_class("Native__Char").unwrap().parse))
+                class_def: Some(scope.find_class("Native__Char").unwrap().parse)
             })),
         ],
-        class_def: Cell::new(Some(scope.find_class("Char").unwrap().parse))
+        class_def: Some(scope.find_class("Char").unwrap().parse)
     }));
 }
 
@@ -55,7 +55,7 @@ end
             root.find_method("main").exprs.get(0).unwrap(),
             &Expr::Char(Box::new(Char {
                 span: span2(8, 3, "'a'", file.deref()),
-                instance: RefCell::new(Some(
+                instance: Some(Box::new(
                     NewInstance {
                         name_opt: None,
                         args: vec![
@@ -64,10 +64,10 @@ end
                                 args: vec![
                                     Expr::NativeChar(Box::new(NativeChar { value: 'a' }))
                                 ],
-                                class_def: Cell::new(Some(root.find_class("Native__Char")))
+                                class_def: Some(root.find_class("Native__Char"))
                             })),
                         ],
-                        class_def: Cell::new(Some(root.find_class("Char")))
+                        class_def: Some(root.find_class("Char"))
                     }
                 ))
             }))

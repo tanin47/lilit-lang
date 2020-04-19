@@ -8,8 +8,8 @@ pub fn apply<'def>(
     scope: &mut Scope<'def>
 ) {
     for (index, param) in params.iter_mut().enumerate() {
-        tpe::apply(&param.tpe, scope);
-        param.parent.set(Some(parent));
+        tpe::apply(&mut param.tpe, scope);
+        param.parent = Some(parent);
         param.index = index;
     }
 }

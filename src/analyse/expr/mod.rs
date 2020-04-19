@@ -11,7 +11,7 @@ pub mod member_access;
 pub mod new_instance;
 
 pub fn apply<'def>(
-    expr: &Expr<'def>,
+    expr: &mut Expr<'def>,
     scope: &mut Scope<'def>,
 ) {
     match expr {

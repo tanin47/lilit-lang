@@ -52,7 +52,7 @@ pub struct Method<'a> {
     pub params: Vec<Param<'a>>,
     pub exprs: Vec<Expr<'a>>,
     pub return_type: Type<'a>,
-    pub parent_class: Cell<Option<*const Class<'a>>>,
+    pub parent_class: Option<*const Class<'a>>,
     pub llvm: Cell<Option<FunctionValue>>
 }
 
@@ -62,13 +62,13 @@ pub struct Param<'a> {
     pub tpe: Type<'a>,
     pub is_varargs: bool,
     pub index: usize,
-    pub parent: Cell<Option<ParamParent<'a>>>,
+    pub parent: Option<ParamParent<'a>>,
     pub llvm: Cell<Option<PointerValue>>,
 }
 
 impl <'a> Param<'a> {
     pub fn get_llvm_type(&self) -> BasicTypeEnum {
-        let param_class = unsafe { &*self.tpe.class_def.get().unwrap() };
+        let param_class = unsafe { &*self.tpe.class_def.unwrap() };
         BasicTypeEnum::PointerType(if self.is_varargs {
             param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic)
         } else {
@@ -86,7 +86,7 @@ pub enum ParamParent<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Type<'a> {
     pub span: Option<Span<'a>>,
-    pub class_def: Cell<Option<* const Class<'a>>>
+    pub class_def: Option<* const Class<'a>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -108,14 +108,14 @@ pub enum Expr<'a> {
 pub struct Assignment<'a> {
     pub name: Span<'a>,
     pub expr: Box<Expr<'a>>,
-    pub tpe: Cell<Option<*const Class<'a>>>,
+    pub tpe: Option<*const Class<'a>>,
     pub llvm: Cell<Option<PointerValue>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Identifier<'a> {
     pub name: Option<Span<'a>>,
-    pub source: RefCell<Option<IdentifierSource<'a>>>
+    pub source: Option<IdentifierSource<'a>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -128,9 +128,9 @@ pub enum IdentifierSource<'a> {
 impl <'a> IdentifierSource<'a> {
     pub fn get_type(&self) -> *const Class<'a> {
         match self {
-            IdentifierSource::Assignment(a) => unsafe { &*(&**a) .tpe.get().unwrap() },
-            IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.class_def.get().unwrap() }
-            IdentifierSource::ClassParam(p) => unsafe { &*(&*p.param_def.get().unwrap()).tpe.class_def.get().unwrap() }
+            IdentifierSource::Assignment(a) => unsafe { &*(&**a).tpe.unwrap() },
+            IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.class_def.unwrap() }
+            IdentifierSource::ClassParam(p) => unsafe { &*(&*p.param_def.unwrap()).tpe.class_def.unwrap() }
         }
     }
 }
@@ -140,14 +140,14 @@ pub struct Invoke<'a> {
     pub invoker_opt: Option<Expr<'a>>,
     pub name: Span<'a>,
     pub args: Vec<Expr<'a>>,
-    pub method_def: Cell<Option<* const Method<'a>>>
+    pub method_def: Option<* const Method<'a>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct MemberAccess<'a> {
     pub parent: Expr<'a>,
     pub name: Option<Span<'a>>,
-    pub param_def: Cell<Option<* const Param<'a>>>
+    pub param_def: Option<* const Param<'a>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -155,25 +155,25 @@ pub struct NewInstance<'a> {
     pub name_opt: Option<Span<'a>>,
     pub args: Vec<Expr<'a>>,
     // TODO(tanin): this should refer to a constructor
-    pub class_def: Cell<Option<* const Class<'a>>>
+    pub class_def: Option<* const Class<'a>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LiteralString<'a> {
     pub span: Span<'a>,
-    pub instance: RefCell<Option<NewInstance<'a>>>
+    pub instance: Option<Box<NewInstance<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Int<'a> {
     pub span: Span<'a>,
-    pub instance: RefCell<Option<NewInstance<'a>>>
+    pub instance: Option<Box<NewInstance<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Char<'a> {
     pub span: Span<'a>,
-    pub instance: RefCell<Option<NewInstance<'a>>>
+    pub instance: Option<Box<NewInstance<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]

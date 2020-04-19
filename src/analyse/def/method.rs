@@ -16,20 +16,20 @@ pub fn apply<'def>(
             name: None,
             tpe: Type {
                 span: None,
-                class_def: Cell::new(Some(parent_class)),
+                class_def: Some(parent_class),
             },
             is_varargs: false,
             index: 0,
-            parent: Cell::new(Some(ParamParent::Method(method))),
+            parent: Some(ParamParent::Method(method)),
             llvm: Cell::new(None)
         })
     }
 
     let parent = ParamParent::Method(method);
     params::apply(&mut method.params, parent, scope);
-    tpe::apply(&method.return_type, scope);
+    tpe::apply(&mut method.return_type, scope);
 
-    for e in &method.exprs {
+    for e in &mut method.exprs {
         expr::apply(e, scope);
     }
     scope.leave();

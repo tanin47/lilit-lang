@@ -8,6 +8,6 @@ pub trait LiteralStringEmitter {
 
 impl LiteralStringEmitter for Emitter<'_> {
     fn apply_literal_string<'def>(&self, int: &LiteralString<'def>) -> Value<'def> {
-        self.apply_new_instance(int.instance.borrow().as_ref().unwrap())
+        self.apply_new_instance(int.instance.as_ref().unwrap())
     }
 }

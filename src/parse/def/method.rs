@@ -28,7 +28,7 @@ pub fn parse_tail<'def, 'r>(
         params: params.unwrap_or(vec![]),
         exprs,
         return_type: tpe,
-        parent_class: Cell::new(None),
+        parent_class: None,
         llvm: Cell::new(None)
     }))
 }
@@ -66,11 +66,11 @@ end
                    exprs: vec![
                        Expr::String(Box::new(LiteralString {
                            span: span(2, 3, "\"hello\""),
-                           instance: RefCell::new(None)
+                           instance: None
                        }))
                    ],
-                   return_type: Type { span: Some(span(1, 13, "Number")), class_def: Cell::new(None) },
-                   parent_class: Cell::new(None),
+                   return_type: Type { span: Some(span(1, 13, "Number")), class_def: None },
+                   parent_class: None,
                    llvm: Cell::new(None)
                }
            ))
@@ -93,24 +93,24 @@ end
                     params: vec![
                         Param {
                             name: Some(span(1, 10, "a")),
-                            tpe: Type { span: Some(span(1, 13, "String")), class_def: Cell::new(None) },
+                            tpe: Type { span: Some(span(1, 13, "String")), class_def: None },
                             is_varargs: false,
                             index: 0,
-                            parent: Cell::new(None),
+                            parent: None,
                             llvm: Cell::new(None),
                         },
                         Param {
                             name: Some(span(1, 21, "b")),
-                            tpe: Type { span: Some(span(1, 27, "String")), class_def: Cell::new(None) },
+                            tpe: Type { span: Some(span(1, 27, "String")), class_def: None },
                             is_varargs: true,
                             index: 1,
-                            parent: Cell::new(None),
+                            parent: None,
                             llvm: Cell::new(None),
                         },
                     ],
                     exprs: vec![],
-                    return_type: Type { span: Some(span(1, 36, "Number")), class_def: Cell::new(None) },
-                    parent_class: Cell::new(None),
+                    return_type: Type { span: Some(span(1, 36, "Number")), class_def: None },
+                    parent_class: None,
                     llvm: Cell::new(None)
                 }
             ))

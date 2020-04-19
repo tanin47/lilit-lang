@@ -3,10 +3,10 @@ use analyse::scope::Scope;
 use std::cell::Cell;
 
 pub fn apply<'def>(
-    string: &LiteralString<'def>,
+    string: &mut LiteralString<'def>,
     scope: &mut Scope<'def>,
 ) {
-    string.instance.replace(Some(NewInstance {
+    string.instance = Some(Box::new(NewInstance {
         name_opt: None,
         args: vec![
             Expr::NewInstance(Box::new(NewInstance {
@@ -14,10 +14,10 @@ pub fn apply<'def>(
                 args: vec![
                     Expr::NativeString(Box::new(NativeString { value: serde_json::from_str(string.span.fragment).unwrap() }))
                 ],
-                class_def: Cell::new(Some(scope.find_class("Native__String").unwrap().parse))
+                class_def: Some(scope.find_class("Native__String").unwrap().parse)
             })),
         ],
-        class_def: Cell::new(Some(scope.find_class("String").unwrap().parse))
+        class_def: Some(scope.find_class("String").unwrap().parse)
     }));
 }
 
@@ -57,7 +57,7 @@ end
             root.find_method("main").exprs.get(0).unwrap(),
             &Expr::String(Box::new(LiteralString {
                 span: span2(11, 3, "\"test\"", file.deref()),
-                instance: RefCell::new(Some(
+                instance: Some(Box::new(
                     NewInstance {
                         name_opt: None,
                         args: vec![
@@ -66,10 +66,10 @@ end
                                 args: vec![
                                     Expr::NativeString(Box::new(NativeString { value: "test".to_string() }))
                                 ],
-                                class_def: Cell::new(Some(root.find_class("Native__String")))
+                                class_def: Some(root.find_class("Native__String"))
                             })),
                         ],
-                        class_def: Cell::new(Some(root.find_class("String")))
+                        class_def: Some(root.find_class("String"))
                     }
                 ))
             }))

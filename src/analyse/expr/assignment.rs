@@ -4,11 +4,11 @@ use analyse::expr;
 use analyse::tpe::GetType;
 
 pub fn apply<'def>(
-    assignment: &Assignment<'def>,
+    assignment: &mut Assignment<'def>,
     scope: &mut Scope<'def>,
 ) {
-    expr::apply(&assignment.expr, scope);
-    assignment.tpe.set(Some(assignment.expr.get_type(scope)));
+    expr::apply(&mut assignment.expr, scope);
+    assignment.tpe = Some(assignment.expr.get_type(scope));
 
     scope.add_var(assignment);
 }
@@ -53,16 +53,14 @@ end
                     name: span2(11, 3, "a", file.deref()),
                     expr: Box::new(Expr::Int(Box::new(Int {
                         span: span2(11, 7, "2", file.deref()),
-                        instance: RefCell::new(Some(make_int_instance(2, &root)))
+                        instance: Some(Box::new(make_int_instance(2, &root)))
                     }))),
-                    tpe: Cell::new(Some(root.find_class("Int"))),
+                    tpe: Some(root.find_class("Int")),
                     llvm: Cell::new(None)
                 })),
                 Expr::Identifier(Box::new(Identifier {
                     name: Some(span2(12, 3, "a", file.deref())),
-                    source: RefCell::new(Some(IdentifierSource::Assignment(
-                        unwrap!(Expr::Assignment, root.find_method("main").exprs.get(0).unwrap()).deref()
-                    )))
+                    source: Some(IdentifierSource::Assignment(unwrap!(Expr::Assignment, root.find_method("main").exprs.get(0).unwrap()).deref()))
                 })),
             ]
         )

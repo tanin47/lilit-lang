@@ -46,7 +46,7 @@ impl ClassEmitter for Emitter<'_> {
     fn get_type_enums_for_class(&self, class: &Class) -> Vec<BasicTypeEnum> {
         let mut type_enums = vec![];
         for param in &class.params {
-            let param_class = unsafe { &* param.tpe.class_def.get().unwrap() };
+            let param_class = unsafe { &* param.tpe.class_def.unwrap() };
             type_enums.push(param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).into());
         }
         type_enums
@@ -63,7 +63,7 @@ impl ClassEmitter for Emitter<'_> {
            other if other.starts_with("Native__Struct__") => {
                let mut params = vec![];
                for param in &class.params {
-                   params.push(self.get_type_for_native(unsafe { &*param.tpe.class_def.get().unwrap() }));
+                   params.push(self.get_type_for_native(unsafe { &*param.tpe.class_def.unwrap() }));
                }
                params
            },

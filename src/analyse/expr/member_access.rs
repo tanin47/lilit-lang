@@ -4,16 +4,16 @@ use analyse::expr;
 use analyse::tpe::GetType;
 
 pub fn apply<'def>(
-    member_access: &MemberAccess<'def>,
+    member_access: &mut MemberAccess<'def>,
     scope: &mut Scope<'def>,
 ) {
-    expr::apply(&member_access.parent, scope);
+    expr::apply(&mut member_access.parent, scope);
 
     let class = member_access.parent.get_type(scope);
 
     for param in &class.params {
         if param.name.unwrap().fragment == member_access.name.unwrap().fragment {
-            member_access.param_def.set(Some(param));
+            member_access.param_def = Some(param);
         }
     }
 }
@@ -56,7 +56,7 @@ end
                         name_opt: Some(span2(11, 3, "Test", file.deref())),
                         args: vec![Expr::String(Box::from(LiteralString {
                             span: span2(11, 8, "\"a\"", file.deref()),
-                            instance: RefCell::new(Some(
+                            instance: Some(Box::new(
                                 NewInstance {
                                     name_opt: None,
                                     args: vec![
@@ -65,19 +65,17 @@ end
                                             args: vec![
                                                 Expr::NativeString(Box::new(NativeString { value: "a".to_string() }))
                                             ],
-                                            class_def: Cell::new(Some(root.find_class("Native__String")))
+                                            class_def: Some(root.find_class("Native__String"))
                                         })),
                                     ],
-                                    class_def: Cell::new(Some(root.find_class("String")))
+                                    class_def: Some(root.find_class("String"))
                                 }
                             ))
                         }))],
-                        class_def: Cell::new(Some(root.find_class("Test")))
+                        class_def: Some(root.find_class("Test"))
                     })),
                     name: Some(span2(11, 13, "member", file.deref())),
-                    param_def: Cell::new(Some(
-                        root.find_class("Test").params.get(0).unwrap()
-                    ))
+                    param_def: Some(root.find_class("Test").params.get(0).unwrap())
                 }))
             ]
         )

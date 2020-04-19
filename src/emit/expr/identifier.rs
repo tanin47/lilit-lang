@@ -11,17 +11,17 @@ pub trait IdentifierEmitter {
 
 impl IdentifierEmitter for Emitter<'_> {
     fn apply_identifier<'def>(&self, identifier: &Identifier<'def>) -> Value<'def> {
-        match identifier.source.borrow().as_ref().unwrap() {
+        match identifier.source.as_ref().unwrap() {
             IdentifierSource::Param(param) => {
                 let param = unsafe { &**param };
-                let param_class = unsafe { &*param.tpe.class_def.get().unwrap() };
+                let param_class = unsafe { &*param.tpe.class_def.unwrap() };
 
                 let alloca_ptr = param.llvm.get().unwrap();
                 self.read_ptr(alloca_ptr, param_class)
             },
             IdentifierSource::Assignment(assignment) => {
                 let assignment = unsafe { &**assignment };
-                let var_class = unsafe { &*assignment.tpe.get().unwrap() };
+                let var_class = unsafe { &*assignment.tpe.unwrap() };
 
                 let alloca_ptr = assignment.llvm.get().unwrap();
                 self.read_ptr(alloca_ptr, var_class)

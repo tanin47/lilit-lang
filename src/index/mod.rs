@@ -89,8 +89,8 @@ end
                 name: span2(1, 5, "main", files.get(0).unwrap().deref()),
                 params: vec![],
                 exprs: vec![],
-                return_type: Type { span: Some(span2(1, 13, "Number", files.get(0).unwrap().deref())), class_def: Cell::new(None) },
-                parent_class: Cell::new(None),
+                return_type: Type { span: Some(span2(1, 13, "Number", files.get(0).unwrap().deref())), class_def: None },
+                parent_class: None,
                 llvm: Cell::new(None)
             }
         );
@@ -104,8 +104,8 @@ end
                         name: span2(2, 7, "test", files.get(1).unwrap().deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: Some(span2(2, 15, "Number", files.get(1).unwrap().deref())), class_def: Cell::new(None) },
-                        parent_class: Cell::new(None),
+                        return_type: Type { span: Some(span2(2, 15, "Number", files.get(1).unwrap().deref())), class_def: None },
+                        parent_class: None,
                         llvm: Cell::new(None),
                     }
                 ],

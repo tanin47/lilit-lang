@@ -3,10 +3,10 @@ use analyse::scope::Scope;
 use std::cell::Cell;
 
 pub fn apply<'def>(
-    int: &Int<'def>,
+    int: &mut Int<'def>,
     scope: &mut Scope<'def>,
 ) {
-    int.instance.replace(Some(NewInstance {
+    int.instance = Some(Box::new(NewInstance {
         name_opt: None,
         args: vec![
             Expr::NewInstance(Box::new(NewInstance {
@@ -14,10 +14,10 @@ pub fn apply<'def>(
                 args: vec![
                     Expr::NativeInt(Box::new(NativeInt { value: int.span.fragment.parse::<i64>().unwrap() }))
                 ],
-                class_def: Cell::new(Some(scope.find_class("Native__Int").unwrap().parse))
+                class_def: Some(scope.find_class("Native__Int").unwrap().parse)
             })),
         ],
-        class_def: Cell::new(Some(scope.find_class("Int").unwrap().parse))
+        class_def: Some(scope.find_class("Int").unwrap().parse)
     }));
 }
 
@@ -57,7 +57,7 @@ end
             root.find_method("main").exprs.get(0).unwrap(),
             &Expr::Int(Box::new(Int {
                 span: span2(11, 3, "1", file.deref()),
-                instance: RefCell::new(Some(
+                instance: Some(Box::new(
                   NewInstance {
                       name_opt: None,
                       args: vec![
@@ -66,10 +66,10 @@ end
                               args: vec![
                                   Expr::NativeInt(Box::new(NativeInt { value: 1 }))
                               ],
-                              class_def: Cell::new(Some(root.find_class("Native__Int")))
+                              class_def: Some(root.find_class("Native__Int"))
                           })),
                       ],
-                      class_def: Cell::new(Some(root.find_class("Int")))
+                      class_def: Some(root.find_class("Int"))
                   }
                 ))
             }))

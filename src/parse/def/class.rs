@@ -66,8 +66,8 @@ end
                             name: span(2, 7, "test"),
                             params: vec![],
                             exprs: vec![],
-                            return_type: Type { span: Some(span(2, 13, "Number")), class_def: Cell::new(None) },
-                            parent_class: Cell::new(None),
+                            return_type: Type { span: Some(span(2, 13, "Number")), class_def: None },
+                            parent_class: None,
                             llvm: Cell::new(None)
                         }
                     ],

@@ -4,22 +4,22 @@ use analyse::expr;
 use analyse::tpe::GetType;
 
 pub fn apply<'def>(
-    invoke: &Invoke<'def>,
+    invoke: &mut Invoke<'def>,
     scope: &mut Scope<'def>,
 ) {
-    for arg in &invoke.args {
+    for arg in &mut invoke.args {
         expr::apply(arg, scope);
     }
 
-    invoke.method_def.set(Some(
-        match &invoke.invoker_opt {
+    invoke.method_def = Some(
+        match &mut invoke.invoker_opt {
             Some(parent) => {
                 expr::apply(parent, scope);
                 parent.get_type(scope).find_method(invoke.name.fragment)
             },
             None => scope.find_method(invoke.name.fragment).unwrap().parse,
         }
-    ));
+    );
 }
 
 #[cfg(test)]
@@ -55,11 +55,11 @@ end
                     invoker_opt: Some(Expr::NewInstance(Box::new(NewInstance {
                         name_opt: Some(span2(7, 3, "Test", file.deref())),
                         args: vec![],
-                        class_def: Cell::new(Some(root.find_class("Test")))
+                        class_def: Some(root.find_class("Test"))
                     }))),
                     name: span2(7, 10, "run", file.deref()),
                     args: vec![],
-                    method_def: Cell::new(Some(root.find_class("Test").find_method("run")))
+                    method_def: Some(root.find_class("Test").find_method("run")),
                 }))
             ]
         )

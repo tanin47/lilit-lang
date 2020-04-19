@@ -8,5 +8,5 @@ pub fn parse<'def, 'r>(
 ) -> ParseResult<'def, 'r, Type<'def>> {
     let (input, name) = capitalize(input)?;
 
-    Ok((input, Type { span: Some(name), class_def: Cell::new(None) }))
+    Ok((input, Type { span: Some(name), class_def: None }))
 }

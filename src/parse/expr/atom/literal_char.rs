@@ -7,7 +7,7 @@ pub fn parse<'def, 'r>(
     input: Tokens<'def, 'r>,
 ) -> ParseResult<'def, 'r, Char<'def>> {
     if let Token::Char(span) = &input[0] {
-        Ok((&input[1..], Char { span: *span, instance: RefCell::new(None) }))
+        Ok((&input[1..], Char { span: *span, instance: None }))
     } else {
         Err(input)
     }

@@ -29,7 +29,7 @@ pub fn parse_tail<'def, 'r>(
                 invoker_opt: None,
                 name,
                 args,
-                method_def: Cell::new(None),
+                method_def: None,
             }
         ))
     } else {
@@ -68,10 +68,10 @@ func("a", "b")
                     invoker_opt: None,
                     name: span(1, 1, "func"),
                     args: vec![
-                        Expr::String(Box::new(LiteralString { span: span(1, 6, "\"a\""), instance: RefCell::new(None) })),
-                        Expr::String(Box::new(LiteralString { span: span(1, 11, "\"b\""), instance: RefCell::new(None) })),
+                        Expr::String(Box::new(LiteralString { span: span(1, 6, "\"a\""), instance: None })),
+                        Expr::String(Box::new(LiteralString { span: span(1, 11, "\"b\""), instance: None })),
                     ],
-                    method_def: Cell::new(None),
+                    method_def: None,
                 }
             ))
         );
