@@ -355,7 +355,7 @@ fn float_or_double_dot<'a>(
 
     let (second_number, input) = take_number(input);
 
-    if first_number.fragment.is_empty() && second_number.fragment.is_empty() {
+    if second_number.fragment.is_empty() {
         return Err(original);
     }
 

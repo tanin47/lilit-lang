@@ -37,9 +37,12 @@ impl ClassEmitter for Emitter<'_> {
 
     fn get_type_enums_for_native(&self, name: &str) -> Vec<BasicTypeEnum> {
        match name {
+           "Native__Char" => vec![self.context.i8_type().into()],
            "Native__Int" => vec![self.context.i64_type().into()],
            "Native__String" => vec![self.context.i8_type().ptr_type(AddressSpace::Generic).into()],
            "Native__Void" => vec![],
+           "Native__Any" => vec![],
+           "Native__Null" => vec![],
            _ => panic!("Unknown native class: {}", name),
        }
     }

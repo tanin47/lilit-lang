@@ -5,12 +5,13 @@ use inkwell::AddressSpace;
 use inkwell::attributes::Attribute;
 use inkwell::module::Linkage;
 use parse::tree::Class;
+use emit::expr::new_instance::NewInstanceEmitter;
 
 pub trait Helper {
     fn malloc_array(&self, array_type: &ArrayType) -> PointerValue;
     fn malloc(&self, struct_type: &StructType) -> PointerValue;
     fn get_external_func(&self, name: &str, tpe: FunctionType) -> FunctionValue;
-    fn convert(&self, value: &Value) -> BasicValueEnum;
+    fn convert<'def>(&self, value: &Value<'def>, expected_class: &Class<'def>) -> PointerValue;
     fn gc_init(&self);
     fn gc_collect(&self);
     fn gc_register_finalizer(&self, ptr: PointerValue);
@@ -62,12 +63,44 @@ impl Helper for Emitter<'_> {
         }
     }
 
-    fn convert(&self, value: &Value) -> BasicValueEnum {
+    fn convert<'def>(&self, value: &Value<'def>, expected_class: &Class<'def>) -> PointerValue {
         match value {
-            Value::Int(i) => (*i).into(),
-            Value::String(i) => (*i).into(),
-            Value::Class(ptr, _) => (*ptr).into(),
-            Value::Void => panic!("can't convert void"),
+            Value::Char(i) => {
+                assert_eq!("Native__Char", expected_class.name.fragment);
+                let instance = self.malloc(&expected_class.llvm.get().unwrap());
+
+                let param_ptr = unsafe {
+                    self.builder.build_struct_gep(instance, 0 as u32, format!("Gep for the native param of the class {}", expected_class.name.fragment).as_ref())
+                };
+                self.builder.build_store(param_ptr, BasicValueEnum::IntValue(*i));
+                instance
+            },
+            Value::Int(i) => {
+                assert_eq!("Native__Int", expected_class.name.fragment);
+                let instance = self.malloc(&expected_class.llvm.get().unwrap());
+
+                let param_ptr = unsafe {
+                    self.builder.build_struct_gep(instance, 0 as u32, format!("Gep for the native param of the class {}", expected_class.name.fragment).as_ref())
+                };
+                self.builder.build_store(param_ptr, BasicValueEnum::IntValue(*i));
+                instance
+            },
+            Value::String(i) => {
+                assert_eq!("Native__String", expected_class.name.fragment);
+                let instance = self.malloc(&expected_class.llvm.get().unwrap());
+
+                let param_ptr = unsafe {
+                    self.builder.build_struct_gep(instance, 0 as u32, format!("Gep for the native param of the class {}", expected_class.name.fragment).as_ref())
+                };
+                self.builder.build_store(param_ptr, BasicValueEnum::PointerValue(*i));
+               instance
+            },
+            Value::Class(ptr, class) => {
+                let class = unsafe { &**class };
+                assert_eq!(expected_class.name.fragment, class.name.fragment);
+                *ptr
+            },
+            Value::Void => panic!(),
         }
     }
 

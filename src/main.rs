@@ -35,6 +35,7 @@ fn compile(content: &str, path: &str) {
     analyse::apply(&[file.deref()], &root);
 
     let module = emit::apply(&[file.deref()]);
+    module.print_to_stderr();
 
     Target::initialize_native(&InitializationConfig::default()).unwrap();
 

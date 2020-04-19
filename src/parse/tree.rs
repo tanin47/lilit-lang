@@ -1,7 +1,8 @@
 use tokenize::span::Span;
 use std::cell::{Cell, RefCell};
-use inkwell::types::StructType;
+use inkwell::types::{StructType, BasicTypeEnum};
 use inkwell::values::{FunctionValue, PointerValue};
+use inkwell::AddressSpace;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CompilationUnit<'a> {
@@ -41,6 +42,17 @@ pub struct Param<'a> {
     pub llvm: Cell<Option<PointerValue>>,
 }
 
+impl <'a> Param<'a> {
+    pub fn get_llvm_type(&self) -> BasicTypeEnum {
+        let param_class = unsafe { &*self.tpe.def_opt.get().unwrap() };
+        BasicTypeEnum::PointerType(if self.is_varargs {
+            param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic)
+        } else {
+            param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic)
+        })
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ParamParent<'a> {
     Class(*const Class<'a>),
@@ -55,14 +67,16 @@ pub struct Type<'a> {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expr<'a> {
-    String(Box<LiteralString<'a>>),
-    NativeString(Box<NativeString>),
-    NativeInt(Box<NativeInt>),
+    Char(Box<Char<'a>>),
+    Identifier(Box<Identifier<'a>>),
     Int(Box<Int<'a>>),
     Invoke(Box<Invoke<'a>>),
     MemberAccess(Box<MemberAccess<'a>>),
+    NativeChar(Box<NativeChar>),
+    NativeInt(Box<NativeInt>),
+    NativeString(Box<NativeString>),
     NewInstance(Box<NewInstance<'a>>),
-    Identifier(Box<Identifier<'a>>),
+    String(Box<LiteralString<'a>>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -104,6 +118,17 @@ pub struct LiteralString<'a> {
 pub struct Int<'a> {
     pub span: Span<'a>,
     pub instance: RefCell<Option<NewInstance<'a>>>
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Char<'a> {
+    pub span: Span<'a>,
+    pub instance: RefCell<Option<NewInstance<'a>>>
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct NativeChar {
+    pub value: char
 }
 
 #[derive(Debug, PartialEq, Clone)]

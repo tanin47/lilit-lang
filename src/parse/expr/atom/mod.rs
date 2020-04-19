@@ -5,6 +5,7 @@ pub mod identifier;
 pub mod int;
 pub mod invoke;
 pub mod literal_string;
+pub mod literal_char;
 pub mod new_instance;
 
 pub fn parse<'def, 'r>(
@@ -12,6 +13,8 @@ pub fn parse<'def, 'r>(
 ) -> ParseResult<'def, 'r, Expr<'def>> {
     if let Ok((input, i)) = literal_string::parse(input) {
         Ok((input, Expr::String(Box::new(i))))
+    } else if let Ok((input, i)) = literal_char::parse(input) {
+        Ok((input, Expr::Char(Box::new(i))))
     } else if let Ok((input, i)) = invoke::parse(input) {
         Ok((input, Expr::Invoke(Box::new(i))))
     } else if let Ok((input, i)) = new_instance::parse(input) {

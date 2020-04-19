@@ -21,8 +21,10 @@ impl <'def> GetType<'def> for Expr<'def> {
             Expr::NewInstance(i) => unsafe { &*i.def_opt.get().unwrap() },
             Expr::Int(i) => unsafe { &*scope.find_class("Int").unwrap().parse },
             Expr::String(i) => unsafe { &*scope.find_class("String").unwrap().parse },
+            Expr::Char(i) => unsafe { &*scope.find_class("Char").unwrap().parse },
             Expr::NativeInt(i) => unsafe { &*scope.find_class("Native__Int").unwrap().parse },
             Expr::NativeString(i) => unsafe { &*scope.find_class("Native__String").unwrap().parse },
+            Expr::NativeChar(i) => unsafe { &*scope.find_class("Native__Char").unwrap().parse },
             Expr::Invoke(i) => unsafe { &*(&*i.def_opt.get().unwrap()).return_type.def_opt.get().unwrap() },
         }
     }

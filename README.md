@@ -106,11 +106,23 @@ $ echo $?
 Technical detail
 -----------------
 
+Here are the stages of compilers:
+
 1. __Tokenize__ builds a sequence of predefined tokens from a sequence of characters. This stage simplifies Parsing, which is the next step.
 2. __Parsing__ builds a parse tree from the sequence of tokens.
 3. __Index__ builds an index tree, which enables references across all files. The index tree can answer a question like: "Can we invoke method A on class C?".
-4. __Analyse__ populates references in the parse tree (e.g. populating a method call with the corresponding method definition).
+4. __Analyse__ populates references in the parse tree (e.g. populating a method call with the corresponding method definition). Analyse should populates 
+every necessary info, so Emit doesn't need to traverse the parse tree.
 5. __Emit__ builds LLVM code from the populated parse tree.
+
+There are 3 layers in Lilit:
+
+1. Application layer is the layer where programmers write their code in Lilit
+2. Native layer, still written in Lilit, are native classes (starting with `Native__`) and native methods (starting with `native__`) don't have implementation; compiler populates their implementation.
+  * A native class contains a corresponding C primitive as its first member. For example, `Native__Int` contains an `i64`, and `Native__String` contains an `i8*`.
+  * A native method must take only params whose types are native classes. A native method converts all params to their C primitive types and invokes a corresponding system function. For example, `native__printf(text: Native__String)` invokes `printf(i8*)`.
+3. C layer contains custom C code that is needed by Native layer.
+
 
 Development tricks
 -------------------

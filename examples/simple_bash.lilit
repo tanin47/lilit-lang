@@ -1,0 +1,48 @@
+class Native__Void
+  // No implementation.
+end
+
+class Native__Int
+  // No implementation. This class represents i64 in LLVM.
+end
+
+class Native__Null
+  // No implementation.
+end
+
+class Native__String
+  // No implementation. This class represents i8* in LLVM.
+end
+
+def native__execlp(cmd: Native__String, arg0: Native__String, arg1: Native__String): Native__Int
+  // No implementation.
+end
+
+def native__fork(): Native__Int
+  // No implementation.
+end
+
+def native__printf(text: Native__String): Native__Void
+  // No implementation.
+end
+
+def exec(cmd: String, cmd2: String): Void
+  native__execlp(cmd.underlying, cmd2.underlying, Native__Null())
+end
+
+class Void
+end
+
+class Int(underlying: Native__Int)
+end
+
+class String(underlying: Native__String)
+end
+
+def main: Int
+  native__printf("before".underlying)
+  exec("ls", "ls")
+  native__printf("after".underlying)
+  0
+end
+

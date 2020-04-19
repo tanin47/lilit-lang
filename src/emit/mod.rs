@@ -3,9 +3,11 @@ use inkwell::module::Module;
 use inkwell::context::Context;
 use inkwell::builder::Builder;
 use parse::tree::{CompilationUnitItem, Class};
-use inkwell::values::{IntValue, PointerValue, ArrayValue};
+use inkwell::values::{IntValue, PointerValue, ArrayValue, BasicValueEnum};
 use emit::def::method::EmitterMethod;
 use emit::def::class::ClassEmitter;
+use inkwell::types::{StructType, BasicTypeEnum};
+use inkwell::AddressSpace;
 
 pub mod def;
 pub mod expr;
@@ -15,11 +17,13 @@ struct Emitter<'r> {
     context: Context,
     builder: Builder,
     module: &'r Module,
+    va_list_struct_type: StructType,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Value<'def> {
     Void,
+    Char(IntValue),
     Int(IntValue),
     String(PointerValue),
     Class(PointerValue, *const Class<'def>),
@@ -29,10 +33,20 @@ pub fn apply(files: &[&LilitFile]) -> Module {
     let context = Context::create();
     let module = context.create_module("main");
     let builder = context.create_builder();
+    let va_list_struct_type = context.struct_type(
+        &vec![
+            BasicTypeEnum::IntType(context.i32_type()),
+            BasicTypeEnum::IntType(context.i32_type()),
+            BasicTypeEnum::PointerType(context.i8_type().ptr_type(AddressSpace::Generic)),
+            BasicTypeEnum::PointerType(context.i8_type().ptr_type(AddressSpace::Generic)),
+        ],
+        false,
+    );
     let emitter = Emitter {
         context,
         builder,
         module: &module,
+        va_list_struct_type,
     };
 
     emitter.apply(files);
