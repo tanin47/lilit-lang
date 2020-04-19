@@ -119,8 +119,8 @@ There are 3 layers in Lilit:
 
 1. Application layer is the layer where programmers write their code in Lilit
 2. Native layer, still written in Lilit, are native classes (starting with `Native__`) and native methods (starting with `native__`) don't have implementation; compiler populates their implementation.
-  * A native class contains a corresponding C primitive as its first member. For example, `Native__Int` contains an `i64`, and `Native__String` contains an `i8*`.
-  * A native method must take only params whose types are native classes. A native method converts all params to their C primitive types and invokes a corresponding system function. For example, `native__printf(text: Native__String)` invokes `printf(i8*)`.
+    * A native class contains a corresponding C primitive as its first member. For example, `Native__Int` contains an `i64`, and `Native__String` contains an `i8*`.
+    * A native method must take only params whose types are native classes. A native method converts all params to their C primitive types and invokes a corresponding system function. For example, `native__printf(text: Native__String)` invokes `printf(i8*)`.
 3. C layer contains custom C code that is needed by Native layer.
 
 
