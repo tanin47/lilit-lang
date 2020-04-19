@@ -30,7 +30,7 @@ fn parse_tail<'def, 'r>(
                         invoker_opt: Some(left),
                         name: invoke.name,
                         args: invoke.args,
-                        def_opt: Cell::new(None),
+                        method_def: Cell::new(None),
                     }
                 ))
             )
@@ -40,7 +40,7 @@ fn parse_tail<'def, 'r>(
                 Expr::MemberAccess(Box::new(MemberAccess {
                     parent: left,
                     name: Some(name),
-                    def_opt: Cell::new(None)
+                    param_def: Cell::new(None)
                 }))
             )
         };
@@ -76,14 +76,14 @@ func("a").member.another_func()
                                 invoker_opt: None,
                                 name: span(1, 1, "func"),
                                 args: vec![Expr::String(Box::new(LiteralString { span: span(1, 6, "\"a\""), instance: RefCell::new(None) }))],
-                                def_opt: Cell::new(None),
+                                method_def: Cell::new(None),
                             })),
                             name: Some(span(1, 11, "member")),
-                            def_opt: Cell::new(None)
+                            param_def: Cell::new(None)
                         }))),
                         name: span(1, 18, "another_func"),
                         args: vec![],
-                        def_opt: Cell::new(None),
+                        method_def: Cell::new(None),
                     }
                 ))
             ))

@@ -14,10 +14,10 @@ pub fn apply<'def>(
                 args: vec![
                     Expr::NativeString(Box::new(NativeString { value: serde_json::from_str(string.span.fragment).unwrap() }))
                 ],
-                def_opt: Cell::new(Some(scope.find_class("Native__String").unwrap().parse))
+                class_def: Cell::new(Some(scope.find_class("Native__String").unwrap().parse))
             })),
         ],
-        def_opt: Cell::new(Some(scope.find_class("String").unwrap().parse))
+        class_def: Cell::new(Some(scope.find_class("String").unwrap().parse))
     }));
 }
 
@@ -54,7 +54,7 @@ end
         apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap(),
+            root.find_method("main").exprs.get(0).unwrap(),
             &Expr::String(Box::new(LiteralString {
                 span: span2(11, 3, "\"test\"", file.deref()),
                 instance: RefCell::new(Some(
@@ -66,10 +66,10 @@ end
                                 args: vec![
                                     Expr::NativeString(Box::new(NativeString { value: "test".to_string() }))
                                 ],
-                                def_opt: Cell::new(Some(root.find_class("Native__String").unwrap().parse))
+                                class_def: Cell::new(Some(root.find_class("Native__String")))
                             })),
                         ],
-                        def_opt: Cell::new(Some(root.find_class("String").unwrap().parse))
+                        class_def: Cell::new(Some(root.find_class("String")))
                     }
                 ))
             }))

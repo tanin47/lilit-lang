@@ -16,7 +16,7 @@ pub fn parse<'def, 'r>(
             NewInstance {
                 name_opt: Some(name),
                 args,
-                def_opt: Cell::new(None),
+                class_def: Cell::new(None),
             }
         ))
     } else {
@@ -58,7 +58,7 @@ Int("a", 5)
                         Expr::String(Box::new(LiteralString { span: span(1, 5, "\"a\""), instance: RefCell::new(None) })),
                         Expr::Int(Box::new(Int { span: span(1, 10, "5"), instance: RefCell::new(None) })),
                     ],
-                    def_opt: Cell::new(None),
+                    class_def: Cell::new(None),
                 }
             ))
         );

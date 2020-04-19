@@ -12,19 +12,19 @@ pub fn apply<'def>(
         let param = unsafe { &* param };
         if let Some(ParamParent::Class(class)) = param.parent.get() {
             let parent_method = scope.find_parent_method();
-            identifier.def_opt.replace(Some(IdentifierSource::ClassParam(Box::new(MemberAccess {
+            identifier.source.replace(Some(IdentifierSource::ClassParam(Box::new(MemberAccess {
                 parent: Expr::Identifier(Box::new(Identifier {
                     name: None,
-                    def_opt: RefCell::new(Some(IdentifierSource::Param(parent_method.params.get(0).unwrap())))
+                    source: RefCell::new(Some(IdentifierSource::Param(parent_method.params.get(0).unwrap())))
                 })),
                 name: None,
-                def_opt: Cell::new(Some(param)),
+                param_def: Cell::new(Some(param)),
             }))));
             return;
         }
     }
 
-    identifier.def_opt.replace(Some(source));
+    identifier.source.replace(Some(source));
 }
 
 #[cfg(test)]
@@ -54,20 +54,20 @@ end
 
         apply(&mut [file.deref_mut()], &root);
 
-        let test_class = unsafe { &*root.find_class("Test").unwrap().parse };
+        let test_class = root.find_class("Test");
         let run_method = test_class.find_method("run");
         assert_eq!(
             run_method.exprs,
             vec![
                 Expr::Identifier(Box::new(Identifier {
                     name: Some(span2(6, 5, "a", file.deref())),
-                    def_opt: RefCell::new(Some(IdentifierSource::ClassParam(Box::new(MemberAccess {
+                    source: RefCell::new(Some(IdentifierSource::ClassParam(Box::new(MemberAccess {
                         parent: Expr::Identifier(Box::new(Identifier {
                             name: None,
-                            def_opt: RefCell::new(Some(IdentifierSource::Param(run_method.params.get(0).unwrap())))
+                            source: RefCell::new(Some(IdentifierSource::Param(run_method.params.get(0).unwrap())))
                         })),
                         name: None,
-                        def_opt: Cell::new(Some(test_class.find_param("a")))
+                        param_def: Cell::new(Some(test_class.find_param("a")))
                     }))))
                 }))
             ]

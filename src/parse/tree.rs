@@ -68,7 +68,7 @@ pub struct Param<'a> {
 
 impl <'a> Param<'a> {
     pub fn get_llvm_type(&self) -> BasicTypeEnum {
-        let param_class = unsafe { &*self.tpe.def_opt.get().unwrap() };
+        let param_class = unsafe { &*self.tpe.class_def.get().unwrap() };
         BasicTypeEnum::PointerType(if self.is_varargs {
             param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic)
         } else {
@@ -86,7 +86,7 @@ pub enum ParamParent<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Type<'a> {
     pub span: Option<Span<'a>>,
-    pub def_opt: Cell<Option<* const Class<'a>>>
+    pub class_def: Cell<Option<* const Class<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -115,7 +115,7 @@ pub struct Assignment<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Identifier<'a> {
     pub name: Option<Span<'a>>,
-    pub def_opt: RefCell<Option<IdentifierSource<'a>>>
+    pub source: RefCell<Option<IdentifierSource<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -129,8 +129,8 @@ impl <'a> IdentifierSource<'a> {
     pub fn get_type(&self) -> *const Class<'a> {
         match self {
             IdentifierSource::Assignment(a) => unsafe { &*(&**a) .tpe.get().unwrap() },
-            IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.def_opt.get().unwrap() }
-            IdentifierSource::ClassParam(p) => unsafe { &*(&*p.def_opt.get().unwrap()).tpe.def_opt.get().unwrap() }
+            IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.class_def.get().unwrap() }
+            IdentifierSource::ClassParam(p) => unsafe { &*(&*p.param_def.get().unwrap()).tpe.class_def.get().unwrap() }
         }
     }
 }
@@ -140,14 +140,14 @@ pub struct Invoke<'a> {
     pub invoker_opt: Option<Expr<'a>>,
     pub name: Span<'a>,
     pub args: Vec<Expr<'a>>,
-    pub def_opt: Cell<Option<* const Method<'a>>>
+    pub method_def: Cell<Option<* const Method<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct MemberAccess<'a> {
     pub parent: Expr<'a>,
     pub name: Option<Span<'a>>,
-    pub def_opt: Cell<Option<* const Param<'a>>>
+    pub param_def: Cell<Option<* const Param<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -155,7 +155,7 @@ pub struct NewInstance<'a> {
     pub name_opt: Option<Span<'a>>,
     pub args: Vec<Expr<'a>>,
     // TODO(tanin): this should refer to a constructor
-    pub def_opt: Cell<Option<* const Class<'a>>>
+    pub class_def: Cell<Option<* const Class<'a>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -95,7 +95,7 @@ end
                                         name: span2(2, 7, "test", file.deref()),
                                         params: vec![],
                                         exprs: vec![],
-                                        return_type: Type { span: Some(span2(2, 15, "Number", file.deref())), def_opt: Cell::new(None) },
+                                        return_type: Type { span: Some(span2(2, 15, "Number", file.deref())), class_def: Cell::new(None) },
                                         parent_class: Cell::new(None),
                                         llvm: Cell::new(None)
                                     }

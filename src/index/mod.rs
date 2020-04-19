@@ -84,18 +84,18 @@ end
         let root = build(files.iter().map(|file| file.deref()).collect::<Vec<_>>().deref());
 
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse },
+            root.find_method("main"),
             &parse::tree::Method {
                 name: span2(1, 5, "main", files.get(0).unwrap().deref()),
                 params: vec![],
                 exprs: vec![],
-                return_type: Type { span: Some(span2(1, 13, "Number", files.get(0).unwrap().deref())), def_opt: Cell::new(None) },
+                return_type: Type { span: Some(span2(1, 13, "Number", files.get(0).unwrap().deref())), class_def: Cell::new(None) },
                 parent_class: Cell::new(None),
                 llvm: Cell::new(None)
             }
         );
         assert_eq!(
-            unsafe { &*root.find_class("Test").unwrap().parse },
+            root.find_class("Test"),
             &parse::tree::Class {
                 name: span2(1, 7, "Test", files.get(1).unwrap().deref()),
                 params: vec![],
@@ -104,8 +104,8 @@ end
                         name: span2(2, 7, "test", files.get(1).unwrap().deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: Some(span2(2, 15, "Number", files.get(1).unwrap().deref())), def_opt: Cell::new(None) },
-                        parent_class: Cell::new(Some(root.find_class("Test").unwrap().parse)),
+                        return_type: Type { span: Some(span2(2, 15, "Number", files.get(1).unwrap().deref())), class_def: Cell::new(None) },
+                        parent_class: Cell::new(None),
                         llvm: Cell::new(None),
                     }
                 ],
@@ -118,15 +118,15 @@ end
             Root {
                 items: vec![
                     RootItem::Method(Method {
-                        parse: root.find_method("main").unwrap().parse,
+                        parse: root.find_method("main"),
                     }),
                     RootItem::Class(Class {
                         methods: vec![
                             Method {
-                                parse: unsafe { &*root.find_class("Test").unwrap().parse }.find_method("test"),
+                                parse: root.find_class("Test").find_method("test"),
                             }
                         ],
-                        parse: root.find_class("Test").unwrap().parse,
+                        parse: root.find_class("Test"),
                     }),
                 ]
             }

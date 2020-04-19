@@ -38,10 +38,10 @@ pub fn make_int_instance<'def>(value: i64, root: &index::tree::Root<'def>) -> Ne
                 args: vec![
                     Expr::NativeInt(Box::new(NativeInt { value }))
                 ],
-                def_opt: Cell::new(Some(root.find_class("Native__Int").unwrap().parse))
+                class_def: Cell::new(Some(root.find_class("Native__Int")))
             })),
         ],
-        def_opt: Cell::new(Some(root.find_class("Int").unwrap().parse))
+        class_def: Cell::new(Some(root.find_class("Int")))
     }
 }
 

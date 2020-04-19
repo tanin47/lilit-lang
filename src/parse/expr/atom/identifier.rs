@@ -8,7 +8,7 @@ pub fn parse<'def, 'r>(
     input: Tokens<'def, 'r>,
 ) -> ParseResult<'def, 'r, Identifier<'def>> {
     let (input, name) = parse_span(input)?;
-    Ok((input, Identifier { name: Some(name), def_opt: RefCell::new(None) }))
+    Ok((input, Identifier { name: Some(name), source: RefCell::new(None) }))
 }
 
 pub fn parse_span<'def, 'r>(

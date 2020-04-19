@@ -37,7 +37,7 @@ impl EmitterMethod for Emitter<'_> {
             param_types.push(param.get_llvm_type());
         }
 
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let return_type_class = unsafe { &*method.return_type.class_def.get().unwrap() };
         let llvm_fn_type = if return_type_class.name.fragment == "Void" {
             self.context.void_type().fn_type(&param_types, false)
         } else {
@@ -94,7 +94,7 @@ impl EmitterMethod for Emitter<'_> {
             &[],
             &method.name.fragment);
 
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let return_type_class = unsafe { &*method.return_type.class_def.get().unwrap() };
         let ret_ptr = unwrap!(BasicValueEnum::PointerValue, llvm_ret.try_as_basic_value().left().unwrap());
         let first_arg_ptr = unsafe { self.builder.build_struct_gep(ret_ptr, 0, "Gep for the first param of Int") };
         let native_int = unwrap!(BasicValueEnum::PointerValue, self.builder.build_load(first_arg_ptr, "Load the first param of Int"));
@@ -118,11 +118,11 @@ impl EmitterMethod for Emitter<'_> {
         for param in &method.params {
             if param.is_varargs { continue; }
 
-            let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
+            let param_class = unsafe { &*param.tpe.class_def.get().unwrap() };
             param_types.push(self.get_type_for_native(param_class));
         }
 
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let return_type_class = unsafe { &*method.return_type.class_def.get().unwrap() };
         let is_varargs = method.params.last().map(|p|p.is_varargs).unwrap_or(false);
         let llvm_fn_type = match return_type_class.name.fragment {
             "Native__Void" => self.context.void_type().fn_type(&param_types, is_varargs),
@@ -144,7 +144,7 @@ impl EmitterMethod for Emitter<'_> {
         for (index, param) in method.params.iter().enumerate() {
             if param.is_varargs { continue; }
 
-            let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
+            let param_class = unsafe { &*param.tpe.class_def.get().unwrap() };
             native_params.push(
                 match param_class.name.fragment {
                     "Native__Int" => self.context.i64_type().into(),
@@ -171,7 +171,7 @@ impl EmitterMethod for Emitter<'_> {
             native_args.push(BasicValueEnum::PointerValue(va_list_ptr.unwrap()));
         }
 
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let return_type_class = unsafe { &*method.return_type.class_def.get().unwrap() };
         let native_method_name = &method.name.fragment["native__".len()..];
         let native_method = self.get_external_func(
             native_method_name,

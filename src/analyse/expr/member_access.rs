@@ -13,7 +13,7 @@ pub fn apply<'def>(
 
     for param in &class.params {
         if param.name.unwrap().fragment == member_access.name.unwrap().fragment {
-            member_access.def_opt.set(Some(param));
+            member_access.param_def.set(Some(param));
         }
     }
 }
@@ -49,7 +49,7 @@ end
 
         apply(&mut [file.deref_mut()], &root);
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse }.exprs,
+            root.find_method("main").exprs,
             vec![
                 Expr::MemberAccess(Box::new(MemberAccess {
                     parent: Expr::NewInstance(Box::new(NewInstance {
@@ -65,18 +65,18 @@ end
                                             args: vec![
                                                 Expr::NativeString(Box::new(NativeString { value: "a".to_string() }))
                                             ],
-                                            def_opt: Cell::new(Some(root.find_class("Native__String").unwrap().parse))
+                                            class_def: Cell::new(Some(root.find_class("Native__String")))
                                         })),
                                     ],
-                                    def_opt: Cell::new(Some(root.find_class("String").unwrap().parse))
+                                    class_def: Cell::new(Some(root.find_class("String")))
                                 }
                             ))
                         }))],
-                        def_opt: Cell::new(Some(root.find_class("Test").unwrap().parse))
+                        class_def: Cell::new(Some(root.find_class("Test")))
                     })),
                     name: Some(span2(11, 13, "member", file.deref())),
-                    def_opt: Cell::new(Some(
-                        unsafe { &*root.find_class("Test").unwrap().parse }.params.get(0).unwrap()
+                    param_def: Cell::new(Some(
+                        root.find_class("Test").params.get(0).unwrap()
                     ))
                 }))
             ]

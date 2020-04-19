@@ -7,7 +7,7 @@ pub fn apply<'def>(
     scope: &mut Scope<'def>,
 ) {
     match new_instance.name_opt {
-       Some(name) => new_instance.def_opt.set(scope.find_class(name.fragment).map(|c|c.parse)),
+       Some(name) => new_instance.class_def.set(scope.find_class(name.fragment).map(|c|c.parse)),
        None => (),
     };
 

@@ -29,7 +29,7 @@ pub fn parse_tail<'def, 'r>(
                 invoker_opt: None,
                 name,
                 args,
-                def_opt: Cell::new(None),
+                method_def: Cell::new(None),
             }
         ))
     } else {
@@ -71,7 +71,7 @@ func("a", "b")
                         Expr::String(Box::new(LiteralString { span: span(1, 6, "\"a\""), instance: RefCell::new(None) })),
                         Expr::String(Box::new(LiteralString { span: span(1, 11, "\"b\""), instance: RefCell::new(None) })),
                     ],
-                    def_opt: Cell::new(None),
+                    method_def: Cell::new(None),
                 }
             ))
         );

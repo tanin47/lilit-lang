@@ -12,8 +12,8 @@ impl MemberAccessEmitter for Emitter<'_> {
         let (parent_ptr, parent_class)  = unwrap2!(Value::Class, self.apply_expr(&member_access.parent));
 
         let parent_class = unsafe { &*parent_class };
-        let param = unsafe { &*member_access.def_opt.get().unwrap() };
-        let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
+        let param = unsafe { &*member_access.param_def.get().unwrap() };
+        let param_class = unsafe { &*param.tpe.class_def.get().unwrap() };
 
         let param_ptr = unsafe {
             self.builder.build_struct_gep(

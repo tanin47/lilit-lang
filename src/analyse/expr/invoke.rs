@@ -11,7 +11,7 @@ pub fn apply<'def>(
         expr::apply(arg, scope);
     }
 
-    invoke.def_opt.set(Some(
+    invoke.method_def.set(Some(
         match &invoke.invoker_opt {
             Some(parent) => {
                 expr::apply(parent, scope);
@@ -49,17 +49,17 @@ end
 
         apply(&mut [file.deref_mut()], &root);
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse }.exprs,
+            root.find_method("main").exprs,
             vec![
                 Expr::Invoke(Box::new(Invoke {
                     invoker_opt: Some(Expr::NewInstance(Box::new(NewInstance {
                         name_opt: Some(span2(7, 3, "Test", file.deref())),
                         args: vec![],
-                        def_opt: Cell::new(Some(root.find_class("Test").unwrap().parse))
+                        class_def: Cell::new(Some(root.find_class("Test")))
                     }))),
                     name: span2(7, 10, "run", file.deref()),
                     args: vec![],
-                    def_opt: Cell::new(Some(unsafe { &*root.find_class("Test").unwrap().parse }.find_method("run")))
+                    method_def: Cell::new(Some(root.find_class("Test").find_method("run")))
                 }))
             ]
         )

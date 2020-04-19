@@ -41,7 +41,7 @@ mod tests {
 
     use index::build;
     use parse;
-    use parse::tree::{CompilationUnit, Type, CompilationUnitItem, Method, Invoke, Expr};
+    use parse::tree::{CompilationUnit, Type, CompilationUnitItem, Method, Invoke, Expr, Class};
     use test_common::span2;
     use analyse::apply;
     use std::cell::Cell;
@@ -77,6 +77,9 @@ end
     #[test]
     fn test_simple() {
         let content = r#"
+class Number
+end
+
 def test(): Number
 end
 
@@ -93,26 +96,33 @@ end
             file.unit,
             CompilationUnit {
                 items: vec![
+                    CompilationUnitItem::Class(Class {
+                        name: span2(1, 7, "Number", file.deref()),
+                        params: vec![],
+                        methods: vec![],
+                        llvm: Cell::new(None),
+                        llvm_native: Cell::new(None)
+                    }),
                     CompilationUnitItem::Method(Method {
-                        name: span2(1, 5, "test", file.deref()),
+                        name: span2(4, 5, "test", file.deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: Some(span2(1, 13, "Number", file.deref())), def_opt: Cell::new(None) },
+                        return_type: Type { span: Some(span2(4, 13, "Number", file.deref())), class_def: Cell::new(Some(root.find_class("Number"))) },
                         parent_class: Cell::new(None),
                         llvm: Cell::new(None)
                     }),
                     CompilationUnitItem::Method(Method {
-                        name: span2(4, 5, "main", file.deref()),
+                        name: span2(7, 5, "main", file.deref()),
                         params: vec![],
                         exprs: vec![
                             Expr::Invoke(Box::new(Invoke {
                                 invoker_opt: None,
-                                name: span2(5, 3, "test", file.deref()),
+                                name: span2(8, 3, "test", file.deref()),
                                 args: vec![],
-                                def_opt: Cell::new(Some(root.find_method("test").unwrap().parse))
+                                method_def: Cell::new(Some(root.find_method("test")))
                             }))
                         ],
-                        return_type: Type { span: Some(span2(4, 13, "Number", file.deref())), def_opt: Cell::new(None) },
+                        return_type: Type { span: Some(span2(7, 13, "Number", file.deref())), class_def: Cell::new(Some(root.find_class("Number"))) },
                         parent_class: Cell::new(None),
                         llvm: Cell::new(None)
                     }),

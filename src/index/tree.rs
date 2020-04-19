@@ -6,28 +6,30 @@ pub struct Root<'a> {
 }
 
 impl <'a> Root<'a> {
-    pub fn find_method(&self, name: &str) -> Option<&Method<'a>> {
+    pub fn find_method(&self, name: &str) -> &parse::tree::Method<'a> {
         for item in &self.items {
            if let RootItem::Method(method)  = item {
-               if unsafe { &*method.parse }.name.fragment == name {
-                   return Some(method);
+               let method = unsafe { &*method.parse };
+               if method.name.fragment == name {
+                   return method;
                }
            }
         }
 
-        None
+        panic!("Unable to find the method {}", name)
     }
 
-    pub fn find_class(&self, name: &str) -> Option<&Class<'a>> {
+    pub fn find_class(&self, name: &str) -> &parse::tree::Class<'a> {
         for item in &self.items {
             if let RootItem::Class(class) = item {
-                if unsafe { &*class.parse }.name.fragment == name {
-                    return Some(class)
+                let class = unsafe { &*class.parse };
+                if class.name.fragment == name {
+                    return class;
                 }
             }
         }
 
-        None
+        panic!("Unable to find the class {}", name);
     }
 }
 

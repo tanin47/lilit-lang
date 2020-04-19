@@ -69,7 +69,7 @@ end
                            instance: RefCell::new(None)
                        }))
                    ],
-                   return_type: Type { span: Some(span(1, 13, "Number")), def_opt: Cell::new(None) },
+                   return_type: Type { span: Some(span(1, 13, "Number")), class_def: Cell::new(None) },
                    parent_class: Cell::new(None),
                    llvm: Cell::new(None)
                }
@@ -93,7 +93,7 @@ end
                     params: vec![
                         Param {
                             name: Some(span(1, 10, "a")),
-                            tpe: Type { span: Some(span(1, 13, "String")), def_opt: Cell::new(None) },
+                            tpe: Type { span: Some(span(1, 13, "String")), class_def: Cell::new(None) },
                             is_varargs: false,
                             index: 0,
                             parent: Cell::new(None),
@@ -101,7 +101,7 @@ end
                         },
                         Param {
                             name: Some(span(1, 21, "b")),
-                            tpe: Type { span: Some(span(1, 27, "String")), def_opt: Cell::new(None) },
+                            tpe: Type { span: Some(span(1, 27, "String")), class_def: Cell::new(None) },
                             is_varargs: true,
                             index: 1,
                             parent: Cell::new(None),
@@ -109,7 +109,7 @@ end
                         },
                     ],
                     exprs: vec![],
-                    return_type: Type { span: Some(span(1, 36, "Number")), def_opt: Cell::new(None) },
+                    return_type: Type { span: Some(span(1, 36, "Number")), class_def: Cell::new(None) },
                     parent_class: Cell::new(None),
                     llvm: Cell::new(None)
                 }

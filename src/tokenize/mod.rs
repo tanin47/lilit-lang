@@ -56,7 +56,7 @@ fn tokenize<'def>(input: Span<'def>) -> Result<(Span<'def>, Option<Token<'def>>)
         Ok((input, Some(token)))
     } else if let Ok((input, token)) = bit(input) {
         Ok((input, Some(token)))
-    } else if let Ok((input, token)) = int_or_long_or_double_or_float(input) {
+    } else if let Ok((input, token)) = int_or_float(input) {
         Ok((input, Some(token)))
     } else if let Ok((input, token)) = keyword_or_identifier(input) {
         Ok((input, Some(token)))
@@ -146,15 +146,9 @@ fn hex_p<'a>(num: Span<'a>, original: Span<'a>) -> Result<(Span<'a>, Token<'a>),
         return Err(input);
     }
 
-    let (ending, input) = take_one_if_case_insensitive("FD", input);
+    let num = concat(&[num, must_be_p, maybe_sign, exponent]);
 
-    let num = concat(&[num, must_be_p, maybe_sign, exponent, ending]);
-
-    if ending.fragment.char_at(0).to_ascii_uppercase() == 'F' {
-        Ok((input, Token::Float(num)))
-    } else {
-        Ok((input, Token::Double(num)))
-    }
+    Ok((input, Token::Float(num)))
 }
 
 fn hex_decimal<'a>(num: Span<'a>, original: Span<'a>) -> Result<(Span<'a>, Token<'a>), Span<'a>> {
@@ -194,18 +188,9 @@ fn hex(original: Span) -> Result<(Span, Token), Span> {
     let (prefix, input) = take(2, original);
     let (hex, input) = take_hex_number(input);
 
-    let (maybe_l, input) = take_one_if_case_insensitive("L", input);
-    let num = concat(&[prefix, hex, maybe_l]);
+    let num = concat(&[prefix, hex]);
 
-    if maybe_l.fragment.is_empty() {
-        hex_decimal(num, input)
-    } else {
-        if hex.fragment.is_empty() {
-            return Err(original);
-        }
-
-        Ok((input, Token::Long(num)))
-    }
+    hex_decimal(num, input)
 }
 
 fn bit(original: Span) -> Result<(Span, Token), Span> {
@@ -220,14 +205,9 @@ fn bit(original: Span) -> Result<(Span, Token), Span> {
     let (prefix, input) = take(2, original);
     let (bits, input) = take_bit(input);
 
-    let (maybe_l, input) = take_one_if_case_insensitive("L", input);
-    let num = concat(&[prefix, bits, maybe_l]);
+    let num = concat(&[prefix, bits]);
 
-    if maybe_l.fragment.is_empty() {
-        Ok((input, Token::Int(num)))
-    } else {
-        Ok((input, Token::Long(num)))
-    }
+    Ok((input, Token::Int(num)))
 }
 
 fn is_identifier(index: usize, s: &str) -> bool {
@@ -266,56 +246,7 @@ fn symbol(input: Span) -> Result<(Span, Token), Span> {
     Ok((input, Token::Symbol(symbol)))
 }
 
-fn float_or_double_end<'a>(
-    number: Span<'a>,
-    original: Span<'a>,
-    include_dot_or_e: bool,
-) -> Result<(Span<'a>, Token<'a>), Span<'a>> {
-    if number.fragment.is_empty() {
-        return Err(original);
-    }
-
-    let (symbol, input) = take(1, original);
-
-    let last_char = symbol.fragment.char_at(0).to_ascii_uppercase();
-    if last_char == 'D' {
-        Ok((
-            input,
-            Token::Double(Span {
-                line: number.line,
-                col: number.col,
-                fragment: unsafe {
-                    std::str::from_utf8_unchecked(slice::from_raw_parts(
-                        number.fragment.as_ptr(),
-                        number.fragment.len() + symbol.fragment.len(),
-                    ))
-                },
-                file: number.file,
-            }),
-        ))
-    } else if last_char == 'F' {
-        Ok((
-            input,
-            Token::Float(Span {
-                line: number.line,
-                col: number.col,
-                fragment: unsafe {
-                    std::str::from_utf8_unchecked(slice::from_raw_parts(
-                        number.fragment.as_ptr(),
-                        number.fragment.len() + symbol.fragment.len(),
-                    ))
-                },
-                file: number.file,
-            }),
-        ))
-    } else if include_dot_or_e {
-        Ok((original, Token::Double(number)))
-    } else {
-        Err(original)
-    }
-}
-
-fn float_or_double_e<'a>(
+fn float_e<'a>(
     num: Span<'a>,
     original: Span<'a>,
     include_dot: bool,
@@ -323,7 +254,11 @@ fn float_or_double_e<'a>(
     let (maybe_e, input) = take_one_if_case_insensitive("E", original);
 
     if maybe_e.fragment.is_empty() {
-        return float_or_double_end(num, original, include_dot);
+        if include_dot {
+            return Ok((original, Token::Float(num)))
+        } else {
+            return Err(input);
+        }
     }
 
     if num.fragment.is_empty() {
@@ -335,10 +270,10 @@ fn float_or_double_e<'a>(
 
     let num = concat(&[num, maybe_e, maybe_operator, second_number]);
 
-    float_or_double_end(num, input, true)
+    Ok((input, Token::Float(num)))
 }
 
-fn float_or_double_dot<'a>(
+fn float_dot<'a>(
     first_number: Span<'a>,
     original: Span<'a>,
 ) -> Result<(Span<'a>, Token<'a>), Span<'a>> {
@@ -350,7 +285,7 @@ fn float_or_double_dot<'a>(
     };
 
     if last_char != '.' {
-        return float_or_double_e(first_number, original, false);
+        return float_e(first_number, original, false);
     }
 
     let (second_number, input) = take_number(input);
@@ -371,13 +306,13 @@ fn float_or_double_dot<'a>(
         file: first_number.file,
     };
 
-    float_or_double_e(num, input, true)
+    float_e(num, input, true)
 }
 
-fn int_or_long_or_double_or_float(original: Span) -> Result<(Span, Token), Span> {
+fn int_or_float(original: Span) -> Result<(Span, Token), Span> {
     let (number, input) = take_number(original);
 
-    if let Ok(ok) = float_or_double_dot(number, input) {
+    if let Ok(ok) = float_dot(number, input) {
         return Ok(ok);
     }
 
@@ -385,15 +320,7 @@ fn int_or_long_or_double_or_float(original: Span) -> Result<(Span, Token), Span>
         return Err(original);
     }
 
-    let (maybe_l, input) = take_one_if_case_insensitive("L", input);
-
-    let num = concat(&[number, maybe_l]);
-
-    if maybe_l.fragment.is_empty() {
-        Ok((input, Token::Int(num)))
-    } else {
-        Ok((input, Token::Long(num)))
-    }
+    Ok((input, Token::Int(number)))
 }
 
 fn oneline_comment(input: Span) -> Result<(Span, Token), Span> {
@@ -587,13 +514,12 @@ mod tests {
         assert_eq!(
             apply(
                 r#"
-0b001 0b1L
+0b001
 "#
                     .trim()
             ),
             Ok(vec![
                 Token::Int(span(1, 1, "0b001")),
-                Token::Long(span(1, 7, "0b1L")),
             ])
         )
     }
@@ -603,19 +529,19 @@ mod tests {
         assert_eq!(
             apply(
                 r#"
-0x0123456789abcdefABCDEF 0x02L 0x2p+3 0x2p-3d 0xap2f 0x1.0p2d 0x.1p2 0x.ap2f
+0x0123456789abcdefABCDEF 0x02 0x2p+3 0x2p-3 0xap2 0x1.0p2 0x.1p2 0x.ap2
 "#
                     .trim()
             ),
             Ok(vec![
                 Token::Int(span(1, 1, "0x0123456789abcdefABCDEF")),
-                Token::Long(span(1, 26, "0x02L")),
-                Token::Double(span(1, 32, "0x2p+3")),
-                Token::Double(span(1, 39, "0x2p-3d")),
-                Token::Float(span(1, 47, "0xap2f")),
-                Token::Double(span(1, 54, "0x1.0p2d")),
-                Token::Double(span(1, 63, "0x.1p2")),
-                Token::Float(span(1, 70, "0x.ap2f")),
+                Token::Int(span(1, 26, "0x02")),
+                Token::Float(span(1, 31, "0x2p+3")),
+                Token::Float(span(1, 38, "0x2p-3")),
+                Token::Float(span(1, 45, "0xap2")),
+                Token::Float(span(1, 51, "0x1.0p2")),
+                Token::Float(span(1, 59, "0x.1p2")),
+                Token::Float(span(1, 66, "0x.ap2")),
             ])
         )
     }
@@ -634,60 +560,19 @@ mod tests {
     }
 
     #[test]
-    fn test_long() {
-        assert_eq!(
-            apply(
-                r#"
-1234567890L
-"#
-                    .trim()
-            ),
-            Ok(vec![Token::Long(span(1, 1, "1234567890L"))])
-        )
-    }
-
-    #[test]
-    fn test_double() {
-        assert_eq!(
-            apply(
-                r#"
-1.0 1. .1 1.0d 1.D .1D 2d 1e-2 1e+3d 5.3e4d e2
-"#
-                    .trim()
-            ),
-            Ok(vec![
-                Token::Double(span(1, 1, "1.0")),
-                Token::Double(span(1, 5, "1.")),
-                Token::Double(span(1, 8, ".1")),
-                Token::Double(span(1, 11, "1.0d")),
-                Token::Double(span(1, 16, "1.D")),
-                Token::Double(span(1, 20, ".1D")),
-                Token::Double(span(1, 24, "2d")),
-                Token::Double(span(1, 27, "1e-2")),
-                Token::Double(span(1, 32, "1e+3d")),
-                Token::Double(span(1, 38, "5.3e4d")),
-                Token::Identifier(span(1, 45, "e2")),
-            ])
-        )
-    }
-
-    #[test]
     fn test_float() {
         assert_eq!(
             apply(
                 r#"
-1.0f 1f 1.F .1f 1e2F 1.3e-2F 12e+1f
+1.0 1e2 1.3e-2 12e+1
 "#
                     .trim()
             ),
             Ok(vec![
-                Token::Float(span(1, 1, "1.0f")),
-                Token::Float(span(1, 6, "1f")),
-                Token::Float(span(1, 9, "1.F")),
-                Token::Float(span(1, 13, ".1f")),
-                Token::Float(span(1, 17, "1e2F")),
-                Token::Float(span(1, 22, "1.3e-2F")),
-                Token::Float(span(1, 30, "12e+1f")),
+                Token::Float(span(1, 1, "1.0")),
+                Token::Float(span(1, 5, "1e2")),
+                Token::Float(span(1, 9, "1.3e-2")),
+                Token::Float(span(1, 16, "12e+1")),
             ])
         )
     }
@@ -739,7 +624,7 @@ end
                 Token::Symbol(span(1, 11, "(")),
                 Token::Symbol(span(1, 12, ")")),
                 Token::Symbol(span(1, 13, ":")),
-                Token::Identifier(span(1, 15, "Boolean")),
+                Token::Capitalize(span(1, 15, "Boolean")),
                 Token::Identifier(span(3, 5, "a")),
                 Token::Symbol(span(3, 7, "+")),
                 Token::Symbol(span(3, 8, "=")),

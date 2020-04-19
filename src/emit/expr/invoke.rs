@@ -16,7 +16,7 @@ impl InvokeEmitter for Emitter<'_> {
             return self.apply_native_invoke(invoke);
         }
 
-        let method = unsafe { &*invoke.def_opt.get().unwrap() };
+        let method = unsafe { &*invoke.method_def.get().unwrap() };
         let mut args = vec![];
 
         if let Some(parent) = &invoke.invoker_opt {
@@ -34,7 +34,7 @@ impl InvokeEmitter for Emitter<'_> {
             &args,
             &method.name.fragment);
 
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let return_type_class = unsafe { &*method.return_type.class_def.get().unwrap() };
 
         match return_type_class.name.fragment {
             "Void"  => Value::Void,
@@ -44,7 +44,7 @@ impl InvokeEmitter for Emitter<'_> {
 
     fn apply_native_invoke<'def>(&self, invoke: &Invoke<'def>) -> Value<'def> {
         assert_eq!(None, invoke.invoker_opt, "Native class shouldn't have a method");
-        let method = unsafe { &*invoke.def_opt.get().unwrap() };
+        let method = unsafe { &*invoke.method_def.get().unwrap() };
         let mut args = vec![];
 
         for (index, arg) in invoke.args.iter().enumerate() {
@@ -59,7 +59,7 @@ impl InvokeEmitter for Emitter<'_> {
             let arg_class = unsafe { &*arg_class };
             assert!(arg_class.name.fragment.starts_with("Native__"), "Expect {} to be a native class", arg_class.name.fragment);
 
-            let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
+            let param_class = unsafe { &*param.tpe.class_def.get().unwrap() };
             assert!(param_class.name.fragment.starts_with("Native__"), "Expect {} to be a native class", param_class.name.fragment);
 
             args.push(
@@ -81,7 +81,7 @@ impl InvokeEmitter for Emitter<'_> {
             &args,
             &method.name.fragment);
 
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let return_type_class = unsafe { &*method.return_type.class_def.get().unwrap() };
         match return_type_class.name.fragment {
             "Native__Void" => Value::Void,
             _ => {

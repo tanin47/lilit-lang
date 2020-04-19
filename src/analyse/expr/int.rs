@@ -14,10 +14,10 @@ pub fn apply<'def>(
                 args: vec![
                     Expr::NativeInt(Box::new(NativeInt { value: int.span.fragment.parse::<i64>().unwrap() }))
                 ],
-                def_opt: Cell::new(Some(scope.find_class("Native__Int").unwrap().parse))
+                class_def: Cell::new(Some(scope.find_class("Native__Int").unwrap().parse))
             })),
         ],
-        def_opt: Cell::new(Some(scope.find_class("Int").unwrap().parse))
+        class_def: Cell::new(Some(scope.find_class("Int").unwrap().parse))
     }));
 }
 
@@ -54,7 +54,7 @@ end
         apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap(),
+            root.find_method("main").exprs.get(0).unwrap(),
             &Expr::Int(Box::new(Int {
                 span: span2(11, 3, "1", file.deref()),
                 instance: RefCell::new(Some(
@@ -66,10 +66,10 @@ end
                               args: vec![
                                   Expr::NativeInt(Box::new(NativeInt { value: 1 }))
                               ],
-                              def_opt: Cell::new(Some(root.find_class("Native__Int").unwrap().parse))
+                              class_def: Cell::new(Some(root.find_class("Native__Int")))
                           })),
                       ],
-                      def_opt: Cell::new(Some(root.find_class("Int").unwrap().parse))
+                      class_def: Cell::new(Some(root.find_class("Int")))
                   }
                 ))
             }))

@@ -16,7 +16,7 @@ pub fn apply<'def>(
             name: None,
             tpe: Type {
                 span: None,
-                def_opt: Cell::new(Some(parent_class)),
+                class_def: Cell::new(Some(parent_class)),
             },
             is_varargs: false,
             index: 0,

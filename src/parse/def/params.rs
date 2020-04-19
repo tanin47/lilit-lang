@@ -8,8 +8,12 @@ pub fn parse<'def, 'r>(
     input: Tokens<'def, 'r>
 ) -> ParseResult<'def, 'r, Vec<Param<'def>>> {
     let (input, _) = symbol('(')(input)?;
-    let (input, params) = separated_list(symbol(','), parse_single)(input)?;
+    let (input, mut params) = separated_list(symbol(','), parse_single)(input)?;
     let (input, _) = symbol(')')(input)?;
+
+    for (index, param) in params.iter_mut().enumerate() {
+        param.index = index;
+    }
 
     Ok((input, params))
 }
@@ -60,7 +64,7 @@ mod tests {
                 vec![
                     Param {
                         name: Some(span(1, 2, "arg")),
-                        tpe: Type { span: Some(span(1, 7, "Number")), def_opt: Cell::new(None) },
+                        tpe: Type { span: Some(span(1, 7, "Number")), class_def: Cell::new(None) },
                         is_varargs: false,
                         index: 0,
                         parent: Cell::new(None),
@@ -68,7 +72,7 @@ mod tests {
                     },
                     Param {
                         name: Some(span(1, 15, "arg2")),
-                        tpe: Type { span: Some(span(1, 24, "Number")), def_opt: Cell::new(None) },
+                        tpe: Type { span: Some(span(1, 24, "Number")), class_def: Cell::new(None) },
                         is_varargs: true,
                         index: 1,
                         parent: Cell::new(None),

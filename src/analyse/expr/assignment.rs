@@ -47,7 +47,7 @@ end
         apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse }.exprs,
+            root.find_method("main").exprs,
             vec![
                 Expr::Assignment(Box::new(Assignment {
                     name: span2(11, 3, "a", file.deref()),
@@ -55,13 +55,13 @@ end
                         span: span2(11, 7, "2", file.deref()),
                         instance: RefCell::new(Some(make_int_instance(2, &root)))
                     }))),
-                    tpe: Cell::new(Some(root.find_class("Int").unwrap().parse)),
+                    tpe: Cell::new(Some(root.find_class("Int"))),
                     llvm: Cell::new(None)
                 })),
                 Expr::Identifier(Box::new(Identifier {
                     name: Some(span2(12, 3, "a", file.deref())),
-                    def_opt: RefCell::new(Some(IdentifierSource::Assignment(
-                        unwrap!(Expr::Assignment, unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap()).deref()
+                    source: RefCell::new(Some(IdentifierSource::Assignment(
+                        unwrap!(Expr::Assignment, root.find_method("main").exprs.get(0).unwrap()).deref()
                     )))
                 })),
             ]

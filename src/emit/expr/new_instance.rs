@@ -16,7 +16,7 @@ impl NewInstanceEmitter for Emitter<'_> {
             args.push(self.apply_expr(arg));
         }
 
-        let class = unsafe { &*new_instance.def_opt.get().unwrap() };
+        let class = unsafe { &*new_instance.class_def.get().unwrap() };
         Value::Class(self.alloc_new_instance(class, args), class)
     }
 
@@ -42,7 +42,7 @@ impl NewInstanceEmitter for Emitter<'_> {
             println!("{}", class.name.fragment);
             instance = self.malloc(&class.llvm.get().unwrap());
             for (index, (param, arg)) in class.params.iter().zip(args.iter()).enumerate() {
-                let expected_value_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
+                let expected_value_class = unsafe { &*param.tpe.class_def.get().unwrap() };
 
                 let param_ptr = unsafe {
                     self.builder.build_struct_gep(instance, index as u32, format!("Gep for the field #{} of the class {}", index, class.name.fragment).as_ref())

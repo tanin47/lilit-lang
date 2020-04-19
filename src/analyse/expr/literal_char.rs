@@ -15,10 +15,10 @@ pub fn apply<'def>(
                 args: vec![
                     Expr::NativeChar(Box::new(NativeChar { value: char.span.fragment.char_at(1) }))
                 ],
-                def_opt: Cell::new(Some(scope.find_class("Native__Char").unwrap().parse))
+                class_def: Cell::new(Some(scope.find_class("Native__Char").unwrap().parse))
             })),
         ],
-        def_opt: Cell::new(Some(scope.find_class("Char").unwrap().parse))
+        class_def: Cell::new(Some(scope.find_class("Char").unwrap().parse))
     }));
 }
 
@@ -52,7 +52,7 @@ end
         apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
-            unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap(),
+            root.find_method("main").exprs.get(0).unwrap(),
             &Expr::Char(Box::new(Char {
                 span: span2(8, 3, "'a'", file.deref()),
                 instance: RefCell::new(Some(
@@ -64,10 +64,10 @@ end
                                 args: vec![
                                     Expr::NativeChar(Box::new(NativeChar { value: 'a' }))
                                 ],
-                                def_opt: Cell::new(Some(root.find_class("Native__Char").unwrap().parse))
+                                class_def: Cell::new(Some(root.find_class("Native__Char")))
                             })),
                         ],
-                        def_opt: Cell::new(Some(root.find_class("Char").unwrap().parse))
+                        class_def: Cell::new(Some(root.find_class("Char")))
                     }
                 ))
             }))
