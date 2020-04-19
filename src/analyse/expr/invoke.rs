@@ -6,6 +6,7 @@ pub fn apply<'def>(
     invoke: &Invoke<'def>,
     scope: &mut Scope<'def>,
 ) {
+    // TODO: support invoking instance method
     for arg in &invoke.args {
         expr::apply(arg, scope);
     }

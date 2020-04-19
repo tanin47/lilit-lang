@@ -1,63 +1,76 @@
 #include <stdio.h>
 #include <string.h>
 #include <gc.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+struct Process {
+  long pid;
+  long in;
+  long out;
+  long err;
+};
+
+struct Process* lilit_exec(char *cmd) {
+   int* in = GC_malloc(sizeof(int) * 2);
+   int* out = GC_malloc(sizeof(int) * 2);
+   int* err = GC_malloc(sizeof(int) * 2);
+
+   pipe(in);
+   pipe(out);
+   pipe(err);
+
+
+   int pid = fork();
+
+  if (pid == 0) {
+    close(in[1]);
+    close(out[0]);
+    close(err[0]);
+    dup2(in[0], STDIN_FILENO);
+    dup2(out[1], STDOUT_FILENO);
+    dup2(err[1], STDERR_FILENO);
+
+    execlp(cmd, cmd, (char*) NULL);
+  }
+  close(in[0]);
+  close(out[1]);
+  close(err[1]);
+
+  struct Process* process = GC_malloc(sizeof(struct Process));
+  process->pid = pid;
+  process->in = in[1];
+  process->out = out[0];
+  process->err = err[0];
+  return process;
+}
+
+char lilit_read(int pipe) {
+  char c;
+  read(pipe, &c, 1);
+  return c;
+}
+
+void lilit_write(int pipe, char c) {
+  write(pipe, &c, 1);
+}
+
+int lilit_wait(int pid) {
+  int exitCode;
+  waitpid(pid, &exitCode, 0);
+  return exitCode;
+}
 
 struct Test {
-  int a;
-  char *b;
+  long pid;
+  long in;
 };
 
 struct Test* test_call() {
   struct Test* t = GC_malloc(sizeof(struct Test));
-  char *s = GC_malloc(sizeof(char)*4);
-  s = "abc";
-  t->a = 34;
-  t->b = s;
+  t->pid = 23;
+  t->in = 37;
   return t;
-}
-
-char* lilit__read() {
-  int block_size = 3;
-  int size = block_size;
-  char* buf = GC_malloc(sizeof(char) * size);
-
-  char* offset = buf;
-
-  while (fgets(offset, block_size, stdin)) {
-    int len = strlen(offset);
-
-    if (len == (block_size - 1) && offset[len - 1] != '\n') {
-      int new_size = size + block_size - 1;
-      buf = GC_realloc(buf, sizeof(char) * new_size);
-      offset = &buf[size - 1];
-      size = new_size;
-    } else {
-      offset[len - 1] = '\0';
-      return buf;
-    }
-  }
-
-  return buf;
-}
-
-char* lilit__read_file(char* filename) {
-  FILE *file = fopen(filename, "r");
-
-  int block_size = 11;
-  int size = block_size;
-  char* buf = GC_malloc(sizeof(char) * size);
-
-  int nread = 0;
-  char* offset = buf;
-
-  while ((nread = fread(offset, sizeof(char), block_size, file)) > 0) {
-    int new_size = size + block_size;
-    buf = GC_realloc(buf, sizeof(char) * new_size);
-    offset = &buf[size];
-    size = new_size;
-  }
-
-  return buf;
 }
 
 int GC_finalizer_count = 0;

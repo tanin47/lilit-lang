@@ -3,211 +3,189 @@ source_filename = "native/lib.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
-%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i64, i32, [20 x i8] }
-%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
-%struct.Test = type { i32, i8* }
+%struct.Process = type { i64, i64, i64, i64 }
+%struct.Test = type { i64, i64 }
 
-@.str = private unnamed_addr constant [4 x i8] c"abc\00", align 1
-@stdin = external global %struct._IO_FILE*, align 8
-@.str.1 = private unnamed_addr constant [2 x i8] c"r\00", align 1
 @GC_finalizer_count = global i32 0, align 4
-@.str.2 = private unnamed_addr constant [20 x i8] c"GC freed count: %d\0A\00", align 1
+@.str = private unnamed_addr constant [20 x i8] c"GC freed count: %d\0A\00", align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define %struct.Test* @test_call() #0 {
-  %1 = alloca %struct.Test*, align 8
+define %struct.Process* @lilit_exec(i8*) #0 {
   %2 = alloca i8*, align 8
-  %3 = call noalias i8* @GC_malloc(i64 16) #5
-  %4 = bitcast i8* %3 to %struct.Test*
-  store %struct.Test* %4, %struct.Test** %1, align 8
-  %5 = call noalias i8* @GC_malloc(i64 4) #5
-  store i8* %5, i8** %2, align 8
-  store i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8** %2, align 8
-  %6 = load %struct.Test*, %struct.Test** %1, align 8
-  %7 = getelementptr inbounds %struct.Test, %struct.Test* %6, i32 0, i32 0
-  store i32 34, i32* %7, align 8
-  %8 = load i8*, i8** %2, align 8
-  %9 = load %struct.Test*, %struct.Test** %1, align 8
-  %10 = getelementptr inbounds %struct.Test, %struct.Test* %9, i32 0, i32 1
-  store i8* %8, i8** %10, align 8
-  %11 = load %struct.Test*, %struct.Test** %1, align 8
-  ret %struct.Test* %11
+  %3 = alloca i32*, align 8
+  %4 = alloca i32*, align 8
+  %5 = alloca i32*, align 8
+  %6 = alloca i32, align 4
+  %7 = alloca %struct.Process*, align 8
+  store i8* %0, i8** %2, align 8
+  %8 = call noalias i8* @GC_malloc(i64 8) #4
+  %9 = bitcast i8* %8 to i32*
+  store i32* %9, i32** %3, align 8
+  %10 = call noalias i8* @GC_malloc(i64 8) #4
+  %11 = bitcast i8* %10 to i32*
+  store i32* %11, i32** %4, align 8
+  %12 = call noalias i8* @GC_malloc(i64 8) #4
+  %13 = bitcast i8* %12 to i32*
+  store i32* %13, i32** %5, align 8
+  %14 = load i32*, i32** %3, align 8
+  %15 = call i32 @pipe(i32* %14) #5
+  %16 = load i32*, i32** %4, align 8
+  %17 = call i32 @pipe(i32* %16) #5
+  %18 = load i32*, i32** %5, align 8
+  %19 = call i32 @pipe(i32* %18) #5
+  %20 = call i32 @fork() #5
+  store i32 %20, i32* %6, align 4
+  %21 = load i32, i32* %6, align 4
+  %22 = icmp eq i32 %21, 0
+  br i1 %22, label %23, label %51
+
+; <label>:23:                                     ; preds = %1
+  %24 = load i32*, i32** %3, align 8
+  %25 = getelementptr inbounds i32, i32* %24, i64 1
+  %26 = load i32, i32* %25, align 4
+  %27 = call i32 @close(i32 %26)
+  %28 = load i32*, i32** %4, align 8
+  %29 = getelementptr inbounds i32, i32* %28, i64 0
+  %30 = load i32, i32* %29, align 4
+  %31 = call i32 @close(i32 %30)
+  %32 = load i32*, i32** %5, align 8
+  %33 = getelementptr inbounds i32, i32* %32, i64 0
+  %34 = load i32, i32* %33, align 4
+  %35 = call i32 @close(i32 %34)
+  %36 = load i32*, i32** %3, align 8
+  %37 = getelementptr inbounds i32, i32* %36, i64 0
+  %38 = load i32, i32* %37, align 4
+  %39 = call i32 @dup2(i32 %38, i32 0) #5
+  %40 = load i32*, i32** %4, align 8
+  %41 = getelementptr inbounds i32, i32* %40, i64 1
+  %42 = load i32, i32* %41, align 4
+  %43 = call i32 @dup2(i32 %42, i32 1) #5
+  %44 = load i32*, i32** %5, align 8
+  %45 = getelementptr inbounds i32, i32* %44, i64 1
+  %46 = load i32, i32* %45, align 4
+  %47 = call i32 @dup2(i32 %46, i32 2) #5
+  %48 = load i8*, i8** %2, align 8
+  %49 = load i8*, i8** %2, align 8
+  %50 = call i32 (i8*, i8*, ...) @execlp(i8* %48, i8* %49, i8* null) #5
+  br label %51
+
+; <label>:51:                                     ; preds = %23, %1
+  %52 = load i32*, i32** %3, align 8
+  %53 = getelementptr inbounds i32, i32* %52, i64 0
+  %54 = load i32, i32* %53, align 4
+  %55 = call i32 @close(i32 %54)
+  %56 = load i32*, i32** %4, align 8
+  %57 = getelementptr inbounds i32, i32* %56, i64 1
+  %58 = load i32, i32* %57, align 4
+  %59 = call i32 @close(i32 %58)
+  %60 = load i32*, i32** %5, align 8
+  %61 = getelementptr inbounds i32, i32* %60, i64 1
+  %62 = load i32, i32* %61, align 4
+  %63 = call i32 @close(i32 %62)
+  %64 = call noalias i8* @GC_malloc(i64 32) #4
+  %65 = bitcast i8* %64 to %struct.Process*
+  store %struct.Process* %65, %struct.Process** %7, align 8
+  %66 = load i32, i32* %6, align 4
+  %67 = sext i32 %66 to i64
+  %68 = load %struct.Process*, %struct.Process** %7, align 8
+  %69 = getelementptr inbounds %struct.Process, %struct.Process* %68, i32 0, i32 0
+  store i64 %67, i64* %69, align 8
+  %70 = load i32*, i32** %3, align 8
+  %71 = getelementptr inbounds i32, i32* %70, i64 1
+  %72 = load i32, i32* %71, align 4
+  %73 = sext i32 %72 to i64
+  %74 = load %struct.Process*, %struct.Process** %7, align 8
+  %75 = getelementptr inbounds %struct.Process, %struct.Process* %74, i32 0, i32 1
+  store i64 %73, i64* %75, align 8
+  %76 = load i32*, i32** %4, align 8
+  %77 = getelementptr inbounds i32, i32* %76, i64 0
+  %78 = load i32, i32* %77, align 4
+  %79 = sext i32 %78 to i64
+  %80 = load %struct.Process*, %struct.Process** %7, align 8
+  %81 = getelementptr inbounds %struct.Process, %struct.Process* %80, i32 0, i32 2
+  store i64 %79, i64* %81, align 8
+  %82 = load i32*, i32** %5, align 8
+  %83 = getelementptr inbounds i32, i32* %82, i64 0
+  %84 = load i32, i32* %83, align 4
+  %85 = sext i32 %84 to i64
+  %86 = load %struct.Process*, %struct.Process** %7, align 8
+  %87 = getelementptr inbounds %struct.Process, %struct.Process* %86, i32 0, i32 3
+  store i64 %85, i64* %87, align 8
+  %88 = load %struct.Process*, %struct.Process** %7, align 8
+  ret %struct.Process* %88
 }
 
 ; Function Attrs: allocsize(0)
 declare noalias i8* @GC_malloc(i64) #1
 
+; Function Attrs: nounwind
+declare i32 @pipe(i32*) #2
+
+; Function Attrs: nounwind
+declare i32 @fork() #2
+
+declare i32 @close(i32) #3
+
+; Function Attrs: nounwind
+declare i32 @dup2(i32, i32) #2
+
+; Function Attrs: nounwind
+declare i32 @execlp(i8*, i8*, ...) #2
+
 ; Function Attrs: noinline nounwind optnone uwtable
-define i8* @lilit__read() #0 {
-  %1 = alloca i8*, align 8
+define signext i8 @lilit_read(i32) #0 {
+  %2 = alloca i32, align 4
+  %3 = alloca i8, align 1
+  store i32 %0, i32* %2, align 4
+  %4 = load i32, i32* %2, align 4
+  %5 = call i64 @read(i32 %4, i8* %3, i64 1)
+  %6 = load i8, i8* %3, align 1
+  ret i8 %6
+}
+
+declare i64 @read(i32, i8*, i64) #3
+
+; Function Attrs: noinline nounwind optnone uwtable
+define void @lilit_write(i32, i8 signext) #0 {
+  %3 = alloca i32, align 4
+  %4 = alloca i8, align 1
+  store i32 %0, i32* %3, align 4
+  store i8 %1, i8* %4, align 1
+  %5 = load i32, i32* %3, align 4
+  %6 = call i64 @write(i32 %5, i8* %4, i64 1)
+  ret void
+}
+
+declare i64 @write(i32, i8*, i64) #3
+
+; Function Attrs: noinline nounwind optnone uwtable
+define i32 @lilit_wait(i32) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
-  %4 = alloca i8*, align 8
-  %5 = alloca i8*, align 8
-  %6 = alloca i32, align 4
-  %7 = alloca i32, align 4
-  store i32 3, i32* %2, align 4
-  %8 = load i32, i32* %2, align 4
-  store i32 %8, i32* %3, align 4
-  %9 = load i32, i32* %3, align 4
-  %10 = sext i32 %9 to i64
-  %11 = mul i64 1, %10
-  %12 = call noalias i8* @GC_malloc(i64 %11) #5
-  store i8* %12, i8** %4, align 8
-  %13 = load i8*, i8** %4, align 8
-  store i8* %13, i8** %5, align 8
-  br label %14
-
-; <label>:14:                                     ; preds = %60, %0
-  %15 = load i8*, i8** %5, align 8
-  %16 = load i32, i32* %2, align 4
-  %17 = load %struct._IO_FILE*, %struct._IO_FILE** @stdin, align 8
-  %18 = call i8* @fgets(i8* %15, i32 %16, %struct._IO_FILE* %17)
-  %19 = icmp ne i8* %18, null
-  br i1 %19, label %20, label %61
-
-; <label>:20:                                     ; preds = %14
-  %21 = load i8*, i8** %5, align 8
-  %22 = call i64 @strlen(i8* %21) #6
-  %23 = trunc i64 %22 to i32
-  store i32 %23, i32* %6, align 4
-  %24 = load i32, i32* %6, align 4
-  %25 = load i32, i32* %2, align 4
-  %26 = sub nsw i32 %25, 1
-  %27 = icmp eq i32 %24, %26
-  br i1 %27, label %28, label %53
-
-; <label>:28:                                     ; preds = %20
-  %29 = load i8*, i8** %5, align 8
-  %30 = load i32, i32* %6, align 4
-  %31 = sub nsw i32 %30, 1
-  %32 = sext i32 %31 to i64
-  %33 = getelementptr inbounds i8, i8* %29, i64 %32
-  %34 = load i8, i8* %33, align 1
-  %35 = sext i8 %34 to i32
-  %36 = icmp ne i32 %35, 10
-  br i1 %36, label %37, label %53
-
-; <label>:37:                                     ; preds = %28
-  %38 = load i32, i32* %3, align 4
-  %39 = load i32, i32* %2, align 4
-  %40 = add nsw i32 %38, %39
-  %41 = sub nsw i32 %40, 1
-  store i32 %41, i32* %7, align 4
-  %42 = load i8*, i8** %4, align 8
-  %43 = load i32, i32* %7, align 4
-  %44 = sext i32 %43 to i64
-  %45 = mul i64 1, %44
-  %46 = call i8* @GC_realloc(i8* %42, i64 %45) #7
-  store i8* %46, i8** %4, align 8
-  %47 = load i8*, i8** %4, align 8
-  %48 = load i32, i32* %3, align 4
-  %49 = sub nsw i32 %48, 1
-  %50 = sext i32 %49 to i64
-  %51 = getelementptr inbounds i8, i8* %47, i64 %50
-  store i8* %51, i8** %5, align 8
-  %52 = load i32, i32* %7, align 4
-  store i32 %52, i32* %3, align 4
-  br label %60
-
-; <label>:53:                                     ; preds = %28, %20
-  %54 = load i8*, i8** %5, align 8
-  %55 = load i32, i32* %6, align 4
-  %56 = sub nsw i32 %55, 1
-  %57 = sext i32 %56 to i64
-  %58 = getelementptr inbounds i8, i8* %54, i64 %57
-  store i8 0, i8* %58, align 1
-  %59 = load i8*, i8** %4, align 8
-  store i8* %59, i8** %1, align 8
-  br label %63
-
-; <label>:60:                                     ; preds = %37
-  br label %14
-
-; <label>:61:                                     ; preds = %14
-  %62 = load i8*, i8** %4, align 8
-  store i8* %62, i8** %1, align 8
-  br label %63
-
-; <label>:63:                                     ; preds = %61, %53
-  %64 = load i8*, i8** %1, align 8
-  ret i8* %64
+  store i32 %0, i32* %2, align 4
+  %4 = load i32, i32* %2, align 4
+  %5 = call i32 @waitpid(i32 %4, i32* %3, i32 0)
+  %6 = load i32, i32* %3, align 4
+  ret i32 %6
 }
 
-declare i8* @fgets(i8*, i32, %struct._IO_FILE*) #2
-
-; Function Attrs: nounwind readonly
-declare i64 @strlen(i8*) #3
-
-; Function Attrs: allocsize(1)
-declare i8* @GC_realloc(i8*, i64) #4
+declare i32 @waitpid(i32, i32*, i32) #3
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define i8* @lilit__read_file(i8*) #0 {
-  %2 = alloca i8*, align 8
-  %3 = alloca %struct._IO_FILE*, align 8
-  %4 = alloca i32, align 4
-  %5 = alloca i32, align 4
-  %6 = alloca i8*, align 8
-  %7 = alloca i32, align 4
-  %8 = alloca i8*, align 8
-  %9 = alloca i32, align 4
-  store i8* %0, i8** %2, align 8
-  %10 = load i8*, i8** %2, align 8
-  %11 = call %struct._IO_FILE* @fopen(i8* %10, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.1, i32 0, i32 0))
-  store %struct._IO_FILE* %11, %struct._IO_FILE** %3, align 8
-  store i32 11, i32* %4, align 4
-  %12 = load i32, i32* %4, align 4
-  store i32 %12, i32* %5, align 4
-  %13 = load i32, i32* %5, align 4
-  %14 = sext i32 %13 to i64
-  %15 = mul i64 1, %14
-  %16 = call noalias i8* @GC_malloc(i64 %15) #5
-  store i8* %16, i8** %6, align 8
-  store i32 0, i32* %7, align 4
-  %17 = load i8*, i8** %6, align 8
-  store i8* %17, i8** %8, align 8
-  br label %18
-
-; <label>:18:                                     ; preds = %26, %1
-  %19 = load i8*, i8** %8, align 8
-  %20 = load i32, i32* %4, align 4
-  %21 = sext i32 %20 to i64
-  %22 = load %struct._IO_FILE*, %struct._IO_FILE** %3, align 8
-  %23 = call i64 @fread(i8* %19, i64 1, i64 %21, %struct._IO_FILE* %22)
-  %24 = trunc i64 %23 to i32
-  store i32 %24, i32* %7, align 4
-  %25 = icmp sgt i32 %24, 0
-  br i1 %25, label %26, label %40
-
-; <label>:26:                                     ; preds = %18
-  %27 = load i32, i32* %5, align 4
-  %28 = load i32, i32* %4, align 4
-  %29 = add nsw i32 %27, %28
-  store i32 %29, i32* %9, align 4
-  %30 = load i8*, i8** %6, align 8
-  %31 = load i32, i32* %9, align 4
-  %32 = sext i32 %31 to i64
-  %33 = mul i64 1, %32
-  %34 = call i8* @GC_realloc(i8* %30, i64 %33) #7
-  store i8* %34, i8** %6, align 8
-  %35 = load i8*, i8** %6, align 8
-  %36 = load i32, i32* %5, align 4
-  %37 = sext i32 %36 to i64
-  %38 = getelementptr inbounds i8, i8* %35, i64 %37
-  store i8* %38, i8** %8, align 8
-  %39 = load i32, i32* %9, align 4
-  store i32 %39, i32* %5, align 4
-  br label %18
-
-; <label>:40:                                     ; preds = %18
-  %41 = load i8*, i8** %6, align 8
-  ret i8* %41
+define %struct.Test* @test_call() #0 {
+  %1 = alloca %struct.Test*, align 8
+  %2 = call noalias i8* @GC_malloc(i64 16) #4
+  %3 = bitcast i8* %2 to %struct.Test*
+  store %struct.Test* %3, %struct.Test** %1, align 8
+  %4 = load %struct.Test*, %struct.Test** %1, align 8
+  %5 = getelementptr inbounds %struct.Test, %struct.Test* %4, i32 0, i32 0
+  store i64 23, i64* %5, align 8
+  %6 = load %struct.Test*, %struct.Test** %1, align 8
+  %7 = getelementptr inbounds %struct.Test, %struct.Test* %6, i32 0, i32 1
+  store i64 37, i64* %7, align 8
+  %8 = load %struct.Test*, %struct.Test** %1, align 8
+  ret %struct.Test* %8
 }
-
-declare %struct._IO_FILE* @fopen(i8*, i8*) #2
-
-declare i64 @fread(i8*, i64, i64, %struct._IO_FILE*) #2
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define void @GC_finalizer(i8*, i8*) #0 {
@@ -219,20 +197,18 @@ define void @GC_finalizer(i8*, i8*) #0 {
   %6 = add nsw i32 %5, 1
   store i32 %6, i32* @GC_finalizer_count, align 4
   %7 = load i32, i32* @GC_finalizer_count, align 4
-  %8 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([20 x i8], [20 x i8]* @.str.2, i32 0, i32 0), i32 %7)
+  %8 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([20 x i8], [20 x i8]* @.str, i32 0, i32 0), i32 %7)
   ret void
 }
 
-declare i32 @printf(i8*, ...) #2
+declare i32 @printf(i8*, ...) #3
 
 attributes #0 = { noinline nounwind optnone uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { allocsize(0) "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #2 = { "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #3 = { nounwind readonly "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #4 = { allocsize(1) "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #5 = { allocsize(0) }
-attributes #6 = { nounwind readonly }
-attributes #7 = { allocsize(1) }
+attributes #2 = { nounwind "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #3 = { "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #4 = { allocsize(0) }
+attributes #5 = { nounwind }
 
 !llvm.module.flags = !{!0}
 !llvm.ident = !{!1}

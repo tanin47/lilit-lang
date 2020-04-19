@@ -12,7 +12,7 @@ pub fn apply<'def>(
             Expr::NewInstance(Box::new(NewInstance {
                 name_opt: None,
                 args: vec![
-                    Expr::NativeString(Box::new(NativeString { value: string.span.fragment[1..(string.span.fragment.len()-1)].to_string() }))
+                    Expr::NativeString(Box::new(NativeString { value: serde_json::from_str(string.span.fragment).unwrap() }))
                 ],
                 def_opt: Cell::new(Some(scope.find_class("Native__String").unwrap().parse))
             })),

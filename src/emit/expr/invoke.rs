@@ -83,13 +83,11 @@ impl InvokeEmitter for Emitter<'_> {
             &method.name.fragment);
 
         let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
-        let value = self.to_value(llvm_ret.try_as_basic_value().left().unwrap(), return_type_class);
-
-        // Lift value to a class
-        if Value::Void == value {
-            Value::Void
-        } else {
-            Value::Class(self.wrap_with_class(&value, return_type_class), return_type_class)
+        match return_type_class.name.fragment {
+            "Native__Void" => Value::Void,
+            _ => {
+                Value::Class(self.wrap_with_class(&self.to_value(llvm_ret.try_as_basic_value().left().unwrap(), return_type_class), return_type_class), return_type_class)
+            }
         }
     }
 }

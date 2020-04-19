@@ -8,5 +8,5 @@
 extern char **environ;
 
 int main() {
-  execl("/bin/ls", "ls", (char*)NULL);
+  execlp("ls", "ls", (char*)NULL);
 }

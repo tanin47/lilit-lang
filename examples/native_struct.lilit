@@ -16,10 +16,10 @@ end
 class String(underlying: Native__String)
 end
 
-class Native__Struct__Test(a: Native__Int, b: Native__String)
+class Native__Struct__Process(a: Native__Int, b: Native__Int)
 end
 
-def native__test_call(): Native__Struct__Test
+def native__test_call(): Native__Struct__Process
 end
 
 def native__vprintf(text: Native__String, args...: Native__Any): Native__Int
@@ -27,6 +27,6 @@ end
 
 def main(): Int
   t = native__test_call()
-  native__vprintf("Hello %d %s".underlying, t.a, t.b)
-  3
+  native__vprintf("Hello %d %d\n".underlying, t.a, t.b)
+  34
 end
