@@ -27,7 +27,7 @@ impl AssignmentEmitter for Emitter<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
+    use std::ops::{Deref, DerefMut};
 
     use index::build;
     use ::{parse, analyse};
@@ -55,10 +55,10 @@ def test(): Void
   a = 2
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = build(&[file.deref()]);
 
-        analyse::apply(&[file.deref()], &root);
+        analyse::apply(&mut [file.deref_mut()], &root);
 
         let module = apply(&[file.deref()]);
         module.print_to_stderr();

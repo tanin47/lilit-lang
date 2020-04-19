@@ -23,7 +23,7 @@ pub fn apply<'def>(
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
+    use std::ops::{Deref, DerefMut};
 
     use index::build;
     use parse;
@@ -48,10 +48,10 @@ def main: Void
   "test"
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = build(&[file.deref()]);
 
-        apply(&[file.deref()], &root);
+        apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
             unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap(),

@@ -159,14 +159,17 @@ define void @lilit_write(i32, i8 signext) #0 {
 declare i64 @write(i32, i8*, i64) #3
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define i32 @lilit_wait(i32) #0 {
+define i64 @lilit_wait(i32) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   store i32 %0, i32* %2, align 4
   %4 = load i32, i32* %2, align 4
   %5 = call i32 @waitpid(i32 %4, i32* %3, i32 0)
   %6 = load i32, i32* %3, align 4
-  ret i32 %6
+  %7 = and i32 %6, 65280
+  %8 = ashr i32 %7, 8
+  %9 = sext i32 %8 to i64
+  ret i64 %9
 }
 
 declare i32 @waitpid(i32, i32*, i32) #3

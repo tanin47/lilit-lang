@@ -19,16 +19,14 @@ impl InvokeEmitter for Emitter<'_> {
         let method = unsafe { &*invoke.def_opt.get().unwrap() };
         let mut args = vec![];
 
+        if let Some(parent) = &invoke.invoker_opt {
+            let (parent, _) = unwrap2!(Value::Class, self.apply_expr(parent));
+            args.push(BasicValueEnum::PointerValue(parent));
+        }
+
         for (param, arg) in method.params.iter().zip(&invoke.args) {
             let (ptr, arg_class) = unwrap2!(Value::Class, self.apply_expr(arg));
-            let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
-            let arg_class = unsafe { &*arg_class };
-
-            if arg_class.name.fragment == "Native__Null" {
-                args.push(BasicValueEnum::PointerValue(param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).const_null()));
-            } else {
-                args.push(BasicValueEnum::PointerValue(ptr));
-            }
+            args.push(BasicValueEnum::PointerValue(ptr));
         }
 
         let llvm_ret = self.builder.build_call(
@@ -45,6 +43,7 @@ impl InvokeEmitter for Emitter<'_> {
     }
 
     fn apply_native_invoke<'def>(&self, invoke: &Invoke<'def>) -> Value<'def> {
+        assert_eq!(None, invoke.invoker_opt, "Native class shouldn't have a method");
         let method = unsafe { &*invoke.def_opt.get().unwrap() };
         let mut args = vec![];
 
@@ -94,7 +93,7 @@ impl InvokeEmitter for Emitter<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
+    use std::ops::{Deref, DerefMut};
 
     use index::build;
     use ::{parse, analyse};
@@ -135,10 +134,10 @@ def test(): Void
   println("Test %d %d", 1, 2)
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = build(&[file.deref()]);
 
-        analyse::apply(&[file.deref()], &root);
+        analyse::apply(&mut [file.deref_mut()], &root);
 
         let module = apply(&[file.deref()]);
         module.print_to_stderr();

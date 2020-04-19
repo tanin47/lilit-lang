@@ -3,6 +3,7 @@ use emit::Emitter;
 use inkwell::AddressSpace;
 use inkwell::types::BasicTypeEnum;
 use emit::helper::Helper;
+use emit::def::method::EmitterMethod;
 
 pub trait ClassEmitter {
     fn apply_class_def(&self, class: &Class);
@@ -28,8 +29,6 @@ impl ClassEmitter for Emitter<'_> {
     }
 
     fn apply_class(&self, class: &Class) {
-        // TODO: this isn't a good representation. Refactor it somehow.
-        // There are 2 concepts: 1. normal class, 2. native class, and 3. native struct class.
         if class.name.fragment.starts_with("Native__Struct__") {
             class.llvm.get().unwrap().set_body(&self.get_type_enums_for_class(class), false);
             class.llvm_native.get().unwrap().set_body(&self.get_type_enums_for_native(class), false);
@@ -37,6 +36,10 @@ impl ClassEmitter for Emitter<'_> {
             class.llvm.get().unwrap().set_body(&self.get_type_enums_for_native(class), false);
         } else {
             class.llvm.get().unwrap().set_body(&self.get_type_enums_for_class(class), false);
+        }
+
+        for method in &class.methods {
+            self.apply_method(method);
         }
     }
 

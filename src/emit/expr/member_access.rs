@@ -23,7 +23,10 @@ impl MemberAccessEmitter for Emitter<'_> {
             )
         };
 
-        let value = self.builder.build_load(param_ptr, format!("Load field {} for identifier {}", param.name.fragment, member_access.name.fragment).as_ref());
+        let value = self.builder.build_load(
+            param_ptr,
+            &format!("Load field {} for identifier {}", param.name.map(|x|x.fragment).unwrap_or("-"), member_access.name.map(|x|x.fragment).unwrap_or("-"))
+            );
 
         Value::Class(unwrap!(BasicValueEnum::PointerValue, value), param_class)
     }

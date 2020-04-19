@@ -23,24 +23,28 @@ impl EmitterMethod for Emitter<'_> {
 
         let is_main = method.name.fragment == "main";
         let real_name = if is_main {
-            "native__main"
+            "native__main".to_string()
+        } else if let Some(parent_class) = method.parent_class.get() {
+            let parent_class = unsafe { &*parent_class };
+            format!("lilit_user_space__{}__{}", parent_class.name.fragment, method.name.fragment)
         } else {
-            method.name.fragment
+            format!("lilit_user_space__{}", method.name.fragment)
         };
 
         let mut param_types = vec![];
+
         for param in &method.params {
             param_types.push(param.get_llvm_type());
         }
 
         let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
-        let llvm_fn_type = if return_type_class.name.fragment == "Void" || return_type_class.name.fragment == "Native__Void" {
+        let llvm_fn_type = if return_type_class.name.fragment == "Void" {
             self.context.void_type().fn_type(&param_types, false)
         } else {
             return_type_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).fn_type(&param_types, false)
         };
 
-        let llvm_method = self.module.add_function(real_name, llvm_fn_type, None);
+        let llvm_method = self.module.add_function(&real_name, llvm_fn_type, None);
         method.llvm.set(Some(llvm_method));
 
         let first_block = self.context.append_basic_block(&llvm_method, "first_block");
@@ -69,6 +73,43 @@ impl EmitterMethod for Emitter<'_> {
 
         if is_main {
             self.create_llvm_main_method(method);
+        }
+    }
+
+    fn create_llvm_main_method(&self, method: &Method) {
+            let fn_type = self.context.i32_type().fn_type(
+                &[
+                    self.context.i32_type().into(),
+                self.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into()
+            ],
+            false
+        );
+
+        let main = self.module.add_function("main", fn_type, None);
+        let first_block = self.context.append_basic_block(&main, "first_block");
+        self.builder.position_at_end(&first_block);
+
+        let llvm_ret = self.builder.build_call(
+            method.llvm.get().unwrap(),
+            &[],
+            &method.name.fragment);
+
+        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
+        let ret_ptr = unwrap!(BasicValueEnum::PointerValue, llvm_ret.try_as_basic_value().left().unwrap());
+        let first_arg_ptr = unsafe { self.builder.build_struct_gep(ret_ptr, 0, "Gep for the first param of Int") };
+        let native_int = unwrap!(BasicValueEnum::PointerValue, self.builder.build_load(first_arg_ptr, "Load the first param of Int"));
+        let native_int_first_arg_ptr = unsafe { self.builder.build_struct_gep(native_int, 0, "Gep for the first param of Native__Int") };
+        let int_value = unwrap!(BasicValueEnum::IntValue, self.builder.build_load(native_int_first_arg_ptr, "Load the first param of Native__Int"));
+
+        self.builder.build_return(Some(&self.builder.build_int_cast(
+            int_value,
+            self.context.i32_type(),
+            "Cast return type"
+        )));
+
+        if !main.verify(true) {
+            main.print_to_stderr();
+            panic!("Native main(..) is invalid.");
         }
     }
 
@@ -161,43 +202,6 @@ impl EmitterMethod for Emitter<'_> {
             self.builder.build_return(None);
         } else {
             self.builder.build_return(Some(&native_ret_value.try_as_basic_value().left().unwrap()));
-        }
-    }
-
-    fn create_llvm_main_method(&self, method: &Method) {
-            let fn_type = self.context.i32_type().fn_type(
-                &[
-                    self.context.i32_type().into(),
-                self.context.i8_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic).into()
-            ],
-            false
-        );
-
-        let main = self.module.add_function("main", fn_type, None);
-        let first_block = self.context.append_basic_block(&main, "first_block");
-        self.builder.position_at_end(&first_block);
-
-        let llvm_ret = self.builder.build_call(
-            method.llvm.get().unwrap(),
-            &[],
-            &method.name.fragment);
-
-        let return_type_class = unsafe { &*method.return_type.def_opt.get().unwrap() };
-        let ret_ptr = unwrap!(BasicValueEnum::PointerValue, llvm_ret.try_as_basic_value().left().unwrap());
-        let first_arg_ptr = unsafe { self.builder.build_struct_gep(ret_ptr, 0, "Gep for the first param of Int") };
-        let native_int = unwrap!(BasicValueEnum::PointerValue, self.builder.build_load(first_arg_ptr, "Load the first param of Int"));
-        let native_int_first_arg_ptr = unsafe { self.builder.build_struct_gep(native_int, 0, "Gep for the first param of Native__Int") };
-        let int_value = unwrap!(BasicValueEnum::IntValue, self.builder.build_load(native_int_first_arg_ptr, "Load the first param of Native__Int"));
-
-        self.builder.build_return(Some(&self.builder.build_int_cast(
-            int_value,
-            self.context.i32_type(),
-            "Cast return type"
-        )));
-
-        if !main.verify(true) {
-            main.print_to_stderr();
-            panic!("Native main(..) is invalid.");
         }
     }
 }

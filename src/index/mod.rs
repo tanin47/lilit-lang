@@ -89,7 +89,8 @@ end
                 name: span2(1, 5, "main", files.get(0).unwrap().deref()),
                 params: vec![],
                 exprs: vec![],
-                return_type: Type { span: span2(1, 13, "Number", files.get(0).unwrap().deref()), def_opt: Cell::new(None) },
+                return_type: Type { span: Some(span2(1, 13, "Number", files.get(0).unwrap().deref())), def_opt: Cell::new(None) },
+                parent_class: Cell::new(None),
                 llvm: Cell::new(None)
             }
         );
@@ -103,11 +104,13 @@ end
                         name: span2(2, 7, "test", files.get(1).unwrap().deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: span2(2, 15, "Number", files.get(1).unwrap().deref()), def_opt: Cell::new(None) },
-                        llvm: Cell::new(None)
+                        return_type: Type { span: Some(span2(2, 15, "Number", files.get(1).unwrap().deref())), def_opt: Cell::new(None) },
+                        parent_class: Cell::new(Some(root.find_class("Test").unwrap().parse)),
+                        llvm: Cell::new(None),
                     }
                 ],
-                llvm: Cell::new(None)
+                llvm: Cell::new(None),
+                llvm_native: Cell::new(None),
             }
         );
         assert_eq!(
@@ -120,7 +123,7 @@ end
                     RootItem::Class(Class {
                         methods: vec![
                             Method {
-                                parse: root.find_class("Test").unwrap().find_method("test").unwrap().parse,
+                                parse: unsafe { &*root.find_class("Test").unwrap().parse }.find_method("test"),
                             }
                         ],
                         parse: root.find_class("Test").unwrap().parse,

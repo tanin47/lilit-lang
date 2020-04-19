@@ -24,18 +24,41 @@ pub struct Class<'a> {
     pub llvm_native: Cell<Option<StructType>>
 }
 
+impl <'a> Class<'a> {
+    pub fn find_method(&self, name: &str) -> &Method<'a> {
+        for method in &self.methods {
+           if method.name.fragment == name {
+               return method;
+           }
+        }
+
+        panic!("Unable to find the method {} in the class {}", name, self.name.fragment)
+    }
+
+    pub fn find_param(&self, name: &str) -> &Param<'a> {
+        for param in &self.params {
+            if param.name.unwrap().fragment == name {
+                return param;
+            }
+        }
+
+        panic!("Unable to find the param {} in the class {}", name, self.name.fragment)
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Method<'a> {
     pub name: Span<'a>,
     pub params: Vec<Param<'a>>,
     pub exprs: Vec<Expr<'a>>,
     pub return_type: Type<'a>,
+    pub parent_class: Cell<Option<*const Class<'a>>>,
     pub llvm: Cell<Option<FunctionValue>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Param<'a> {
-    pub name: Span<'a>,
+    pub name: Option<Span<'a>>,
     pub tpe: Type<'a>,
     pub is_varargs: bool,
     pub index: usize,
@@ -62,7 +85,7 @@ pub enum ParamParent<'a> {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Type<'a> {
-    pub span: Span<'a>,
+    pub span: Option<Span<'a>>,
     pub def_opt: Cell<Option<* const Class<'a>>>
 }
 
@@ -91,21 +114,23 @@ pub struct Assignment<'a> {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Identifier<'a> {
-    pub name: Span<'a>,
-    pub def_opt: Cell<Option<IdentifierSource<'a>>>
+    pub name: Option<Span<'a>>,
+    pub def_opt: RefCell<Option<IdentifierSource<'a>>>
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum IdentifierSource<'a> {
     Assignment(*const Assignment<'a>),
     Param(*const Param<'a>),
+    ClassParam(Box<MemberAccess<'a>>),
 }
 
 impl <'a> IdentifierSource<'a> {
-    pub fn get_type(&self) -> * const Class<'a> {
+    pub fn get_type(&self) -> *const Class<'a> {
         match self {
             IdentifierSource::Assignment(a) => unsafe { &*(&**a) .tpe.get().unwrap() },
             IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.def_opt.get().unwrap() }
+            IdentifierSource::ClassParam(p) => unsafe { &*(&*p.def_opt.get().unwrap()).tpe.def_opt.get().unwrap() }
         }
     }
 }
@@ -121,7 +146,7 @@ pub struct Invoke<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct MemberAccess<'a> {
     pub parent: Expr<'a>,
-    pub name: Span<'a>,
+    pub name: Option<Span<'a>>,
     pub def_opt: Cell<Option<* const Param<'a>>>
 }
 

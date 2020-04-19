@@ -1,11 +1,14 @@
 use parse::tree::{Type, Class, Expr};
 use analyse::scope::Scope;
+use std::borrow::Borrow;
 
 pub fn apply<'def>(
     tpe: &Type<'def>,
     scope: &mut Scope<'def>
 ) {
-    tpe.def_opt.set(scope.find_class(tpe.span.fragment).map(|c| c.parse));
+    if tpe.def_opt.get().is_none() {
+        tpe.def_opt.set(scope.find_class(tpe.span.unwrap().fragment).map(|c| c.parse));
+    }
 }
 
 
@@ -16,7 +19,7 @@ pub trait GetType<'def> {
 impl <'def> GetType<'def> for Expr<'def> {
     fn get_type(&self, scope: &Scope<'def>) -> &Class<'def> {
         match self {
-            Expr::Identifier(i) => unsafe { &*i.def_opt.get().unwrap().get_type() },
+            Expr::Identifier(i) => unsafe { &*i.def_opt.borrow().as_ref().unwrap().get_type() },
             Expr::MemberAccess(i) => unsafe { &*(&*i.def_opt.get().unwrap()).tpe.def_opt.get().unwrap() },
             Expr::NewInstance(i) => unsafe { &*i.def_opt.get().unwrap() },
             Expr::Int(i) => unsafe { &*scope.find_class("Int").unwrap().parse },

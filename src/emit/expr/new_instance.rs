@@ -39,6 +39,7 @@ impl NewInstanceEmitter for Emitter<'_> {
                 }
             );
         } else {
+            println!("{}", class.name.fragment);
             instance = self.malloc(&class.llvm.get().unwrap());
             for (index, (param, arg)) in class.params.iter().zip(args.iter()).enumerate() {
                 let expected_value_class = unsafe { &*param.tpe.def_opt.get().unwrap() };

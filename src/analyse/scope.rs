@@ -138,7 +138,7 @@ impl <'def> Scope<'def> {
                 Some(LevelEnclosing::Class(class)) => {
                     let class = unsafe { &*class };
                     for param in &unsafe { &*class.parse }.params {
-                        if param.name.fragment == name {
+                        if param.name.unwrap().fragment == name {
                             return Some(IdentifierSource::Param(param));
                         }
                     }
@@ -146,7 +146,7 @@ impl <'def> Scope<'def> {
                 Some(LevelEnclosing::Method(method)) => {
                     let method = unsafe { &*method };
                     for param in &unsafe { &*method.parse }.params {
-                        if param.name.fragment == name {
+                        if param.name.map(|x|x.fragment) == Some(name) {
                             return Some(IdentifierSource::Param(param));
                         }
                     }
@@ -156,6 +156,22 @@ impl <'def> Scope<'def> {
         }
 
         panic!("Unable to find the class {}", name);
+    }
+
+    pub fn find_parent_method(&self) -> &Method<'def> {
+        for i in (0..self.levels.len()).rev() {
+            let level = self.levels.get(i).unwrap();
+
+            match level.enclosing_opt {
+                Some(LevelEnclosing::Method(method)) => {
+                    return unsafe { &*(&*method).parse };
+                },
+                _ => (),
+            }
+        }
+
+        panic!("Unable to find the parent method");
+
     }
 
     pub fn add_var(&mut self, assignment: &Assignment<'def>) {

@@ -6,7 +6,7 @@ use lilit::{analyse, emit, index, parse};
 use std::env;
 use std::fs::File;
 use std::io::Read;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use inkwell::targets::{InitializationConfig, Target, TargetMachine, RelocMode, CodeModel, FileType};
 use inkwell::OptimizationLevel;
 use std::path::Path;
@@ -25,14 +25,14 @@ fn main() {
 }
 
 fn compile(content: &str, path: &str) {
-    let file = parse::apply(content, path).unwrap();
+    let mut file = parse::apply(content, path).unwrap();
 
     println!("---- Code ----");
     println!("{}\n", content);
 
     let root = index::build(&[file.deref()]);
 
-    analyse::apply(&[file.deref()], &root);
+    analyse::apply(&mut [file.deref_mut()], &root);
 
     let module = emit::apply(&[file.deref()]);
     module.print_to_stderr();

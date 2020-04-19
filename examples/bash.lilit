@@ -54,7 +54,7 @@ end
 
 class WritePipe(pipe: Native__Int)
   def write(c: Char): Void
-    native__lilit_write(pipe, c)
+    native__lilit_write(pipe, c.underlying)
   end
 end
 
@@ -75,29 +75,19 @@ end
 class Exec(cmd: String)
   def start(): Process
     process = native__lilit_exec(cmd.underlying)
-    Process(process.pid, WritePipe(process.in), ReadPipe(process.out), ReadPipe(process.err))
+    Process(Int(process.pid), WritePipe(process.in), ReadPipe(process.out), ReadPipe(process.err))
   end
 end
 
 def main(): Int
-  native__vprintf("Start\n".underlying)
-  process = native__lilit_exec("./examples/bash.sh".underlying)
-  native__lilit_write(process.in, 'd'.underlying)
-  native__vprintf("Read %c\n".underlying, native__lilit_read(process.out))
-  native__lilit_write(process.in, 'z'.underlying)
-  native__vprintf("Read %c\n".underlying, native__lilit_read(process.out))
-  native__vprintf("Done\n".underlying)
+  native__vprintf("Started\n".underlying)
+  proc = Exec("./examples/bash.sh").start()
+  proc.write('d')
+  native__vprintf("Read %c\n".underlying, proc.read().underlying)
+  proc.write('Z')
+  native__vprintf("Read %c\n".underlying, proc.read().underlying)
+  native__vprintf("Exit %d\n".underlying, proc.wait().underlying)
+  native__vprintf("Finished\n".underlying)
   0
 end
-
-//def main(): Int
-//  native__vprintf("before".underlying)
-//  proc = Exec("ls").start()
-//  proc.write('c')
-//  proc.read()
-//  proc.write('b')
-//  native__vprintf("Exit %d".underlying, proc.wait().underlying)
-//  native__vprintf("after".underlying)
-//  0
-//end
 

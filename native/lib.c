@@ -55,10 +55,10 @@ void lilit_write(int pipe, char c) {
   write(pipe, &c, 1);
 }
 
-int lilit_wait(int pid) {
+long lilit_wait(int pid) {
   int exitCode;
   waitpid(pid, &exitCode, 0);
-  return exitCode;
+  return (long) WEXITSTATUS(exitCode);
 }
 
 struct Test {

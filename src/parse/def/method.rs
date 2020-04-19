@@ -28,6 +28,7 @@ pub fn parse_tail<'def, 'r>(
         params: params.unwrap_or(vec![]),
         exprs,
         return_type: tpe,
+        parent_class: Cell::new(None),
         llvm: Cell::new(None)
     }))
 }
@@ -68,7 +69,8 @@ end
                            instance: RefCell::new(None)
                        }))
                    ],
-                   return_type: Type { span: span(1, 13, "Number"), def_opt: Cell::new(None) },
+                   return_type: Type { span: Some(span(1, 13, "Number")), def_opt: Cell::new(None) },
+                   parent_class: Cell::new(None),
                    llvm: Cell::new(None)
                }
            ))
@@ -90,16 +92,16 @@ end
                     name: span(1, 5, "test"),
                     params: vec![
                         Param {
-                            name: span(1, 10, "a"),
-                            tpe: Type { span: span(1, 13, "String"), def_opt: Cell::new(None) },
+                            name: Some(span(1, 10, "a")),
+                            tpe: Type { span: Some(span(1, 13, "String")), def_opt: Cell::new(None) },
                             is_varargs: false,
                             index: 0,
                             parent: Cell::new(None),
                             llvm: Cell::new(None),
                         },
                         Param {
-                            name: span(1, 21, "b"),
-                            tpe: Type { span: span(1, 27, "String"), def_opt: Cell::new(None) },
+                            name: Some(span(1, 21, "b")),
+                            tpe: Type { span: Some(span(1, 27, "String")), def_opt: Cell::new(None) },
                             is_varargs: true,
                             index: 1,
                             parent: Cell::new(None),
@@ -107,7 +109,8 @@ end
                         },
                     ],
                     exprs: vec![],
-                    return_type: Type { span: span(1, 36, "Number"), def_opt: Cell::new(None) },
+                    return_type: Type { span: Some(span(1, 36, "Number")), def_opt: Cell::new(None) },
+                    parent_class: Cell::new(None),
                     llvm: Cell::new(None)
                 }
             ))

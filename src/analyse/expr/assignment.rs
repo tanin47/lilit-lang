@@ -15,7 +15,7 @@ pub fn apply<'def>(
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
+    use std::ops::{Deref, DerefMut};
 
     use index::build;
     use parse;
@@ -41,10 +41,10 @@ def main: Void
   a
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = build(&[file.deref()]);
 
-        apply(&[file.deref()], &root);
+        apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
             unsafe { &*root.find_method("main").unwrap().parse }.exprs,
@@ -59,8 +59,8 @@ end
                     llvm: Cell::new(None)
                 })),
                 Expr::Identifier(Box::new(Identifier {
-                    name: span2(12, 3, "a", file.deref()),
-                    def_opt: Cell::new(Some(IdentifierSource::Assignment(
+                    name: Some(span2(12, 3, "a", file.deref())),
+                    def_opt: RefCell::new(Some(IdentifierSource::Assignment(
                         unwrap!(Expr::Assignment, unsafe { &*root.find_method("main").unwrap().parse }.exprs.get(0).unwrap()).deref()
                     )))
                 })),

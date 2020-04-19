@@ -10,7 +10,7 @@ pub mod scope;
 pub mod tpe;
 
 pub fn apply<'def>(
-    files: &[&LilitFile<'def>],
+    files: &mut [&mut LilitFile<'def>],
     root: &Root<'def>,
 ) {
     for file in files {
@@ -19,17 +19,17 @@ pub fn apply<'def>(
 }
 
 pub fn apply_file<'def>(
-    file: &LilitFile<'def>,
+    file: &mut LilitFile<'def>,
     root: &Root<'def>,
 ) {
     let mut scope = Scope { levels: vec![] };
     scope.enter_root(root);
    // Add all import statements to scope
 
-    for item in &file.unit.items {
+    for item in &mut file.unit.items {
         match item {
             CompilationUnitItem::Class(c) => class::apply(c, &mut scope),
-            CompilationUnitItem::Method(m) => method::apply(m, &mut scope),
+            CompilationUnitItem::Method(m) => method::apply(m, None, &mut scope),
         }
     }
     scope.leave();
@@ -37,7 +37,7 @@ pub fn apply_file<'def>(
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
+    use std::ops::{Deref, DerefMut};
 
     use index::build;
     use parse;
@@ -66,10 +66,10 @@ def main: Void
   native__printf("hello")
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = build(&[file.deref()]);
 
-        apply(&[file.deref()], &root);
+        apply(&mut [file.deref_mut()], &root);
 
         println!("{:#?}", file.unit);
     }
@@ -84,10 +84,10 @@ def main(): Number
   test()
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = build(&[file.deref()]);
 
-        apply(&[file.deref()], &root);
+        apply(&mut [file.deref_mut()], &root);
 
         assert_eq!(
             file.unit,
@@ -97,7 +97,8 @@ end
                         name: span2(1, 5, "test", file.deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: span2(1, 13, "Number", file.deref()), def_opt: Cell::new(None) },
+                        return_type: Type { span: Some(span2(1, 13, "Number", file.deref())), def_opt: Cell::new(None) },
+                        parent_class: Cell::new(None),
                         llvm: Cell::new(None)
                     }),
                     CompilationUnitItem::Method(Method {
@@ -111,7 +112,8 @@ end
                                 def_opt: Cell::new(Some(root.find_method("test").unwrap().parse))
                             }))
                         ],
-                        return_type: Type { span: span2(4, 13, "Number", file.deref()), def_opt: Cell::new(None) },
+                        return_type: Type { span: Some(span2(4, 13, "Number", file.deref())), def_opt: Cell::new(None) },
+                        parent_class: Cell::new(None),
                         llvm: Cell::new(None)
                     }),
                 ]

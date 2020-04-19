@@ -66,11 +66,13 @@ end
                             name: span(2, 7, "test"),
                             params: vec![],
                             exprs: vec![],
-                            return_type: Type { span: span(2, 13, "Number"), def_opt: Cell::new(None) },
+                            return_type: Type { span: Some(span(2, 13, "Number")), def_opt: Cell::new(None) },
+                            parent_class: Cell::new(None),
                             llvm: Cell::new(None)
                         }
                     ],
-                    llvm: Cell::new(None)
+                    llvm: Cell::new(None),
+                    llvm_native: Cell::new(None),
                 }
             ))
         );

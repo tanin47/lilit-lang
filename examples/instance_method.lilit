@@ -1,0 +1,16 @@
+class Native__Int
+end
+
+class Int(underlying: Native__Int)
+end
+
+class Test(number: Int)
+  def get(): Int
+    number
+  end
+end
+
+def main(): Int
+  t = Test(13)
+  t.get()
+end

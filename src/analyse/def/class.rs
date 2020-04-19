@@ -1,17 +1,19 @@
 use parse::tree::{Class, ParamParent};
 use analyse::def::{method, params};
 use analyse::scope::Scope;
+use std::ops::Deref;
 
 pub fn apply<'def>(
-    class: &Class<'def>,
+    class: &mut Class<'def>,
     scope: &mut Scope<'def>,
 ) {
     scope.enter_class(class);
 
-    params::apply(&class.params, ParamParent::Class(class), scope);
+    let parent = class as *const Class<'def>;
+    params::apply(&mut class.params, ParamParent::Class(parent), scope);
 
-    for m in &class.methods {
-        method::apply(m, scope);
+    for m in &mut class.methods {
+        method::apply(m, Some(parent), scope);
     }
     scope.leave();
 }

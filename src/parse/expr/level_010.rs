@@ -39,7 +39,7 @@ fn parse_tail<'def, 'r>(
                 input,
                 Expr::MemberAccess(Box::new(MemberAccess {
                     parent: left,
-                    name,
+                    name: Some(name),
                     def_opt: Cell::new(None)
                 }))
             )
@@ -60,50 +60,32 @@ mod tests {
     use std::cell::{Cell, RefCell};
 
     #[test]
-    fn test_chain_method() {
+    fn test_dot() {
         assert_eq!(
             level_010::parse(&generate_tokens(
                 r#"
-func("a").another_func()
+func("a").member.another_func()
            "#
             )),
             Ok((
                 &[] as Tokens,
                 Expr::Invoke(Box::new(
                     Invoke {
-                        invoker_opt: Some(Expr::Invoke(Box::new(Invoke {
-                            invoker_opt: None,
-                            name: span(1, 1, "func"),
-                            args: vec![Expr::String(Box::new(LiteralString { span: span(1, 6, "\"a\""), instance: RefCell::new(None) }))],
-                            def_opt: Cell::new(None),
+                        invoker_opt: Some(Expr::MemberAccess(Box::new(MemberAccess {
+                            parent: Expr::Invoke(Box::new(Invoke {
+                                invoker_opt: None,
+                                name: span(1, 1, "func"),
+                                args: vec![Expr::String(Box::new(LiteralString { span: span(1, 6, "\"a\""), instance: RefCell::new(None) }))],
+                                def_opt: Cell::new(None),
+                            })),
+                            name: Some(span(1, 11, "member")),
+                            def_opt: Cell::new(None)
                         }))),
-                        name: span(1, 11, "another_func"),
+                        name: span(1, 18, "another_func"),
                         args: vec![],
                         def_opt: Cell::new(None),
                     }
                 ))
-            ))
-        );
-    }
-
-    #[test]
-    fn test_member_access() {
-        assert_eq!(
-            level_010::parse(&generate_tokens(
-                r#"
-instance.field
-           "#
-            )),
-            Ok((
-                &[] as Tokens,
-                Expr::MemberAccess(Box::new(MemberAccess {
-                    parent: Expr::Identifier(Box::new(Identifier {
-                        name: span(1, 1, "instance"),
-                        def_opt: Cell::new(None)
-                    })),
-                    name: span(1, 10, "field"),
-                    def_opt: Cell::new(None),
-                }))
             ))
         );
     }

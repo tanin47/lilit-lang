@@ -43,18 +43,6 @@ pub struct Class<'a> {
     pub parse: *const parse::tree::Class<'a>,
 }
 
-impl <'a> Class<'a> {
-    pub fn find_method(&self, name: &str) -> Option<&Method<'a>> {
-        for method in &self.methods {
-            if unsafe { &*method.parse }.name.fragment == name {
-                return Some(method);
-            }
-        }
-
-        None
-    }
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum ClassItem<'a> {
     Class(Class<'a>),

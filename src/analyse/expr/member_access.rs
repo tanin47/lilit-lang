@@ -12,7 +12,7 @@ pub fn apply<'def>(
     let class = member_access.parent.get_type(scope);
 
     for param in &class.params {
-        if param.name.fragment == member_access.name.fragment {
+        if param.name.unwrap().fragment == member_access.name.unwrap().fragment {
             member_access.def_opt.set(Some(param));
         }
     }
@@ -26,7 +26,7 @@ mod tests {
     use parse::tree::{Method, Type, Expr, MemberAccess, NewInstance, LiteralString, NativeString};
     use test_common::span2;
     use std::cell::{Cell, RefCell};
-    use std::ops::Deref;
+    use std::ops::{Deref, DerefMut};
 
     #[test]
     fn test_simple() {
@@ -44,10 +44,10 @@ def main(): Test
   Test("a").member
 end
         "#;
-        let file = unwrap!(Ok, parse::apply(content.trim(), ""));
+        let mut file = unwrap!(Ok, parse::apply(content.trim(), ""));
         let root = index::build(&[file.deref()]);
 
-        apply(&[file.deref()], &root);
+        apply(&mut [file.deref_mut()], &root);
         assert_eq!(
             unsafe { &*root.find_method("main").unwrap().parse }.exprs,
             vec![
@@ -74,7 +74,7 @@ end
                         }))],
                         def_opt: Cell::new(Some(root.find_class("Test").unwrap().parse))
                     })),
-                    name: span2(11, 13, "member", file.deref()),
+                    name: Some(span2(11, 13, "member", file.deref())),
                     def_opt: Cell::new(Some(
                         unsafe { &*root.find_class("Test").unwrap().parse }.params.get(0).unwrap()
                     ))

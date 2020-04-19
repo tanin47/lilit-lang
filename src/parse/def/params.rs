@@ -8,12 +8,8 @@ pub fn parse<'def, 'r>(
     input: Tokens<'def, 'r>
 ) -> ParseResult<'def, 'r, Vec<Param<'def>>> {
     let (input, _) = symbol('(')(input)?;
-    let (input, mut params) = separated_list(symbol(','), parse_single)(input)?;
+    let (input, params) = separated_list(symbol(','), parse_single)(input)?;
     let (input, _) = symbol(')')(input)?;
-
-    for (index, param) in params.iter_mut().enumerate() {
-        param.index = index;
-    }
 
     Ok((input, params))
 }
@@ -27,10 +23,10 @@ fn parse_single<'def, 'r>(
     let (input, tpe) = tpe::parse(input)?;
 
     Ok((input, Param {
-        name,
+        name: Some(name),
         tpe,
         is_varargs: varargs_opt.is_some(),
-        index: 0,
+        index: 100000,
         parent: Cell::new(None),
         llvm: Cell::new(None),
     }))
@@ -63,16 +59,16 @@ mod tests {
                 &[] as Tokens,
                 vec![
                     Param {
-                        name: span(1, 2, "arg"),
-                        tpe: Type { span: span(1, 7, "Number"), def_opt: Cell::new(None) },
+                        name: Some(span(1, 2, "arg")),
+                        tpe: Type { span: Some(span(1, 7, "Number")), def_opt: Cell::new(None) },
                         is_varargs: false,
                         index: 0,
                         parent: Cell::new(None),
                         llvm: Cell::new(None),
                     },
                     Param {
-                        name: span(1, 15, "arg2"),
-                        tpe: Type { span: span(1, 24, "Number"), def_opt: Cell::new(None) },
+                        name: Some(span(1, 15, "arg2")),
+                        tpe: Type { span: Some(span(1, 24, "Number")), def_opt: Cell::new(None) },
                         is_varargs: true,
                         index: 1,
                         parent: Cell::new(None),

@@ -113,7 +113,6 @@ impl Helper for Emitter<'_> {
                         self.builder.build_struct_gep(instance, index as u32, format!("Gep for the param {} of the class {}", index, expected_class.name.fragment).as_ref())
                     };
                     let param_class = unsafe { &*param.tpe.def_opt.get().unwrap() };
-                    println!("{:#?}", param_ptr);
                     self.builder.build_store(param_ptr, self.wrap_with_class(&self.to_value(struct_field_value, param_class), param_class));
                 }
                 instance
