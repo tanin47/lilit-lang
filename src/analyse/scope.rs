@@ -1,4 +1,4 @@
-use parse::tree::{CompilationUnit, Class, Method, Assignment, Param, IdentifierSource};
+use parse::tree::{CompilationUnit, Class, Method, Assignment, Param, IdentifierSource, TypeKind, ClassType, Type, GenericType};
 use index::tree::{Root, RootItem};
 use ::{index, parse};
 
@@ -116,6 +116,47 @@ impl <'def> Scope<'def> {
                         }
                     }
                 },
+                _ => (),
+            }
+        }
+
+        panic!("Unable to find the class {}", name);
+    }
+
+    pub fn find_type(&self, name: &str, generics: &[Type<'def>]) -> TypeKind<'def> {
+        for i in (0..self.levels.len()).rev() {
+            let level = self.levels.get(i).unwrap();
+            match level.enclosing_opt {
+                Some(LevelEnclosing::Root(root)) => {
+                    let root = unsafe { &*root };
+                    for item in &root.items {
+                        if let RootItem::Class(candidate) = item {
+                            if unsafe { &*candidate.parse }.name.fragment == name {
+                                let mut hydrated_generics = vec![];
+                                for g in generics {
+                                    hydrated_generics.push(Type {
+                                        span: g.span,
+                                        kind: Box::new(self.find_type(g.span.unwrap().fragment, &[])),
+                                    });
+                                }
+                                return TypeKind::Class(ClassType {
+                                    class_def: Some(candidate.parse),
+                                    generics: hydrated_generics,
+                                })
+                            }
+                        }
+                    }
+                },
+                Some(LevelEnclosing::Class(class)) => {
+                    let class = unsafe { &*(&*class).parse };
+                    for generic in &class.generics {
+                       if generic.name.fragment == name {
+                           return TypeKind::Generic(GenericType {
+                               generic_def: Some(generic)
+                           })
+                       }
+                    }
+                }
                 _ => (),
             }
         }

@@ -1,4 +1,4 @@
-use parse::tree::{Int, NewInstance, NativeInt, Expr};
+use parse::tree::{Int, NewInstance, NativeInt, Expr, ClassType, TypeKind};
 use analyse::scope::Scope;
 use std::cell::Cell;
 
@@ -8,16 +8,18 @@ pub fn apply<'def>(
 ) {
     int.instance = Some(Box::new(NewInstance {
         name_opt: None,
+        generics: vec![],
         args: vec![
             Expr::NewInstance(Box::new(NewInstance {
                 name_opt: None,
+                generics: vec![],
                 args: vec![
                     Expr::NativeInt(Box::new(NativeInt { value: int.span.fragment.parse::<i64>().unwrap() }))
                 ],
-                class_def: Some(scope.find_class("Native__Int").unwrap().parse)
+                tpe: Some(TypeKind::Class(ClassType { class_def: Some(scope.find_class("Native__Int").unwrap().parse), generics: vec![] }))
             })),
         ],
-        class_def: Some(scope.find_class("Int").unwrap().parse)
+        tpe: Some(TypeKind::Class(ClassType { class_def: Some(scope.find_class("Int").unwrap().parse), generics: vec![] }))
     }));
 }
 
@@ -27,7 +29,7 @@ mod tests {
 
     use index::build;
     use parse;
-    use parse::tree::{CompilationUnit, Type, CompilationUnitItem, Method, Invoke, Expr, Int, NewInstance, NativeInt};
+    use parse::tree::{CompilationUnit, Type, CompilationUnitItem, Method, Invoke, Expr, Int, NewInstance, NativeInt, TypeKind};
     use test_common::span2;
     use analyse::apply;
     use std::cell::{Cell, RefCell};
@@ -60,16 +62,18 @@ end
                 instance: Some(Box::new(
                   NewInstance {
                       name_opt: None,
+                      generics: vec![],
                       args: vec![
                           Expr::NewInstance(Box::new(NewInstance {
                               name_opt: None,
+                              generics: vec![],
                               args: vec![
                                   Expr::NativeInt(Box::new(NativeInt { value: 1 }))
                               ],
-                              class_def: Some(root.find_class("Native__Int"))
+                              tpe: Some(TypeKind::init_class_type(root.find_class("Native__Int")))
                           })),
                       ],
-                      class_def: Some(root.find_class("Int"))
+                      tpe: Some(TypeKind::init_class_type(root.find_class("Int")))
                   }
                 ))
             }))

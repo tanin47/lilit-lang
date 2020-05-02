@@ -41,7 +41,7 @@ mod tests {
 
     use index::build;
     use parse;
-    use parse::tree::{CompilationUnit, Type, CompilationUnitItem, Method, Invoke, Expr, Class};
+    use parse::tree::{CompilationUnit, Type, CompilationUnitItem, Method, Invoke, Expr, Class, TypeKind};
     use test_common::span2;
     use analyse::apply;
     use std::cell::Cell;
@@ -98,6 +98,7 @@ end
                 items: vec![
                     CompilationUnitItem::Class(Class {
                         name: span2(1, 7, "Number", file.deref()),
+                        generics: vec![],
                         params: vec![],
                         methods: vec![],
                         llvm: Cell::new(None),
@@ -107,7 +108,10 @@ end
                         name: span2(4, 5, "test", file.deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: Some(span2(4, 13, "Number", file.deref())), class_def: Some(root.find_class("Number")) },
+                        return_type: Type {
+                            span: Some(span2(4, 13, "Number", file.deref())),
+                            kind: Box::from(TypeKind::init_class_type(root.find_class("Number")))
+                        },
                         parent_class: None,
                         llvm: Cell::new(None)
                     }),
@@ -122,7 +126,10 @@ end
                                 method_def: Some(root.find_method("test")),
                             }))
                         ],
-                        return_type: Type { span: Some(span2(7, 13, "Number", file.deref())), class_def: Some(root.find_class("Number")) },
+                        return_type: Type {
+                            span: Some(span2(7, 13, "Number", file.deref())),
+                            kind: Box::from(TypeKind::init_class_type(root.find_class("Number"))),
+                        },
                         parent_class: None,
                         llvm: Cell::new(None)
                     }),
