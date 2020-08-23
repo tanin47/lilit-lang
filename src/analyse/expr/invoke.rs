@@ -1,4 +1,4 @@
-use parse::tree::{Expr, Invoke, Class, Method};
+use parse::tree::{Expr, Invoke, Class, Method, TypeKind};
 use analyse::scope::Scope;
 use analyse::expr;
 use analyse::tpe::GetType;
@@ -15,7 +15,12 @@ pub fn apply<'def>(
         match &mut invoke.invoker_opt {
             Some(parent) => {
                 expr::apply(parent, scope);
-                parent.get_type(scope).find_method(invoke.name.fragment)
+                match parent.get_type(scope) {
+                    TypeKind::Class(class) => {
+                        unsafe { &*class.class_def.unwrap() }.find_method(invoke.name.fragment)
+                    },
+                    TypeKind::Generic(_) => panic!(),
+                }
             },
             None => scope.find_method(invoke.name.fragment).unwrap().parse,
         }
@@ -27,7 +32,7 @@ mod tests {
     use index;
     use parse;
     use analyse::apply;
-    use parse::tree::{Method, Type, Expr, MemberAccess, NewInstance, LiteralString, NativeString, Invoke};
+    use parse::tree::{Method, Type, Expr, MemberAccess, NewInstance, LiteralString, NativeString, Invoke, TypeKind};
     use test_common::span2;
     use std::cell::{Cell, RefCell};
     use std::ops::{Deref, DerefMut};
@@ -54,8 +59,9 @@ end
                 Expr::Invoke(Box::new(Invoke {
                     invoker_opt: Some(Expr::NewInstance(Box::new(NewInstance {
                         name_opt: Some(span2(7, 3, "Test", file.deref())),
+                        generics: vec![],
                         args: vec![],
-                        class_def: Some(root.find_class("Test"))
+                        tpe: Some(TypeKind::init_class_type(root.find_class("Test")))
                     }))),
                     name: span2(7, 10, "run", file.deref()),
                     args: vec![],

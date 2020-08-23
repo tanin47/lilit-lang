@@ -22,7 +22,7 @@ mod tests {
     use test_common::{span2, make_int_instance};
     use analyse::apply;
     use std::cell::{Cell, RefCell};
-    use parse::tree::{Expr, Assignment, Int, NewInstance, Identifier, IdentifierSource};
+    use parse::tree::{Expr, Assignment, Int, NewInstance, Identifier, IdentifierSource, TypeKind};
 
     #[test]
     fn test_simple() {
@@ -55,7 +55,7 @@ end
                         span: span2(11, 7, "2", file.deref()),
                         instance: Some(Box::new(make_int_instance(2, &root)))
                     }))),
-                    tpe: Some(root.find_class("Int")),
+                    tpe: Some(TypeKind::init_class_type(root.find_class("Int"))),
                     llvm: Cell::new(None)
                 })),
                 Expr::Identifier(Box::new(Identifier {

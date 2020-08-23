@@ -12,7 +12,7 @@ pub mod macros;
 pub mod test_common;
 
 pub mod analyse;
-pub mod emit;
+// pub mod emit;
 pub mod index;
 pub mod tokenize;
 pub mod parse;

@@ -89,7 +89,7 @@ end
                 name: span2(1, 5, "main", files.get(0).unwrap().deref()),
                 params: vec![],
                 exprs: vec![],
-                return_type: Type { span: Some(span2(1, 13, "Number", files.get(0).unwrap().deref())), class_def: None },
+                return_type: Type::init(Some(span2(1, 13, "Number", files.get(0).unwrap().deref()))),
                 parent_class: None,
                 llvm: Cell::new(None)
             }
@@ -98,13 +98,14 @@ end
             root.find_class("Test"),
             &parse::tree::Class {
                 name: span2(1, 7, "Test", files.get(1).unwrap().deref()),
+                generics: vec![],
                 params: vec![],
                 methods: vec![
                     parse::tree::Method {
                         name: span2(2, 7, "test", files.get(1).unwrap().deref()),
                         params: vec![],
                         exprs: vec![],
-                        return_type: Type { span: Some(span2(2, 15, "Number", files.get(1).unwrap().deref())), class_def: None },
+                        return_type: Type::init(Some(span2(2, 15, "Number", files.get(1).unwrap().deref()))),
                         parent_class: None,
                         llvm: Cell::new(None),
                     }

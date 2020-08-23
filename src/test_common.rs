@@ -1,7 +1,7 @@
 use tokenize::span::Span;
 use tokenize::token::Token;
 use {tokenize, LilitFile};
-use parse::tree::{NewInstance, Expr, NativeInt};
+use parse::tree::{NewInstance, Expr, NativeInt, TypeKind, ClassType};
 use std::cell::Cell;
 use index;
 
@@ -32,16 +32,24 @@ pub fn generate_tokens(fragment: &str) -> Vec<Token> {
 pub fn make_int_instance<'def>(value: i64, root: &index::tree::Root<'def>) -> NewInstance<'def> {
     NewInstance {
         name_opt: None,
+        generics: vec![],
         args: vec![
             Expr::NewInstance(Box::new(NewInstance {
                 name_opt: None,
+                generics: vec![],
                 args: vec![
                     Expr::NativeInt(Box::new(NativeInt { value }))
                 ],
-                class_def: Some(root.find_class("Native__Int"))
+                tpe: Some(TypeKind::Class(ClassType {
+                    class_def: Some(root.find_class("Native__Int")),
+                    generics: vec![]
+                })),
             })),
         ],
-        class_def: Some(root.find_class("Int"))
+        tpe: Some(TypeKind::Class(ClassType {
+            class_def: Some(root.find_class("Int")),
+            generics: vec![],
+        }))
     }
 }
 

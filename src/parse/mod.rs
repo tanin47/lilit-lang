@@ -89,15 +89,16 @@ end
                         CompilationUnitItem::Class(
                             Class {
                                 name: span2(1, 7, "Test", file.deref()),
+                                generics: vec![],
                                 params: vec![],
                                 methods: vec![
                                     Method {
                                         name: span2(2, 7, "test", file.deref()),
                                         params: vec![],
                                         exprs: vec![],
-                                        return_type: Type { span: Some(span2(2, 15, "Number", file.deref())), class_def: None },
+                                        return_type: Type::init(Some(span2(2, 15, "Number", file.deref()))),
                                         parent_class: None,
-                                        llvm: Cell::new(None)
+                                        llvm: Cell::new(None),
                                     }
                                 ],
                                 llvm: Cell::new(None),

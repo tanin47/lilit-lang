@@ -61,16 +61,28 @@ long lilit_wait(int pid) {
   return (long) WEXITSTATUS(exitCode);
 }
 
-struct Test {
-  long pid;
-  long in;
+struct Array {
+  void** underlying;
+  int size;
+  int capacity;
 };
 
-struct Test* test_call() {
-  struct Test* t = GC_malloc(sizeof(struct Test));
-  t->pid = 23;
-  t->in = 37;
-  return t;
+void lilit__array_init(struct Array *array, int initialCapacity) {
+  array->underlying = malloc(initialCapacity * sizeof(void *));
+  array->size = 0;
+  array->capacity = initialCapacity;
+}
+
+void lilit__array_push(struct Array *array, void *item) {
+  if (array->size == array->capacity) {
+    array->capacity *= 2;
+    array->underlying = realloc(array->underlying, array->capacity * sizeof(void *));
+  }
+  array->underlying[array->size++] = item;
+}
+
+void* lilit__array_get(int index) {
+  return array->underlying[index];
 }
 
 int GC_finalizer_count = 0;

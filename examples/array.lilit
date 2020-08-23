@@ -1,0 +1,42 @@
+class Native__Int
+end
+
+class Native__Array
+end
+
+def native__lilit_array_init(arr: Native__Array, capacity: Native__Int): Native__Array
+end
+
+def native__lilit_array_add(arr: Native__Array, items: Native__Any): Native__Array
+end
+
+def native__lilit_array_get(arr: Native__Array, index: Native__Int): Native__Any
+end
+
+class Int(underlying: Native__Int)
+end
+
+class Void
+end
+
+class Array[T](underlying: Native__Array)
+  def init(): Void
+    native__lilit_array_init(underlying, 3)
+  end
+
+  def get(index: Int): T
+    native__lilit_array_get(underlying, index.underlying)
+  end
+
+  def push(item: T): Void
+    native__lilit_array_add(items.underlying, item)
+  end
+end
+
+def main(): Int
+  items = Array[Int](Native__Array())
+  items.init()
+  items.push(10)
+  items.push(20)
+  items.get(0)
+end

@@ -26,14 +26,7 @@ fn parse_single<'def, 'r>(
     let (input, _) = symbol(':')(input)?;
     let (input, tpe) = tpe::parse(input)?;
 
-    Ok((input, Param {
-        name: Some(name),
-        tpe,
-        is_varargs: varargs_opt.is_some(),
-        index: 100000,
-        parent: None,
-        llvm: Cell::new(None),
-    }))
+    Ok((input, Param::init(Some(name), tpe, varargs_opt.is_some(), 10000)))
 }
 
 pub fn parse_varargs<'def, 'r>(input: Tokens<'def, 'r>) -> ParseResult<'def, 'r, ()> {
@@ -64,7 +57,7 @@ mod tests {
                 vec![
                     Param {
                         name: Some(span(1, 2, "arg")),
-                        tpe: Type { span: Some(span(1, 7, "Number")), class_def: None },
+                        tpe: Type::init(Some(span(1, 7, "Number"))),
                         is_varargs: false,
                         index: 0,
                         parent: None,
@@ -72,7 +65,7 @@ mod tests {
                     },
                     Param {
                         name: Some(span(1, 15, "arg2")),
-                        tpe: Type { span: Some(span(1, 24, "Number")), class_def: None },
+                        tpe: Type::init(Some(span(1, 24, "Number"))),
                         is_varargs: true,
                         index: 1,
                         parent: None,

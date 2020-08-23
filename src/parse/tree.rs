@@ -3,6 +3,7 @@ use std::cell::{Cell, RefCell};
 use inkwell::types::{StructType, BasicTypeEnum};
 use inkwell::values::{FunctionValue, PointerValue};
 use inkwell::AddressSpace;
+use inkwell::context::Context;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CompilationUnit<'a> {
@@ -18,10 +19,26 @@ pub enum CompilationUnitItem<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Class<'a> {
     pub name: Span<'a>,
+    pub generics: Vec<GenericDef<'a>>,
     pub params: Vec<Param<'a>>,
     pub methods: Vec<Method<'a>>,
     pub llvm: Cell<Option<StructType>>,
     pub llvm_native: Cell<Option<StructType>>
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct GenericDef<'a> {
+    pub name: Span<'a>,
+    pub index: usize,
+}
+
+impl <'a> GenericDef<'a> {
+    pub fn init(name: Span, index: usize) -> GenericDef {
+        GenericDef {
+            name,
+            index,
+        }
+    }
 }
 
 impl <'a> Class<'a> {
@@ -67,13 +84,36 @@ pub struct Param<'a> {
 }
 
 impl <'a> Param<'a> {
-    pub fn get_llvm_type(&self) -> BasicTypeEnum {
-        let param_class = unsafe { &*self.tpe.class_def.unwrap() };
-        BasicTypeEnum::PointerType(if self.is_varargs {
-            param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic)
-        } else {
-            param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic)
-        })
+    pub fn init<'b>(name: Option<Span<'b>>, tpe: Type<'b>, is_varargs: bool, index: usize) -> Param<'b> {
+        Param {
+            name,
+            tpe,
+            is_varargs,
+            index,
+            parent: None,
+            llvm: Cell::new(None),
+        }
+    }
+
+    // TODO: how should we handle this?
+    pub fn get_llvm_type(&self, context: &Context) -> BasicTypeEnum {
+        match self.tpe.kind.as_ref() {
+            TypeKind::Class(c) => {
+                let param_class = unsafe { &*c.class_def.unwrap() };
+                BasicTypeEnum::PointerType(if self.is_varargs {
+                    param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic)
+                } else {
+                    param_class.llvm.get().unwrap().ptr_type(AddressSpace::Generic)
+                })
+            }
+            TypeKind::Generic(g) => {
+                BasicTypeEnum::PointerType(if self.is_varargs {
+                    context.void_type().ptr_type(AddressSpace::Generic).ptr_type(AddressSpace::Generic)
+                } else {
+                    context.void_type().ptr_type(AddressSpace::Generic)
+                })
+            }
+        }
     }
 }
 
@@ -86,7 +126,39 @@ pub enum ParamParent<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Type<'a> {
     pub span: Option<Span<'a>>,
-    pub class_def: Option<* const Class<'a>>
+    pub kind: Box<TypeKind<'a>>,
+}
+
+impl <'a> Type<'a> {
+    pub fn init(span: Option<Span>) -> Type {
+        Type { span, kind: Box::new(TypeKind::Class(ClassType { class_def: None, generics: vec![] })) }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TypeKind<'a> {
+    Class(ClassType<'a>),
+    Generic(GenericType<'a>)
+}
+
+impl <'a> TypeKind<'a> {
+    pub fn init_class_type(class_def: *const Class<'a>) -> TypeKind {
+        TypeKind::Class(ClassType {
+            class_def: Some(class_def),
+            generics: vec![]
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ClassType<'a> {
+    pub class_def: Option<* const Class<'a>>, // TODO: remove Some(..)
+    pub generics: Vec<Type<'a>>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct GenericType<'a> {
+    pub generic_def: Option<* const GenericDef<'a>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -108,7 +180,7 @@ pub enum Expr<'a> {
 pub struct Assignment<'a> {
     pub name: Span<'a>,
     pub expr: Box<Expr<'a>>,
-    pub tpe: Option<*const Class<'a>>,
+    pub tpe: Option<TypeKind<'a>>,
     pub llvm: Cell<Option<PointerValue>>,
 }
 
@@ -126,11 +198,11 @@ pub enum IdentifierSource<'a> {
 }
 
 impl <'a> IdentifierSource<'a> {
-    pub fn get_type(&self) -> *const Class<'a> {
+    pub fn get_type(&self) -> *const TypeKind<'a> {
         match self {
-            IdentifierSource::Assignment(a) => unsafe { &*(&**a).tpe.unwrap() },
-            IdentifierSource::Param(p) => unsafe { &*(&**p).tpe.class_def.unwrap() }
-            IdentifierSource::ClassParam(p) => unsafe { &*(&*p.param_def.unwrap()).tpe.class_def.unwrap() }
+            IdentifierSource::Assignment(a) => unsafe { (&**a) }.tpe.as_ref().unwrap(),
+            IdentifierSource::Param(p) => unsafe { (&**p) }.tpe.kind.as_ref(),
+            IdentifierSource::ClassParam(p) => unsafe { (&*p.param_def.unwrap()).tpe.kind.as_ref() },
         }
     }
 }
@@ -153,9 +225,20 @@ pub struct MemberAccess<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct NewInstance<'a> {
     pub name_opt: Option<Span<'a>>,
+    pub generics: Vec<Type<'a>>,
     pub args: Vec<Expr<'a>>,
-    // TODO(tanin): this should refer to a constructor
-    pub class_def: Option<* const Class<'a>>
+    pub tpe: Option<TypeKind<'a>>
+}
+
+impl<'a> NewInstance<'a> {
+    pub fn init<'b>(name_opt: Option<Span<'b>>, generics: Vec<Type<'b>>, args: Vec<Expr<'b>>) -> NewInstance<'b> {
+        NewInstance {
+            name_opt,
+            generics,
+            args,
+            tpe: None
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
