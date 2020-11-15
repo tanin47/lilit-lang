@@ -4,6 +4,6 @@ version = "0.1.0"
 authors = ["tanin"]
 
 [dependencies]
-regex = "0.2.0"
-serde_json = "1.0"
-inkwell = { git = "https://github.com/tanin47/inkwell", rev = "46d576c63a7bec3a5ff4c81efbe74842f850ff0a", features = ["llvm6-0"] }
+regex = "1.4.2"
+serde_json = "1.0.59"
+inkwell = { git = "https://github.com/TheDan64/inkwell", rev = "79070d9fbb0e7ed1c96c7133273770dc2e000a88", features = ["llvm10-0"] }
